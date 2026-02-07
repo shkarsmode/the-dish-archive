@@ -7,7 +7,7 @@ import { CookRank } from '../../core/services/rank.service';
     styles: `
         :host { display: inline-flex; }
         .badge { display: flex; align-items: center; justify-content: center; }
-        svg { display: block; filter: drop-shadow(0 0 var(--badge-glow-r, 4px) var(--badge-glow, transparent)); transition: filter .3s; }
+        svg { display: block; }
     `,
     template: `
         <div class="badge" [style.--badge-glow]="rank().glow" [style.--badge-glow-r]="glowRadius()">

@@ -137,7 +137,6 @@ import { RankBadgeComponent } from './rank-badge.component';
             position: absolute;
             inset: 0;
             background: var(--color-backdrop);
-            backdrop-filter: blur(6px);
         }
 
         .drawer {
@@ -153,6 +152,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom));
             box-shadow: var(--shadow-xl);
             animation: drawerSlideIn .3s cubic-bezier(.25,.8,.25,1);
+            will-change: transform;
 
             :host-context([data-theme='dark']) & {
                 background: #1a1a1a;
@@ -202,7 +202,6 @@ import { RankBadgeComponent } from './rank-badge.component';
             border-radius: var(--radius-md);
             box-shadow: 0 0 20px var(--rank-glow, transparent);
             margin-bottom: var(--space-4);
-            transition: box-shadow .3s;
 
             :host-context([data-theme='dark']) & {
                 background: #242424;
@@ -212,6 +211,7 @@ import { RankBadgeComponent } from './rank-badge.component';
         .rank-badge-wrap {
             flex-shrink: 0;
             animation: badgePulse 3s ease-in-out infinite;
+            will-change: transform;
         }
 
         .rank-info {
@@ -426,7 +426,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             padding: var(--space-2) var(--space-3);
             border-radius: var(--radius-sm);
             background: var(--color-surface);
-            transition: opacity .2s;
+            contain: content;
 
             :host-context([data-theme='dark']) & {
                 background: #242424;

@@ -173,6 +173,7 @@ import { TagChipComponent } from './tag-chip.component';
             flex-direction: column;
             animation: slideUp 250ms var(--ease-out-expo);
             padding-bottom: var(--safe-bottom);
+            will-change: transform;
 
             &.closing {
                 animation: slideDown 250ms ease forwards;

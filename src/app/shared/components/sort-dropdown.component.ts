@@ -137,6 +137,7 @@ import { DishService } from '../../core/services/dish.service';
             z-index: calc(var(--z-drawer) + 1);
             animation: slideUp 200ms var(--ease-out-expo);
             touch-action: none;
+            will-change: transform;
 
             &.closing {
                 animation: slideDown 200ms ease forwards;
