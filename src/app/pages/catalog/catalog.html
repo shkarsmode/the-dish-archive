@@ -1,0 +1,130 @@
+<main class="catalog-page">
+    <!-- Hero Section -->
+    <section class="hero" aria-label="Заголовок">
+        <div class="hero-inner">
+            <span class="hero-eyebrow">Персональная коллекция</span>
+            <h1 class="hero-title">Настина<br>кулинарная книга</h1>
+            <p class="hero-subtitle">
+                Любимые рецепты, собранные с заботой и вниманием к деталям
+            </p>
+        </div>
+    </section>
+
+    <!-- Quick Category Chips -->
+    <section class="quick-filters" aria-label="Быстрые фильтры">
+        <div class="quick-filters-inner">
+            @for (category of quickCategories; track category) {
+                <app-tag-chip
+                    [label]="getCategoryLabel(category)"
+                    [active]="isCategoryActive(category)"
+                    (tagClicked)="toggleQuickCategory(category)" />
+            }
+        </div>
+    </section>
+
+    <!-- Catalog Section -->
+    <section class="catalog" id="catalog" aria-label="Каталог блюд">
+        <div class="catalog-inner">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-search">
+                    <app-search-bar />
+                </div>
+                <div class="toolbar-actions">
+                    <button
+                        class="filter-button"
+                        (click)="openFilters()"
+                        [class.has-filters]="dishService.hasActiveFilters()">
+                        <span class="material-symbols-outlined">tune</span>
+                        <span class="filter-label">Фильтры</span>
+                        @if (dishService.hasActiveFilters()) {
+                            <span class="filter-badge">
+                                <span class="material-symbols-outlined">circle</span>
+                            </span>
+                        }
+                    </button>
+                    <app-sort-dropdown />
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            @if (dishService.hasActiveFilters()) {
+                <div class="active-filters">
+                    <span class="active-filters-label">Активные фильтры:</span>
+                    <button class="clear-all-filters" (click)="dishService.resetFilters()">
+                        Сбросить все
+                    </button>
+                </div>
+            }
+
+            <!-- Results Count -->
+            @if (!dishService.isLoading()) {
+                <div class="results-info">
+                    <span class="results-count">
+                        {{ dishService.totalFilteredCount() }}
+                        {{ dishService.totalFilteredCount() === 1 ? 'блюдо' : 'блюд' }}
+                    </span>
+                </div>
+            }
+
+            <!-- Dish Grid -->
+            @if (dishService.isLoading()) {
+                <div class="dish-grid">
+                    @for (item of skeletonItems; track $index) {
+                        <app-skeleton-card />
+                    }
+                </div>
+            } @else if (dishService.paginatedDishes().length === 0) {
+                <app-empty-state
+                    icon="search_off"
+                    title="Ничего не найдено"
+                    description="Попробуйте изменить параметры поиска или сбросить фильтры" />
+            } @else {
+                <div class="dish-grid">
+                    @for (dish of dishService.paginatedDishes(); track dish.id) {
+                        <app-dish-card [dish]="dish" />
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (dishService.totalPages() > 1) {
+                    <nav class="pagination" aria-label="Навигация по страницам">
+                        <button
+                            class="page-button"
+                            [disabled]="dishService.currentPage() === 1"
+                            (click)="goToPage(dishService.currentPage() - 1)"
+                            aria-label="Предыдущая страница">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+
+                        @for (pageNumber of getPageNumbers(); track $index) {
+                            @if (pageNumber === -1) {
+                                <span class="page-ellipsis">...</span>
+                            } @else {
+                                <button
+                                    class="page-button"
+                                    [class.active]="pageNumber === dishService.currentPage()"
+                                    (click)="goToPage(pageNumber)"
+                                    [attr.aria-current]="pageNumber === dishService.currentPage() ? 'page' : null"
+                                    [attr.aria-label]="'Страница ' + pageNumber">
+                                    {{ pageNumber }}
+                                </button>
+                            }
+                        }
+
+                        <button
+                            class="page-button"
+                            [disabled]="dishService.currentPage() === dishService.totalPages()"
+                            (click)="goToPage(dishService.currentPage() + 1)"
+                            aria-label="Следующая страница">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </nav>
+                }
+            }
+        </div>
+    </section>
+
+    <!-- Filter Drawer -->
+    <app-filter-drawer #filterDrawer />
+</main>

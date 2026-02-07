@@ -1,0 +1,181 @@
+{
+    "version": "1.0.0",
+    "lastUpdated": "2026-02-07T12:00:00.000Z",
+    "dishes": [
+        {
+            "id": "dish-001",
+            "title": "Классический борщ",
+            "slug": "klassicheskij-borshch",
+            "description": "Наваристый украинский борщ на говяжьем бульоне с пампушками. Тот самый рецепт, который получается идеально каждый раз.",
+            "images": [
+                {
+                    "url": "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=800&q=80",
+                    "alt": "Тарелка борща со сметаной и зеленью",
+                    "isPrimary": true
+                },
+                {
+                    "url": "https://images.unsplash.com/photo-1562845929-4b3e92bbb69b?w=800&q=80",
+                    "alt": "Ингредиенты для борща",
+                    "isPrimary": false
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 450, "currency": "RUB" },
+            "cookingTime": { "preparation": 30, "cooking": 90, "total": 120 },
+            "calories": 280,
+            "servings": 6,
+            "difficulty": "medium",
+            "tags": ["борщ", "суп", "украинская кухня", "домашнее", "бульон"],
+            "categories": ["soup", "everyday", "lunch", "dinner"],
+            "tasteProfile": {
+                "sweet": 2,
+                "salty": 3,
+                "sour": 3,
+                "bitter": 0,
+                "spicy": 1,
+                "umami": 4
+            },
+            "ingredients": [
+                { "name": "Говядина на кости", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Свёкла", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Картофель", "amount": "3", "unit": "шт", "optional": false },
+                { "name": "Капуста белокочанная", "amount": "300", "unit": "г", "optional": false },
+                { "name": "Морковь", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Лук репчатый", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Томатная паста", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Чеснок", "amount": "3", "unit": "зубчика", "optional": false },
+                { "name": "Лавровый лист", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Уксус", "amount": "1", "unit": "ст.л.", "optional": false },
+                { "name": "Сметана", "amount": "по вкусу", "unit": "", "optional": true },
+                { "name": "Зелень", "amount": "по вкусу", "unit": "", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Сварить бульон из говядины на кости. Снять пену. Варить 1–1.5 часа до мягкости мяса.", "duration": 90 },
+                { "order": 2, "description": "Свёклу натереть на крупной тёрке и тушить на сковороде с уксусом и томатной пастой 15 минут.", "duration": 15 },
+                { "order": 3, "description": "Картофель нарезать кубиками, добавить в процеженный бульон и варить 10 минут." },
+                { "order": 4, "description": "Морковь и лук нарезать и обжарить до золотистости.", "duration": 10 },
+                { "order": 5, "description": "Добавить к бульону нашинкованную капусту, варить 5 минут." },
+                { "order": 6, "description": "Добавить свекольную и морковно-луковую зажарки. Варить ещё 10 минут." },
+                { "order": 7, "description": "Добавить чеснок, лавровый лист, соль, перец. Дать настояться 20 минут." },
+                { "order": 8, "description": "Подавать со сметаной и свежей зеленью." }
+            ],
+            "notes": "Борщ становится вкуснее на следующий день. Свёклу обязательно тушить отдельно с уксусом — иначе потеряет цвет.",
+            "sourceUrl": "https://example.com/borshch-recipe",
+            "createdAt": "2026-01-15T10:30:00.000Z",
+            "updatedAt": "2026-01-15T10:30:00.000Z"
+        },
+        {
+            "id": "dish-002",
+            "title": "Тирамису",
+            "slug": "tiramisu",
+            "description": "Нежнейший итальянский десерт с маскарпоне и кофейной пропиткой. Без яиц в чистом виде — безопасный и невероятно вкусный.",
+            "images": [
+                {
+                    "url": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800&q=80",
+                    "alt": "Порция тирамису с какао",
+                    "isPrimary": true
+                },
+                {
+                    "url": "https://images.unsplash.com/photo-1542124948-dc391252a940?w=800&q=80",
+                    "alt": "Тирамису в стеклянной форме",
+                    "isPrimary": false
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 800, "currency": "RUB" },
+            "cookingTime": { "preparation": 30, "cooking": 0, "total": 30 },
+            "calories": 450,
+            "servings": 8,
+            "difficulty": "easy",
+            "tags": ["десерт", "итальянская кухня", "без выпечки", "маскарпоне", "кофе"],
+            "categories": ["dessert", "festive"],
+            "tasteProfile": {
+                "sweet": 5,
+                "salty": 0,
+                "sour": 0,
+                "bitter": 2,
+                "spicy": 0,
+                "umami": 1
+            },
+            "ingredients": [
+                { "name": "Маскарпоне", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Сливки 33%", "amount": "300", "unit": "мл", "optional": false },
+                { "name": "Сахарная пудра", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Савоярди (печенье)", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Эспрессо (остывший)", "amount": "300", "unit": "мл", "optional": false },
+                { "name": "Какао-порошок", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Ванильный экстракт", "amount": "1", "unit": "ч.л.", "optional": true },
+                { "name": "Амаретто", "amount": "2", "unit": "ст.л.", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Взбить сливки до устойчивых пиков. Убрать в холодильник.", "duration": 5 },
+                { "order": 2, "description": "Маскарпоне смешать с сахарной пудрой и ванильным экстрактом до однородности.", "duration": 3 },
+                { "order": 3, "description": "Аккуратно вмешать взбитые сливки в маскарпоне движениями снизу вверх.", "duration": 3 },
+                { "order": 4, "description": "Приготовить эспрессо, остудить. Добавить амаретто по желанию." },
+                { "order": 5, "description": "Каждое савоярди быстро окунуть в кофе (не замачивать!) и выложить первый слой." },
+                { "order": 6, "description": "Выложить половину крема, разровнять. Повторить слой печенья и крема." },
+                { "order": 7, "description": "Накрыть и убрать в холодильник минимум на 6 часов, лучше на ночь.", "duration": 360 },
+                { "order": 8, "description": "Перед подачей щедро присыпать какао через сито." }
+            ],
+            "notes": "Главный секрет — не замачивать савоярди, а быстро окунать. Десерт обязательно должен постоять в холодильнике минимум 6 часов.",
+            "sourceUrl": "https://example.com/tiramisu-recipe",
+            "createdAt": "2026-01-20T14:00:00.000Z",
+            "updatedAt": "2026-01-25T09:15:00.000Z"
+        },
+        {
+            "id": "dish-003",
+            "title": "Том Ям с креветками",
+            "slug": "tom-yam-s-krevetkami",
+            "description": "Пряный тайский суп с креветками, грибами и кокосовым молоком. Идеальный баланс кислого, острого и сладкого.",
+            "images": [
+                {
+                    "url": "https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=800&q=80",
+                    "alt": "Тарелка том яма с креветками",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 4.5,
+            "price": { "amount": 650, "currency": "RUB" },
+            "cookingTime": { "preparation": 15, "cooking": 25, "total": 40 },
+            "calories": 190,
+            "servings": 4,
+            "difficulty": "medium",
+            "tags": ["суп", "тайская кухня", "креветки", "острое", "кокосовое молоко"],
+            "categories": ["soup", "dinner", "healthy", "quick"],
+            "tasteProfile": {
+                "sweet": 1,
+                "salty": 3,
+                "sour": 4,
+                "bitter": 0,
+                "spicy": 4,
+                "umami": 5
+            },
+            "ingredients": [
+                { "name": "Креветки (крупные)", "amount": "400", "unit": "г", "optional": false },
+                { "name": "Кокосовое молоко", "amount": "400", "unit": "мл", "optional": false },
+                { "name": "Грибы шампиньоны", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Паста Том Ям", "amount": "3", "unit": "ст.л.", "optional": false },
+                { "name": "Лемонграсс", "amount": "2", "unit": "стебля", "optional": false },
+                { "name": "Лайм", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Рыбный соус", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Сахар", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Помидоры черри", "amount": "100", "unit": "г", "optional": true },
+                { "name": "Кинза", "amount": "по вкусу", "unit": "", "optional": true },
+                { "name": "Перец чили", "amount": "1", "unit": "шт", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Лемонграсс отбить ножом и нарезать кусочками по 3 см. Грибы нарезать пластинками.", "duration": 5 },
+                { "order": 2, "description": "Вскипятить 500 мл воды, добавить лемонграсс и пасту Том Ям. Варить 5 минут.", "duration": 5 },
+                { "order": 3, "description": "Добавить грибы, варить 3 минуты.", "duration": 3 },
+                { "order": 4, "description": "Влить кокосовое молоко, довести до кипения.", "duration": 3 },
+                { "order": 5, "description": "Добавить креветки. Варить 3–4 минуты до готовности.", "duration": 4 },
+                { "order": 6, "description": "Снять с огня. Добавить рыбный соус, сок лайма, сахар. Перемешать." },
+                { "order": 7, "description": "Разлить по тарелкам, добавить черри, кинзу и чили по вкусу." }
+            ],
+            "notes": "Не переварить креветки — станут резиновыми. Лемонграсс не едят, его вылавливают из тарелки. Остроту регулировать количеством пасты.",
+            "sourceUrl": "https://example.com/tom-yam-recipe",
+            "createdAt": "2026-02-01T18:45:00.000Z",
+            "updatedAt": "2026-02-01T18:45:00.000Z"
+        }
+    ]
+}

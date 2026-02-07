@@ -1,0 +1,214 @@
+@if (isLoading()) {
+    <div class="detail-loading">
+        <div class="loading-spinner"></div>
+    </div>
+} @else if (!dish()) {
+    <div class="detail-not-found">
+        <span class="material-symbols-outlined not-found-icon">restaurant</span>
+        <h2>Блюдо не найдено</h2>
+        <p>Возможно, оно было удалено или ссылка неверная</p>
+        <a routerLink="/" class="back-home-link">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Вернуться к каталогу
+        </a>
+    </div>
+} @else {
+    <article class="dish-detail">
+        <!-- Back Button -->
+        <nav class="detail-nav">
+            <a routerLink="/" class="back-button" aria-label="Назад к каталогу">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="back-label">Назад</span>
+            </a>
+            <app-favorites-button [dishId]="dish()!.id" />
+        </nav>
+
+        <!-- Hero Image -->
+        <div class="detail-hero">
+            <img
+                [src]="currentImage"
+                [alt]="currentImageAlt"
+                class="hero-image"
+                (error)="onImageError($event)" />
+
+            <!-- Image Gallery Thumbnails -->
+            @if (dish()!.images.length > 1) {
+                <div class="gallery-thumbs">
+                    @for (image of dish()!.images; track image.url; let i = $index) {
+                        <button
+                            class="gallery-thumb"
+                            [class.active]="activeImageIndex() === i"
+                            (click)="selectImage(i)"
+                            [attr.aria-label]="'Фото ' + (i + 1)">
+                            <img [src]="image.url" [alt]="image.alt" (error)="onImageError($event)" />
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="detail-content">
+            <!-- Header -->
+            <header class="detail-header">
+                <div class="detail-categories">
+                    @for (category of dish()!.categories; track category) {
+                        <span class="category-label">{{ getCategoryLabel(category) }}</span>
+                    }
+                </div>
+                <h1 class="detail-title">{{ dish()!.title }}</h1>
+                <p class="detail-description">{{ dish()!.description }}</p>
+            </header>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat">
+                    <app-rating-stars [rating]="dish()!.rating" />
+                </div>
+                <div class="stat">
+                    <span class="material-symbols-outlined stat-icon">schedule</span>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ dish()!.cookingTime.total }}</span>
+                        <span class="stat-label">мин</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="material-symbols-outlined stat-icon">local_fire_department</span>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ dish()!.calories }}</span>
+                        <span class="stat-label">ккал</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="material-symbols-outlined stat-icon">payments</span>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ dish()!.price.amount }}</span>
+                        <span class="stat-label">₽</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="material-symbols-outlined stat-icon">group</span>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ dish()!.servings }}</span>
+                        <span class="stat-label">порц.</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="material-symbols-outlined stat-icon">trending_up</span>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ getDifficultyLabel(dish()!.difficulty) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            @if (dish()!.tags.length > 0) {
+                <div class="detail-section tags-section">
+                    <div class="tags-list">
+                        @for (tag of dish()!.tags; track tag) {
+                            <app-tag-chip [label]="tag" [clickable]="false" />
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Taste Profile -->
+            @if (getTasteEntries(dish()!).length > 0) {
+                <div class="detail-section">
+                    <h2 class="section-title">Вкусовой профиль</h2>
+                    <div class="taste-profile">
+                        @for (taste of getTasteEntries(dish()!); track taste.key) {
+                            <div class="taste-row">
+                                <span class="taste-label">{{ taste.label }}</span>
+                                <div class="taste-bar-track">
+                                    <div
+                                        class="taste-bar-fill"
+                                        [style.width.%]="taste.value * 20">
+                                    </div>
+                                </div>
+                                <span class="taste-value">{{ taste.value }}</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Ingredients -->
+            <div class="detail-section">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined section-icon">grocery</span>
+                    Ингредиенты
+                    <span class="ingredient-count">{{ dish()!.ingredients.length }}</span>
+                </h2>
+                <ul class="ingredients-list">
+                    @for (ingredient of dish()!.ingredients; track ingredient.name) {
+                        <li class="ingredient" [class.optional]="ingredient.optional">
+                            <span class="ingredient-name">
+                                {{ ingredient.name }}
+                                @if (ingredient.optional) {
+                                    <span class="optional-badge">опционально</span>
+                                }
+                            </span>
+                            <span class="ingredient-dots"></span>
+                            <span class="ingredient-amount">
+                                {{ ingredient.amount }}{{ ingredient.unit ? ' ' + ingredient.unit : '' }}
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Steps -->
+            <div class="detail-section">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined section-icon">format_list_numbered</span>
+                    Приготовление
+                </h2>
+                <ol class="steps-list">
+                    @for (step of dish()!.steps; track step.order) {
+                        <li class="step">
+                            <span class="step-number">{{ step.order }}</span>
+                            <div class="step-content">
+                                <p class="step-text">{{ step.description }}</p>
+                                @if (step.duration) {
+                                    <span class="step-duration">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        {{ step.duration }} мин
+                                    </span>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </div>
+
+            <!-- Notes -->
+            @if (dish()!.notes) {
+                <div class="detail-section">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">sticky_note_2</span>
+                        Заметки
+                    </h2>
+                    <div class="notes-card">
+                        <p>{{ dish()!.notes }}</p>
+                    </div>
+                </div>
+            }
+
+            <!-- Source & Dates -->
+            <footer class="detail-footer">
+                @if (dish()!.sourceUrl) {
+                    <a [href]="dish()!.sourceUrl" target="_blank" rel="noopener noreferrer" class="source-link">
+                        <span class="material-symbols-outlined">open_in_new</span>
+                        Источник рецепта
+                    </a>
+                }
+                <div class="detail-dates">
+                    <span>Добавлено: {{ formatDate(dish()!.createdAt) }}</span>
+                    @if (dish()!.updatedAt !== dish()!.createdAt) {
+                        <span>Обновлено: {{ formatDate(dish()!.updatedAt) }}</span>
+                    }
+                </div>
+            </footer>
+        </div>
+    </article>
+}
