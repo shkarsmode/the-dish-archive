@@ -15,43 +15,40 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
 @Component({
     selector: 'app-slot-machine',
     template: `
-        <div class="slot-machine" [class.active]="isSpinning()">
+        <div class="slot-row" [class.active]="isSpinning()">
             <div class="slot-frame">
-                <div class="slot-reels">
-                    <div class="reel">
-                        <div class="reel-strip" #reel1>
-                            @for (emoji of reelItems1(); track $index) {
-                                <span class="reel-symbol">{{ emoji }}</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="reel">
-                        <div class="reel-strip" #reel2>
-                            @for (emoji of reelItems2(); track $index) {
-                                <span class="reel-symbol">{{ emoji }}</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="reel">
-                        <div class="reel-strip" #reel3>
-                            @for (emoji of reelItems3(); track $index) {
-                                <span class="reel-symbol">{{ emoji }}</span>
-                            }
-                        </div>
+                <div class="reel">
+                    <div class="reel-strip" #reel1>
+                        @for (emoji of reelItems1(); track $index) {
+                            <span class="reel-symbol">{{ emoji }}</span>
+                        }
                     </div>
                 </div>
-                <div class="slot-shine"></div>
+                <div class="reel">
+                    <div class="reel-strip" #reel2>
+                        @for (emoji of reelItems2(); track $index) {
+                            <span class="reel-symbol">{{ emoji }}</span>
+                        }
+                    </div>
+                </div>
+                <div class="reel">
+                    <div class="reel-strip" #reel3>
+                        @for (emoji of reelItems3(); track $index) {
+                            <span class="reel-symbol">{{ emoji }}</span>
+                        }
+                    </div>
+                </div>
             </div>
 
-            <button class="slot-lever" (click)="spin()" [disabled]="isSpinning()">
-                <span class="material-symbols-outlined lever-icon">casino</span>
-                <span class="lever-text">{{ isSpinning() ? 'Крутимо...' : 'Крутити!' }}</span>
-            </button>
-
-            @if (resultDish()) {
-                <button class="slot-result" [class.show]="showResult()" (click)="onResultClick()">
+            @if (showResult() && resultDish()) {
+                <button class="slot-result" (click)="onResultClick()">
                     <span class="result-title">{{ resultDish()!.title }}</span>
                     <span class="result-arrow material-symbols-outlined">arrow_forward</span>
+                </button>
+            } @else {
+                <button class="slot-lever" (click)="spin()" [disabled]="isSpinning()">
+                    <span class="material-symbols-outlined lever-icon">casino</span>
+                    <span class="lever-text">{{ isSpinning() ? '...' : 'Мені пощастить!' }}</span>
                 </button>
             }
         </div>
@@ -59,95 +56,61 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
     styles: `
         @use 'mixins' as m;
 
-        .slot-machine {
-            display: flex;
-            flex-direction: column;
+        .slot-row {
+            display: inline-flex;
             align-items: center;
-            gap: var(--space-3);
-            margin-top: var(--space-5);
+            gap: var(--space-2);
+            margin-top: var(--space-4);
         }
 
         .slot-frame {
-            position: relative;
-            display: flex;
-            background: var(--color-surface);
-            border: 2px solid var(--color-border-light);
-            border-radius: var(--radius-xl);
-            padding: var(--space-2);
-            box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
-            overflow: hidden;
-        }
-
-        .slot-shine {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-                180deg,
-                rgba(255,255,255,0.12) 0%,
-                transparent 30%,
-                transparent 70%,
-                rgba(0,0,0,0.08) 100%
-            );
-            pointer-events: none;
-            border-radius: inherit;
-        }
-
-        .slot-reels {
             display: flex;
             gap: 2px;
+            padding: 3px;
+            background: var(--color-surface);
+            border: 1.5px solid var(--color-border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
         }
 
         .reel {
-            width: 52px;
-            height: 52px;
+            width: 36px;
+            height: 36px;
             overflow: hidden;
-            position: relative;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-sm);
             background: var(--color-bg);
-
-            @include m.tablet {
-                width: 60px;
-                height: 60px;
-            }
         }
 
         .reel-strip {
             display: flex;
             flex-direction: column;
-            transition: transform 0s linear;
         }
 
         .reel-symbol {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 52px;
-            height: 52px;
-            font-size: 28px;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
             flex-shrink: 0;
             user-select: none;
-
-            @include m.tablet {
-                width: 60px;
-                height: 60px;
-                font-size: 32px;
-            }
         }
 
         .slot-lever {
             display: inline-flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-5);
+            gap: var(--space-1);
+            padding: var(--space-2) var(--space-4);
             background: var(--color-accent);
             color: var(--color-text-inverse);
             font-size: var(--text-sm);
             font-weight: var(--weight-semibold);
             border-radius: var(--radius-full);
+            white-space: nowrap;
             transition: background-color var(--transition-base),
                         transform var(--transition-fast),
                         box-shadow var(--transition-base);
-            letter-spacing: 0.02em;
 
             &:hover:not(:disabled) {
                 background: var(--color-accent-hover);
@@ -165,39 +128,42 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
             }
 
             .lever-icon {
-                font-size: 18px;
-                transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                font-size: 16px;
             }
 
             .active & .lever-icon {
-                animation: leverSpin 0.6s ease infinite;
+                animation: leverSpin 0.5s linear infinite;
             }
         }
 
         @keyframes leverSpin {
-            from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
         .slot-result {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-4);
+            gap: var(--space-1);
+            padding: var(--space-2) var(--space-3);
             background: var(--color-accent-light);
             border-radius: var(--radius-full);
             cursor: pointer;
-            opacity: 0;
-            transform: translateY(8px) scale(0.95);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-
-            &.show {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            animation: fadeSlotIn 0.3s ease both;
+            white-space: nowrap;
 
             &:hover {
                 box-shadow: var(--shadow-sm);
+            }
+        }
+
+        @keyframes fadeSlotIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
@@ -205,14 +171,13 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
             font-size: var(--text-sm);
             font-weight: var(--weight-semibold);
             color: var(--color-accent-dark);
-            max-width: 200px;
-            white-space: nowrap;
+            max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .result-arrow {
-            font-size: 16px;
+            font-size: 14px;
             color: var(--color-accent);
         }
     `,
@@ -256,7 +221,7 @@ export class SlotMachineComponent {
         this.reelItems3.set(this.buildReel());
 
         const chosen = dishes[Math.floor(Math.random() * dishes.length)];
-        const itemH = window.innerWidth >= 768 ? 60 : 52;
+        const itemH = 36;
         const totalSymbols = FOOD_EMOJIS.length;
 
         // Each reel lands on a random symbol in the 2nd loop
