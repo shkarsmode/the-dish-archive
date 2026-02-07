@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import {
     CATEGORY_LABELS,
@@ -26,6 +26,7 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
 export class DishDetailPage {
     private readonly route = inject(ActivatedRoute);
     private readonly dishService = inject(DishService);
+    private readonly router = inject(Router);
     protected readonly checklistService = inject(ChecklistService);
 
     private readonly slug = toSignal(
@@ -41,6 +42,21 @@ export class DishDetailPage {
     readonly isLoading = this.dishService.isLoading;
 
     protected readonly activeImageIndex = signal(0);
+    protected readonly completedSteps = signal<Set<number>>(new Set());
+
+    // Swipe navigation
+    protected readonly adjacentDishes = computed(() => {
+        const all = this.dishService.filteredDishes();
+        const current = this.dish();
+        if (!current || all.length < 2) return { prev: undefined, next: undefined };
+        const idx = all.findIndex(d => d.id === current.id);
+        return {
+            prev: idx > 0 ? all[idx - 1] : undefined,
+            next: idx < all.length - 1 ? all[idx + 1] : undefined,
+        };
+    });
+
+    private touchStartX = 0;
 
     protected get currentImage(): string {
         const dishValue = this.dish();
@@ -97,5 +113,85 @@ export class DishDetailPage {
             `<text x="400" y="250" text-anchor="middle" dy=".3em" fill="%23A0A0A0" font-family="Inter,sans-serif" font-size="16">` +
             `Зображення недоступне</text></svg>`
         );
+    }
+
+    // ── Ingredient checklist with confetti ──
+    protected toggleIngredient(dishId: string, name: string, total: number): void {
+        const wasChecked = this.checklistService.isChecked(dishId, name)();
+        this.checklistService.toggle(dishId, name);
+
+        if (!wasChecked) {
+            const { allDone } = this.checklistService.checkedCount(dishId, total)();
+            if (allDone) {
+                this.launchConfetti();
+            }
+        }
+    }
+
+    // ── Steps checklist ──
+    protected isStepDone(order: number): boolean {
+        return this.completedSteps().has(order);
+    }
+
+    protected toggleStep(order: number): void {
+        this.completedSteps.update(s => {
+            const next = new Set(s);
+            if (next.has(order)) {
+                next.delete(order);
+            } else {
+                next.add(order);
+            }
+            return next;
+        });
+    }
+
+    // ── Swipe navigation ──
+    protected onTouchStart(event: TouchEvent): void {
+        this.touchStartX = event.touches[0].clientX;
+    }
+
+    protected onTouchEnd(event: TouchEvent): void {
+        const diff = this.touchStartX - event.changedTouches[0].clientX;
+        const threshold = 80;
+        if (Math.abs(diff) < threshold) return;
+
+        const { prev, next } = this.adjacentDishes();
+        if (diff > 0 && next) {
+            this.router.navigate(['/dish', next.slug]);
+        } else if (diff < 0 && prev) {
+            this.router.navigate(['/dish', prev.slug]);
+        }
+    }
+
+    // ── Confetti ──
+    private launchConfetti(): void {
+        const emojis = ['🎉', '✨', '🌟', '💫', '🎊', '⭐'];
+        for (let i = 0; i < 30; i++) {
+            const el = document.createElement('span');
+            el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            const x = 20 + Math.random() * 60;
+            const delay = Math.random() * 300;
+            Object.assign(el.style, {
+                position: 'fixed',
+                left: `${x}vw`,
+                top: '-20px',
+                fontSize: `${14 + Math.random() * 18}px`,
+                pointerEvents: 'none',
+                zIndex: '9999',
+                opacity: '1',
+                transition: `all ${1.2 + Math.random() * 0.8}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+                transitionDelay: `${delay}ms`,
+            });
+            document.body.appendChild(el);
+
+            requestAnimationFrame(() => {
+                el.style.top = `${70 + Math.random() * 30}vh`;
+                el.style.left = `${x + (Math.random() - 0.5) * 20}vw`;
+                el.style.opacity = '0';
+                el.style.transform = `rotate(${Math.random() * 720 - 360}deg)`;
+            });
+
+            setTimeout(() => el.remove(), 2500);
+        }
     }
 }

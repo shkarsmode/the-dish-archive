@@ -28,6 +28,20 @@
     }
 }
 
+.hero-greeting {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-accent);
+    margin-bottom: var(--space-2);
+    animation: fadeIn 600ms ease;
+
+    @include m.tablet {
+        font-size: var(--text-md);
+        margin-bottom: var(--space-4);
+    }
+}
+
 .hero-title {
     font-family: var(--font-display);
     font-size: var(--text-3xl);
@@ -100,6 +114,64 @@
     @include m.tablet {
         margin-top: var(--space-6);
     }
+}
+
+// ── Collection Stats ────────────────────────────────────────
+.collection-stats {
+    padding: 0 var(--space-3) var(--space-4);
+
+    @include m.tablet {
+        padding: 0 var(--space-5) var(--space-8);
+    }
+}
+
+.stats-grid {
+    @include m.container;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+
+    @include m.tablet {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-4);
+    }
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-4) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+}
+
+.stat-emoji {
+    font-size: 24px;
+    margin-bottom: var(--space-1);
+}
+
+.stat-number {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.stat-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    text-align: center;
 }
 
 // ── Quick Filters ───────────────────────────────────────────

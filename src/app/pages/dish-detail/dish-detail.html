@@ -13,14 +13,28 @@
         </a>
     </div>
 } @else {
-    <article class="dish-detail">
+    <article class="dish-detail"
+        (touchstart)="onTouchStart($event)"
+        (touchend)="onTouchEnd($event)">
         <!-- Back Button -->
         <nav class="detail-nav">
             <a routerLink="/" class="back-button" aria-label="Назад до каталогу">
                 <span class="material-symbols-outlined">arrow_back</span>
                 <span class="back-label">Назад</span>
             </a>
-            <app-favorites-button [dishId]="dish()!.id" />
+            <div class="nav-actions">
+                @if (adjacentDishes().prev) {
+                    <a [routerLink]="['/dish', adjacentDishes().prev!.slug]" class="nav-arrow" aria-label="Попередній рецепт">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </a>
+                }
+                @if (adjacentDishes().next) {
+                    <a [routerLink]="['/dish', adjacentDishes().next!.slug]" class="nav-arrow" aria-label="Наступний рецепт">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                }
+                <app-favorites-button [dishId]="dish()!.id" />
+            </div>
         </nav>
 
         <!-- Hero Image -->
@@ -161,7 +175,7 @@
                         <li class="ingredient"
                             [class.optional]="ingredient.optional"
                             [class.checked]="checklistService.isChecked(dish()!.id, ingredient.name)()"
-                            (click)="checklistService.toggle(dish()!.id, ingredient.name)">
+                            (click)="toggleIngredient(dish()!.id, ingredient.name, dish()!.ingredients.length)">
                             <span class="ingredient-check">
                                 <span class="material-symbols-outlined">
                                     {{ checklistService.isChecked(dish()!.id, ingredient.name)() ? 'check_circle' : 'radio_button_unchecked' }}
@@ -190,8 +204,16 @@
                 </h2>
                 <ol class="steps-list">
                     @for (step of dish()!.steps; track step.order) {
-                        <li class="step">
-                            <span class="step-number">{{ step.order }}</span>
+                        <li class="step"
+                            [class.step-done]="isStepDone(step.order)"
+                            (click)="toggleStep(step.order)">
+                            <span class="step-number">
+                                @if (isStepDone(step.order)) {
+                                    <span class="material-symbols-outlined step-check">check</span>
+                                } @else {
+                                    {{ step.order }}
+                                }
+                            </span>
                             <div class="step-content">
                                 <p class="step-text">{{ step.description }}</p>
                                 @if (step.duration) {

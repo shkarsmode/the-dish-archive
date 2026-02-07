@@ -1,7 +1,8 @@
-import { Component, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
+import { FavoritesService } from '../../core/services/favorites.service';
 import { DishCardComponent } from '../../shared/components/dish-card.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 import { FilterDrawerComponent } from '../../shared/components/filter-drawer.component';
@@ -26,12 +27,43 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
 })
 export class CatalogPage {
     protected readonly dishService = inject(DishService);
+    private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
     protected readonly isSpinning = signal(false);
 
     protected readonly quickCategories: DishCategory[] = ['quick', 'healthy', 'dessert', 'everyday', 'festive', 'vegetarian'];
     protected readonly skeletonItems = Array.from({ length: 6 });
+
+    // ── Time-of-day greeting ──
+    protected readonly greeting = computed(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return { text: 'Доброго ранку', emoji: '🌅', suggestion: 'Час для сніданку!' };
+        if (hour >= 12 && hour < 17) return { text: 'Доброго дня', emoji: '☀️', suggestion: 'Час для обіду!' };
+        if (hour >= 17 && hour < 22) return { text: 'Доброго вечора', emoji: '🌇', suggestion: 'Час для вечері!' };
+        return { text: 'Доброї ночі', emoji: '🌙', suggestion: 'Перекус перед сном?' };
+    });
+
+    // ── Collection stats ──
+    protected readonly collectionStats = computed(() => {
+        const all = this.dishService.allDishes();
+        if (all.length === 0) return undefined;
+        const totalTime = all.reduce((sum, d) => sum + d.cookingTime.total, 0);
+        const avgRating = all.reduce((sum, d) => sum + d.rating, 0) / all.length;
+        const categoryCounts = all.reduce((acc, d) => {
+            d.categories.forEach(c => acc[c] = (acc[c] || 0) + 1);
+            return acc;
+        }, {} as Record<string, number>);
+        const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+
+        return {
+            totalRecipes: all.length,
+            totalCookingHours: Math.round(totalTime / 60),
+            avgRating: avgRating.toFixed(1),
+            favoritesCount: this.favoritesService.count(),
+            topCategory: topCategory ? CATEGORY_LABELS[topCategory[0] as DishCategory] || topCategory[0] : '',
+        };
+    });
 
     protected getCategoryLabel(category: DishCategory): string {
         return CATEGORY_LABELS[category];

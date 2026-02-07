@@ -15,7 +15,8 @@ export class DishService {
     private readonly httpClient = inject(HttpClient);
     private readonly favoritesService = inject(FavoritesService);
 
-    private readonly allDishes = signal<Dish[]>([]);
+    private readonly allDishesSignal = signal<Dish[]>([]);
+    readonly allDishes = this.allDishesSignal.asReadonly();
     readonly isLoading = signal(true);
     readonly loadError = signal<string | null>(null);
 
@@ -27,7 +28,7 @@ export class DishService {
 
     readonly allTags = computed(() => {
         const tagSet = new Set<string>();
-        for (const dish of this.allDishes()) {
+        for (const dish of this.allDishesSignal()) {
             for (const tag of dish.tags) {
                 tagSet.add(tag);
             }
@@ -36,28 +37,28 @@ export class DishService {
     });
 
     readonly priceExtent = computed(() => {
-        const dishes = this.allDishes();
+        const dishes = this.allDishesSignal();
         if (dishes.length === 0) return [0, 1000] as [number, number];
         const prices = dishes.map(d => d.price.amount);
         return [Math.min(...prices), Math.max(...prices)] as [number, number];
     });
 
     readonly calorieExtent = computed(() => {
-        const dishes = this.allDishes();
+        const dishes = this.allDishesSignal();
         if (dishes.length === 0) return [0, 1000] as [number, number];
         const calories = dishes.map(d => d.calories);
         return [Math.min(...calories), Math.max(...calories)] as [number, number];
     });
 
     readonly timeExtent = computed(() => {
-        const dishes = this.allDishes();
+        const dishes = this.allDishesSignal();
         if (dishes.length === 0) return [0, 180] as [number, number];
         const times = dishes.map(d => d.cookingTime.total);
         return [Math.min(...times), Math.max(...times)] as [number, number];
     });
 
     readonly filteredDishes = computed(() => {
-        let dishes = [...this.allDishes()];
+        let dishes = [...this.allDishesSignal()];
         const filterState = this.filters();
         const query = this.searchQuery().toLowerCase().trim();
 
@@ -183,7 +184,7 @@ export class DishService {
     private loadDishes(): void {
         this.httpClient.get<DishData>('data/dishes.json').subscribe({
             next: (data) => {
-                this.allDishes.set(data.dishes);
+                this.allDishesSignal.set(data.dishes);
                 this.isLoading.set(false);
             },
             error: (error) => {
@@ -195,7 +196,7 @@ export class DishService {
     }
 
     getDishBySlug(slug: string) {
-        return computed(() => this.allDishes().find(dish => dish.slug === slug));
+        return computed(() => this.allDishesSignal().find(dish => dish.slug === slug));
     }
 
     updateSearch(query: string): void {
@@ -224,14 +225,14 @@ export class DishService {
     }
 
     importDishes(data: DishData): void {
-        this.allDishes.set(data.dishes);
+        this.allDishesSignal.set(data.dishes);
     }
 
     exportData(): DishData {
         return {
             version: '1.0.0',
             lastUpdated: new Date().toISOString(),
-            dishes: this.allDishes(),
+            dishes: this.allDishesSignal(),
         };
     }
 }
