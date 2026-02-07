@@ -102,7 +102,7 @@ import { DishService } from '../../core/services/dish.service';
             position: fixed;
             inset: 0;
             background: var(--color-backdrop);
-            z-index: var(--z-dropdown);
+            z-index: var(--z-drawer);
             animation: fadeIn 150ms ease;
 
             @media (min-width: 768px) {
@@ -119,7 +119,7 @@ import { DishService } from '../../core/services/dish.service';
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
             box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.12);
             padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
-            z-index: calc(var(--z-dropdown) + 1);
+            z-index: calc(var(--z-drawer) + 1);
             animation: slideUp 200ms var(--ease-out-expo);
 
             @media (min-width: 768px) {
