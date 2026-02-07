@@ -97,7 +97,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             text-decoration: none;
             transition: opacity var(--transition-fast);
 
-            &:hover { opacity: 0.8; }
+            @include m.hover { opacity: 0.8; }
         }
 
         .logo-text {
@@ -135,7 +135,7 @@ import { RankBadgeComponent } from './rank-badge.component';
                         background-color var(--transition-fast);
             cursor: pointer;
 
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background-color: var(--color-surface-hover);
             }
@@ -189,14 +189,14 @@ import { RankBadgeComponent } from './rank-badge.component';
             background: var(--color-surface-hover);
             transition: background var(--transition-fast), transform .15s;
 
-            &:hover {
+            @include m.hover {
                 background: var(--color-surface-active);
                 transform: scale(1.06);
             }
 
             :host-context([data-theme='dark']) & {
                 background: #2a2a2a;
-                &:hover { background: #333; }
+                @include m.hover { background: #333; }
             }
         }
 
@@ -264,7 +264,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             transition: background-color var(--transition-fast),
                         transform var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 background: var(--color-accent-hover);
                 transform: scale(1.05);
             }

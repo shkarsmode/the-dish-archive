@@ -186,7 +186,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             color: var(--color-text-secondary);
             transition: color var(--transition-fast), background var(--transition-fast);
             cursor: pointer;
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background: var(--color-surface-hover);
             }
@@ -378,11 +378,11 @@ import { RankBadgeComponent } from './rank-badge.component';
             text-align: left;
             font-family: var(--font-body);
 
-            &:hover { background: var(--color-surface-hover); }
+            @include m.hover { background: var(--color-surface-hover); }
 
             :host-context([data-theme='dark']) & {
                 background: #242424;
-                &:hover { background: #2a2a2a; }
+                @include m.hover { background: #2a2a2a; }
             }
         }
 

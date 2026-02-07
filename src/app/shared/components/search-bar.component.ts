@@ -26,6 +26,8 @@ import { DishService } from '../../core/services/dish.service';
         </div>
     `,
     styles: `
+        @use 'mixins' as m;
+
         .search-bar {
             display: flex;
             align-items: center;
@@ -85,7 +87,7 @@ import { DishService } from '../../core/services/dish.service';
             transition: background-color var(--transition-fast),
                         color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 background-color: var(--color-border);
                 color: var(--color-text-primary);
             }

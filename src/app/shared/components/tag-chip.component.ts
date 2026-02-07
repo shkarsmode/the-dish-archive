@@ -20,6 +20,8 @@ import { Component, input, output } from '@angular/core';
         </span>
     `,
     styles: `
+        @use 'mixins' as m;
+
         .tag-chip {
             display: inline-flex;
             align-items: center;
@@ -39,7 +41,7 @@ import { Component, input, output } from '@angular/core';
             &[tabindex="0"] {
                 cursor: pointer;
 
-                &:hover {
+                @include m.hover {
                     background: var(--color-accent-light);
                     color: var(--color-accent-dark);
                 }
@@ -57,7 +59,7 @@ import { Component, input, output } from '@angular/core';
             opacity: 0.7;
             transition: opacity var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 opacity: 1;
             }
         }

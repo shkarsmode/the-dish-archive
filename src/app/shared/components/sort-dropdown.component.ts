@@ -42,6 +42,8 @@ import { DishService } from '../../core/services/dish.service';
         </div>
     `,
     styles: `
+        @use 'mixins' as m;
+
         .sort-dropdown {
             position: relative;
         }
@@ -59,7 +61,7 @@ import { DishService } from '../../core/services/dish.service';
             transition: color var(--transition-fast),
                         background-color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background-color: var(--color-surface-hover);
             }
@@ -166,7 +168,7 @@ import { DishService } from '../../core/services/dish.service';
             transition: background-color var(--transition-fast),
                         color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 background-color: var(--color-surface-hover);
                 color: var(--color-text-primary);
             }

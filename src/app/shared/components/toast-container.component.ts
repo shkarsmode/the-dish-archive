@@ -24,6 +24,8 @@ import { ToastService } from '../../core/services/toast.service';
         }
     `,
     styles: `
+        @use 'mixins' as m;
+
         .toast-container {
             position: fixed;
             top: calc(var(--header-height) + var(--space-3) + var(--safe-top));
@@ -89,7 +91,7 @@ import { ToastService } from '../../core/services/toast.service';
             transition: color var(--transition-fast),
                         background-color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background: var(--color-surface-hover);
             }

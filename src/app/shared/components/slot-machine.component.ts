@@ -54,11 +54,13 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
         </div>
     `,
     styles: `
+        @use 'mixins' as m;
+
         .slot-row {
             display: inline-flex;
             align-items: center;
-            margin-top: var(--space-4);
-            min-height: 42px;
+            margin-top: var(--space-3);
+            min-height: 38px;
         }
 
         .anim-in {
@@ -73,10 +75,10 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
         .slot-frame {
             display: flex;
             gap: 2px;
-            padding: 3px;
+            padding: 2px;
             background: var(--color-surface);
             border: 1.5px solid var(--color-border-light);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
         }
 
@@ -120,7 +122,7 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
                         transform var(--transition-fast),
                         box-shadow var(--transition-base);
 
-            &:hover {
+            @include m.hover {
                 background: var(--color-accent-hover);
                 transform: translateY(-1px);
                 box-shadow: var(--shadow-md);
@@ -146,7 +148,7 @@ const FOOD_EMOJIS = ['🍲', '🥗', '🍰', '🍜', '🥘', '🍕', '🍳', '�
             white-space: nowrap;
             transition: box-shadow var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 box-shadow: var(--shadow-sm);
             }
         }

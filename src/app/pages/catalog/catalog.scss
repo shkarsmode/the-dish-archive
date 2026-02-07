@@ -204,7 +204,7 @@
     transition: color var(--transition-fast),
                 background-color var(--transition-fast);
 
-    &:hover {
+    @include m.hover {
         color: var(--color-text-primary);
         background-color: var(--color-surface-hover);
     }
@@ -250,7 +250,7 @@
     color: var(--color-accent);
     font-weight: var(--weight-medium);
 
-    &:hover {
+    @include m.hover {
         text-decoration: underline;
     }
 }
@@ -301,9 +301,11 @@
     transition: background-color var(--transition-fast),
                 color var(--transition-fast);
 
-    &:hover:not(:disabled) {
-        background-color: var(--color-surface-hover);
-        color: var(--color-text-primary);
+    @media (hover: hover) and (pointer: fine) {
+        &:hover:not(:disabled) {
+            background-color: var(--color-surface-hover);
+            color: var(--color-text-primary);
+        }
     }
 
     &.active {

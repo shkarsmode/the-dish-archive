@@ -247,8 +247,10 @@ import { TagChipComponent } from './tag-chip.component';
                 cursor: default;
             }
 
-            &:not(:disabled):hover {
-                text-decoration: underline;
+            &:not(:disabled) {
+                @include m.hover {
+                    text-decoration: underline;
+                }
             }
         }
 
@@ -353,7 +355,7 @@ import { TagChipComponent } from './tag-chip.component';
             border-radius: var(--radius-md);
             transition: opacity var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 opacity: 0.88;
             }
         }

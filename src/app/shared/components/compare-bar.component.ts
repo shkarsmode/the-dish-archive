@@ -197,8 +197,10 @@ import { CompareService } from '../../core/services/compare.service';
                 cursor: default;
             }
 
-            &:not(:disabled):hover {
-                opacity: 0.88;
+            &:not(:disabled) {
+                @include m.hover {
+                    opacity: 0.88;
+                }
             }
         }
 
@@ -207,7 +209,7 @@ import { CompareService } from '../../core/services/compare.service';
             color: var(--color-text-tertiary);
             border-radius: var(--radius-sm);
 
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background: var(--color-surface-hover);
             }
@@ -255,7 +257,7 @@ import { CompareService } from '../../core/services/compare.service';
             color: var(--color-text-tertiary);
             border-radius: var(--radius-sm);
 
-            &:hover {
+            @include m.hover {
                 color: var(--color-text-primary);
                 background: var(--color-surface-hover);
             }

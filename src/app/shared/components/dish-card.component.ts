@@ -79,7 +79,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             transition: transform var(--transition-base),
                         box-shadow var(--transition-base);
 
-            &:hover {
+            @include m.hover {
                 transform: translateY(-3px);
                 box-shadow: var(--shadow-card-hover);
 
@@ -117,8 +117,10 @@ import { RatingStarsComponent } from './rating-stars.component';
             opacity: 0;
             transition: opacity var(--transition-base);
 
-            .dish-card:hover & {
-                opacity: 1;
+            @media (hover: hover) and (pointer: fine) {
+                .dish-card:hover & {
+                    opacity: 1;
+                }
             }
 
             // Always visible on touch devices
@@ -140,7 +142,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             transition: color var(--transition-fast),
                         background-color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 background: rgba(255, 255, 255, 1);
                 color: var(--color-accent);
             }

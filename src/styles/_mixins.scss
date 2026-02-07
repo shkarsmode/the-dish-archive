@@ -69,10 +69,19 @@ $breakpoint-xl: 1280px;
     justify-content: center;
 }
 
+// Only apply hover styles on devices with a pointer (no sticky hovers on touch)
+@mixin hover {
+    @media (hover: hover) and (pointer: fine) {
+        &:hover {
+            @content;
+        }
+    }
+}
+
 @mixin hover-lift {
     transition: transform var(--transition-base), box-shadow var(--transition-base);
 
-    &:hover {
+    @include hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-card-hover);
     }

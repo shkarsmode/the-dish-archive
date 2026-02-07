@@ -16,6 +16,8 @@ import { FavoritesService } from '../../core/services/favorites.service';
         </button>
     `,
     styles: `
+        @use 'mixins' as m;
+
         .favorites-button {
             display: inline-flex;
             align-items: center;
@@ -30,7 +32,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
                         transform var(--transition-spring),
                         background-color var(--transition-fast);
 
-            &:hover {
+            @include m.hover {
                 background: rgba(255, 255, 255, 1);
                 color: var(--color-favorite);
             }
