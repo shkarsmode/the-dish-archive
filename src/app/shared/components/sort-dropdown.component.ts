@@ -19,9 +19,15 @@ import { DishService } from '../../core/services/dish.service';
                 </span>
             </button>
             @if (isOpen()) {
-                <div class="sort-backdrop" (click)="closeDropdown()"></div>
-                <div class="sort-menu" role="listbox" aria-label="Варіанти сортування">
-                    <div class="sort-menu-handle" (click)="closeDropdown()">
+                <div class="sort-backdrop" [class.closing]="isClosing()" (click)="closeDropdown()"></div>
+                <div class="sort-menu" role="listbox" aria-label="Варіанти сортування"
+                     [class.closing]="isClosing()"
+                     [style.transform]="dragTransform()"
+                     (animationend)="onAnimationDone()"
+                     (touchstart)="onDragStart($event)"
+                     (touchmove)="onDragMove($event)"
+                     (touchend)="onDragEnd()">
+                    <div class="sort-menu-handle">
                         <div class="handle-bar"></div>
                     </div>
                     @for (option of sortOptions; track option.value) {
@@ -107,6 +113,10 @@ import { DishService } from '../../core/services/dish.service';
             z-index: var(--z-drawer);
             animation: fadeIn 150ms ease;
 
+            &.closing {
+                animation: fadeOut 200ms ease forwards;
+            }
+
             @media (min-width: 768px) {
                 display: none;
             }
@@ -123,6 +133,11 @@ import { DishService } from '../../core/services/dish.service';
             padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
             z-index: calc(var(--z-drawer) + 1);
             animation: slideUp 200ms var(--ease-out-expo);
+            touch-action: none;
+
+            &.closing {
+                animation: slideDown 200ms ease forwards;
+            }
 
             @media (min-width: 768px) {
                 position: absolute;
@@ -136,7 +151,22 @@ import { DishService } from '../../core/services/dish.service';
                 box-shadow: var(--shadow-lg);
                 padding: var(--space-1);
                 animation: scaleIn 150ms var(--ease-out-expo);
+                touch-action: auto;
+
+                &.closing {
+                    animation: scaleIn 150ms ease reverse forwards;
+                }
             }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(100%); opacity: 0; }
         }
 
         .sort-menu-handle {
@@ -198,7 +228,13 @@ export class SortDropdownComponent {
     private readonly elementRef = inject(ElementRef);
 
     protected readonly isOpen = signal(false);
+    protected readonly isClosing = signal(false);
     protected readonly sortOptions = SORT_OPTIONS;
+
+    private dragStartY = 0;
+    private dragCurrentY = 0;
+    private isDragging = false;
+    protected readonly dragTransform = signal('');
 
     protected currentLabel = () => {
         const currentValue = this.dishService.sortOption();
@@ -208,7 +244,7 @@ export class SortDropdownComponent {
     @HostListener('document:click', ['$event'])
     protected onDocumentClick(event: MouseEvent): void {
         if (!this.elementRef.nativeElement.contains(event.target)) {
-            this.closeDropdown();
+            if (this.isOpen()) this.closeDropdown();
         }
     }
 
@@ -216,16 +252,65 @@ export class SortDropdownComponent {
         if (this.isOpen()) {
             this.closeDropdown();
         } else {
+            this.isClosing.set(false);
             this.isOpen.set(true);
+            this.lockScroll();
         }
     }
 
     protected closeDropdown(): void {
-        this.isOpen.set(false);
+        this.isClosing.set(true);
+    }
+
+    protected onAnimationDone(): void {
+        if (this.isClosing()) {
+            this.isOpen.set(false);
+            this.isClosing.set(false);
+            this.dragTransform.set('');
+            this.unlockScroll();
+        }
     }
 
     protected selectOption(value: SortOption): void {
         this.dishService.updateSort(value);
         this.closeDropdown();
+    }
+
+    // ── Swipe-to-dismiss ──
+    protected onDragStart(e: TouchEvent): void {
+        this.dragStartY = e.touches[0].clientY;
+        this.dragCurrentY = this.dragStartY;
+        this.isDragging = true;
+    }
+
+    protected onDragMove(e: TouchEvent): void {
+        if (!this.isDragging) return;
+        this.dragCurrentY = e.touches[0].clientY;
+        const dy = Math.max(0, this.dragCurrentY - this.dragStartY);
+        if (dy > 0) {
+            e.preventDefault();
+            this.dragTransform.set(`translateY(${dy}px)`);
+        }
+    }
+
+    protected onDragEnd(): void {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        const dy = this.dragCurrentY - this.dragStartY;
+        if (dy > 60) {
+            this.closeDropdown();
+        } else {
+            this.dragTransform.set('');
+        }
+    }
+
+    private lockScroll(): void {
+        if (window.innerWidth < 768) {
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    private unlockScroll(): void {
+        document.body.style.overflow = '';
     }
 }

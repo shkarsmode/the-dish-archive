@@ -20,8 +20,13 @@ import { TagChipComponent } from './tag-chip.component';
             <aside class="drawer" role="dialog" aria-label="Фільтри"
                    [class.open]="isOpen()"
                    [class.closing]="isClosing()"
+                   [style.transform]="dragTransform()"
                    (animationend)="onAnimationDone()">
-                <div class="drawer-handle" (click)="close()">
+                <div class="drawer-handle"
+                     (touchstart)="onDragStart($event)"
+                     (touchmove)="onDragMove($event)"
+                     (touchend)="onDragEnd()"
+                     (click)="close()">
                     <div class="handle-bar"></div>
                 </div>
 
@@ -207,6 +212,7 @@ import { TagChipComponent } from './tag-chip.component';
             justify-content: center;
             padding: var(--space-3);
             cursor: pointer;
+            touch-action: none;
 
             @include m.desktop {
                 display: none;
@@ -365,9 +371,14 @@ export class FilterDrawerComponent {
     protected readonly dishService = inject(DishService);
     protected readonly isOpen = signal(false);
     protected readonly isClosing = signal(false);
+    protected readonly dragTransform = signal('');
 
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly allTasteKeys = ALL_TASTE_KEYS;
+
+    private dragStartY = 0;
+    private dragCurrentY = 0;
+    private isDragging = false;
 
     open(): void {
         this.isClosing.set(false);
@@ -383,7 +394,36 @@ export class FilterDrawerComponent {
         if (this.isClosing()) {
             this.isOpen.set(false);
             this.isClosing.set(false);
+            this.dragTransform.set('');
             document.body.style.overflow = '';
+        }
+    }
+
+    // ── Swipe-to-dismiss ──
+    protected onDragStart(e: TouchEvent): void {
+        this.dragStartY = e.touches[0].clientY;
+        this.dragCurrentY = this.dragStartY;
+        this.isDragging = true;
+    }
+
+    protected onDragMove(e: TouchEvent): void {
+        if (!this.isDragging) return;
+        this.dragCurrentY = e.touches[0].clientY;
+        const dy = Math.max(0, this.dragCurrentY - this.dragStartY);
+        if (dy > 0) {
+            e.preventDefault();
+            this.dragTransform.set(`translateY(${dy}px)`);
+        }
+    }
+
+    protected onDragEnd(): void {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        const dy = this.dragCurrentY - this.dragStartY;
+        if (dy > 80) {
+            this.close();
+        } else {
+            this.dragTransform.set('');
         }
     }
 
