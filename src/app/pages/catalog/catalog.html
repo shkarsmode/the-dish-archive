@@ -7,6 +7,10 @@
             <p class="hero-subtitle">
                 Улюблені рецепти, зібрані з турботою та увагою до деталей
             </p>
+            <button class="random-recipe-button" (click)="goToRandomDish()" [class.spinning]="isSpinning()">
+                <span class="material-symbols-outlined random-icon">casino</span>
+                <span>Випадковий рецепт</span>
+            </button>
         </div>
     </section>
 

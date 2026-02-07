@@ -11,6 +11,7 @@ import {
     TASTE_LABELS,
     TasteProfile,
 } from '../../core/models/dish.model';
+import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
@@ -25,6 +26,7 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
 export class DishDetailPage {
     private readonly route = inject(ActivatedRoute);
     private readonly dishService = inject(DishService);
+    protected readonly checklistService = inject(ChecklistService);
 
     private readonly slug = toSignal(
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))

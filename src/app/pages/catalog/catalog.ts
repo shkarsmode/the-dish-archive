@@ -1,4 +1,5 @@
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { CATEGORY_LABELS, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
 import { DishCardComponent } from '../../shared/components/dish-card.component';
@@ -25,7 +26,9 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
 })
 export class CatalogPage {
     protected readonly dishService = inject(DishService);
+    private readonly router = inject(Router);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
+    protected readonly isSpinning = signal(false);
 
     protected readonly quickCategories: DishCategory[] = ['quick', 'healthy', 'dessert', 'everyday', 'festive', 'vegetarian'];
     protected readonly skeletonItems = Array.from({ length: 6 });
@@ -48,6 +51,17 @@ export class CatalogPage {
 
     protected openFilters(): void {
         this.filterDrawer()?.open();
+    }
+
+    protected goToRandomDish(): void {
+        const dishes = this.dishService.filteredDishes();
+        if (dishes.length === 0) return;
+        this.isSpinning.set(true);
+        setTimeout(() => {
+            const random = dishes[Math.floor(Math.random() * dishes.length)];
+            this.isSpinning.set(false);
+            this.router.navigate(['/dish', random.slug]);
+        }, 600);
     }
 
     protected goToPage(page: number): void {

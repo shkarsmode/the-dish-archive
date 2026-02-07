@@ -138,10 +138,35 @@
                     <span class="material-symbols-outlined section-icon">grocery</span>
                     Інгредієнти
                     <span class="ingredient-count">{{ dish()!.ingredients.length }}</span>
+                    @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
+                        <button class="checklist-clear" (click)="checklistService.clearDish(dish()!.id)">
+                            Скинути
+                        </button>
+                    }
                 </h2>
+                @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
+                    <div class="checklist-progress">
+                        <div class="checklist-progress-bar">
+                            <div class="checklist-progress-fill"
+                                 [style.width.%]="(checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count / dish()!.ingredients.length) * 100">
+                            </div>
+                        </div>
+                        <span class="checklist-progress-text">
+                            {{ checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count }}/{{ dish()!.ingredients.length }}
+                        </span>
+                    </div>
+                }
                 <ul class="ingredients-list">
                     @for (ingredient of dish()!.ingredients; track ingredient.name) {
-                        <li class="ingredient" [class.optional]="ingredient.optional">
+                        <li class="ingredient"
+                            [class.optional]="ingredient.optional"
+                            [class.checked]="checklistService.isChecked(dish()!.id, ingredient.name)()"
+                            (click)="checklistService.toggle(dish()!.id, ingredient.name)">
+                            <span class="ingredient-check">
+                                <span class="material-symbols-outlined">
+                                    {{ checklistService.isChecked(dish()!.id, ingredient.name)() ? 'check_circle' : 'radio_button_unchecked' }}
+                                </span>
+                            </span>
                             <span class="ingredient-name">
                                 {{ ingredient.name }}
                                 @if (ingredient.optional) {

@@ -2,12 +2,14 @@ import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { CompareService } from '../../core/services/compare.service';
+import { RevealDirective } from '../directives/reveal.directive';
 import { FavoritesButtonComponent } from './favorites-button.component';
 import { RatingStarsComponent } from './rating-stars.component';
 
 @Component({
     selector: 'app-dish-card',
     imports: [RatingStarsComponent, FavoritesButtonComponent],
+    hostDirectives: [RevealDirective],
     template: `
         <article class="dish-card" (click)="openDish()" role="link" tabindex="0"
                  (keydown.enter)="openDish()" [attr.aria-label]="dish().title">

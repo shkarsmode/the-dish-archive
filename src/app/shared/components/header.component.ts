@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DishService } from '../../core/services/dish.service';
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
     selector: 'app-header',
@@ -10,11 +11,20 @@ import { FavoritesService } from '../../core/services/favorites.service';
     template: `
         <header class="header" role="banner">
             <div class="header-container">
-                <a class="logo" routerLink="/">
+                <a class="logo" routerLink="/" (click)="onLogoClick($event)">
                     <span class="logo-text">The Dish Archive</span>
                     <span class="logo-subtitle">колекція рецептів</span>
                 </a>
                 <nav class="header-actions" aria-label="Main actions">
+                    <button
+                        class="icon-button theme-toggle"
+                        (click)="themeService.toggle()"
+                        [title]="themeService.theme() === 'light' ? 'Темна тема' : 'Світла тема'"
+                        [attr.aria-label]="themeService.theme() === 'light' ? 'Темна тема' : 'Світла тема'">
+                        <span class="material-symbols-outlined">
+                            {{ themeService.theme() === 'light' ? 'dark_mode' : 'light_mode' }}
+                        </span>
+                    </button>
                     <button
                         class="icon-button"
                         (click)="handleExport()"
@@ -54,6 +64,24 @@ import { FavoritesService } from '../../core/services/favorites.service';
                 </nav>
             </div>
         </header>
+
+        @if (showEasterEgg()) {
+            <div class="easter-egg-overlay" (click)="showEasterEgg.set(false)">
+                <div class="easter-egg-content" (click)="$event.stopPropagation()">
+                    <div class="easter-egg-emoji">💛</div>
+                    <p class="easter-egg-text">
+                        Цей додаток зроблений<br>
+                        спеціально для Булкіної ❤️
+                    </p>
+                    <p class="easter-egg-sub">
+                        Найкраща кухарка у всесвіті ✨
+                    </p>
+                    <button class="easter-egg-close" (click)="showEasterEgg.set(false)">
+                        Дякую 🥰
+                    </button>
+                </div>
+            </div>
+        }
     `,
     styles: `
         @use 'mixins' as m;
@@ -67,6 +95,11 @@ import { FavoritesService } from '../../core/services/favorites.service';
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--color-border-light);
+            transition: background-color 0.3s ease;
+
+            :host-context([data-theme='dark']) & {
+                background: rgba(26, 26, 26, 0.88);
+            }
         }
 
         .header-container {
@@ -164,12 +197,108 @@ import { FavoritesService } from '../../core/services/favorites.service';
             text-align: center;
             border-radius: var(--radius-full);
         }
+
+        // Easter Egg Overlay
+        .easter-egg-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-backdrop);
+            backdrop-filter: blur(12px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .easter-egg-content {
+            text-align: center;
+            padding: var(--space-10) var(--space-8);
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            max-width: 360px;
+            margin: var(--space-5);
+            animation: easterEggPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .easter-egg-emoji {
+            font-size: 64px;
+            margin-bottom: var(--space-4);
+            animation: preloaderFloat 2s ease-in-out infinite;
+        }
+
+        .easter-egg-text {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--weight-semibold);
+            color: var(--color-text-primary);
+            line-height: var(--leading-relaxed);
+            margin-bottom: var(--space-2);
+        }
+
+        .easter-egg-sub {
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-6);
+        }
+
+        .easter-egg-close {
+            display: inline-flex;
+            padding: var(--space-2) var(--space-6);
+            background: var(--color-accent);
+            color: var(--color-text-inverse);
+            font-weight: var(--weight-medium);
+            font-size: var(--text-sm);
+            border-radius: var(--radius-full);
+            transition: background-color var(--transition-fast),
+                        transform var(--transition-fast);
+
+            &:hover {
+                background: var(--color-accent-hover);
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes easterEggPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes preloaderFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
     `,
 })
 export class HeaderComponent {
     protected readonly dishService = inject(DishService);
     protected readonly favoritesService = inject(FavoritesService);
+    protected readonly themeService = inject(ThemeService);
     private readonly exportImportService = inject(ExportImportService);
+
+    protected readonly showEasterEgg = signal(false);
+    private logoClickCount = 0;
+    private logoClickTimer: ReturnType<typeof setTimeout> | null = null;
+
+    protected onLogoClick(event: Event): void {
+        event.preventDefault();
+        this.logoClickCount++;
+
+        if (this.logoClickTimer) clearTimeout(this.logoClickTimer);
+        this.logoClickTimer = setTimeout(() => (this.logoClickCount = 0), 2000);
+
+        if (this.logoClickCount >= 5) {
+            this.logoClickCount = 0;
+            this.showEasterEgg.set(true);
+        }
+    }
 
     protected toggleFavorites(): void {
         const current = this.dishService.filters().favoritesOnly;
