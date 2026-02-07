@@ -244,6 +244,7 @@ export class SortDropdownComponent {
     protected readonly isOpen = signal(false);
     protected readonly isClosing = signal(false);
     protected readonly isDragClosing = signal(false);
+    protected readonly isSnapping = signal(false);
     protected readonly sortOptions = SORT_OPTIONS;
 
     private dragStartY = 0;
@@ -278,12 +279,24 @@ export class SortDropdownComponent {
     }
 
     protected onAnimationDone(): void {
-        if (this.isClosing() || this.isDragClosing()) {
+        if (this.isClosing()) {
             this.isOpen.set(false);
             this.isClosing.set(false);
+            this.dragTransform.set('');
+            this.unlockScroll();
+        }
+    }
+
+    protected onTransitionDone(): void {
+        if (this.isDragClosing()) {
+            this.isOpen.set(false);
             this.isDragClosing.set(false);
             this.dragTransform.set('');
             this.unlockScroll();
+        }
+        if (this.isSnapping()) {
+            this.isSnapping.set(false);
+            this.dragTransform.set('');
         }
     }
 
@@ -318,8 +331,8 @@ export class SortDropdownComponent {
             this.isDragClosing.set(true);
             this.dragTransform.set(`translateY(100vh)`);
         } else {
-            // Snap back with transition
-            this.isDragClosing.set(false);
+            // Snap back smoothly
+            this.isSnapping.set(true);
             this.dragTransform.set('translateY(0)');
         }
     }

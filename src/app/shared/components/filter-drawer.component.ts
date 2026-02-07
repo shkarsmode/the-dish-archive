@@ -386,6 +386,7 @@ export class FilterDrawerComponent {
     protected readonly isOpen = signal(false);
     protected readonly isClosing = signal(false);
     protected readonly isDragClosing = signal(false);
+    protected readonly isSnapping = signal(false);
     protected readonly dragTransform = signal('');
 
     protected readonly allCategories = ALL_CATEGORIES;
@@ -406,12 +407,24 @@ export class FilterDrawerComponent {
     }
 
     protected onAnimationDone(): void {
-        if (this.isClosing() || this.isDragClosing()) {
+        if (this.isClosing()) {
             this.isOpen.set(false);
             this.isClosing.set(false);
+            this.dragTransform.set('');
+            document.body.style.overflow = '';
+        }
+    }
+
+    protected onTransitionDone(): void {
+        if (this.isDragClosing()) {
+            this.isOpen.set(false);
             this.isDragClosing.set(false);
             this.dragTransform.set('');
             document.body.style.overflow = '';
+        }
+        if (this.isSnapping()) {
+            this.isSnapping.set(false);
+            this.dragTransform.set('');
         }
     }
 
@@ -441,8 +454,8 @@ export class FilterDrawerComponent {
             this.isDragClosing.set(true);
             this.dragTransform.set(`translateY(100vh)`);
         } else {
-            // Snap back with transition
-            this.isDragClosing.set(false);
+            // Snap back smoothly
+            this.isSnapping.set(true);
             this.dragTransform.set('translateY(0)');
         }
     }
