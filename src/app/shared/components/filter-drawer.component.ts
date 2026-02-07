@@ -16,8 +16,11 @@ import { TagChipComponent } from './tag-chip.component';
     imports: [TagChipComponent, RangeSliderComponent],
     template: `
         @if (isOpen()) {
-            <div class="drawer-backdrop" (click)="close()" aria-hidden="true"></div>
-            <aside class="drawer" role="dialog" aria-label="Фільтри" [class.open]="isOpen()">
+            <div class="drawer-backdrop" [class.closing]="isClosing()" (click)="close()" aria-hidden="true"></div>
+            <aside class="drawer" role="dialog" aria-label="Фільтри"
+                   [class.open]="isOpen()"
+                   [class.closing]="isClosing()"
+                   (animationend)="onAnimationDone()">
                 <div class="drawer-handle" (click)="close()">
                     <div class="handle-bar"></div>
                 </div>
@@ -143,6 +146,10 @@ import { TagChipComponent } from './tag-chip.component';
             background: var(--color-backdrop);
             z-index: var(--z-drawer);
             animation: fadeIn 200ms ease;
+
+            &.closing {
+                animation: fadeOut 250ms ease forwards;
+            }
         }
 
         .drawer {
@@ -159,6 +166,10 @@ import { TagChipComponent } from './tag-chip.component';
             animation: slideUp 250ms var(--ease-out-expo);
             padding-bottom: var(--safe-bottom);
 
+            &.closing {
+                animation: slideDown 250ms ease forwards;
+            }
+
             @include m.desktop {
                 position: fixed;
                 top: 0;
@@ -169,7 +180,26 @@ import { TagChipComponent } from './tag-chip.component';
                 max-height: 100dvh;
                 border-radius: var(--radius-xl) 0 0 var(--radius-xl);
                 animation: slideInRight 250ms var(--ease-out-expo);
+
+                &.closing {
+                    animation: slideOutRight 250ms ease forwards;
+                }
             }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(100%); opacity: 0; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
 
         .drawer-handle {
@@ -332,18 +362,27 @@ import { TagChipComponent } from './tag-chip.component';
 export class FilterDrawerComponent {
     protected readonly dishService = inject(DishService);
     protected readonly isOpen = signal(false);
+    protected readonly isClosing = signal(false);
 
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly allTasteKeys = ALL_TASTE_KEYS;
 
     open(): void {
+        this.isClosing.set(false);
         this.isOpen.set(true);
         document.body.style.overflow = 'hidden';
     }
 
     close(): void {
-        this.isOpen.set(false);
-        document.body.style.overflow = '';
+        this.isClosing.set(true);
+    }
+
+    protected onAnimationDone(): void {
+        if (this.isClosing()) {
+            this.isOpen.set(false);
+            this.isClosing.set(false);
+            document.body.style.overflow = '';
+        }
     }
 
     protected getCategoryLabel(category: DishCategory): string {

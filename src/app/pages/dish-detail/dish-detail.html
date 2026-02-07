@@ -68,6 +68,9 @@
                     @for (category of dish()!.categories; track category) {
                         <span class="category-label">{{ getCategoryLabel(category) }}</span>
                     }
+                    @if (isNew()) {
+                        <span class="new-badge">НОВЕ</span>
+                    }
                 </div>
                 <h1 class="detail-title">{{ dish()!.title }}</h1>
                 <p class="detail-description">{{ dish()!.description }}</p>

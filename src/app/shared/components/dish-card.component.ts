@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { CompareService } from '../../core/services/compare.service';
@@ -30,6 +30,9 @@ import { RatingStarsComponent } from './rating-stars.component';
                         <span class="material-symbols-outlined">compare_arrows</span>
                     </button>
                 </div>
+                @if (isNew()) {
+                    <span class="new-badge">НОВЕ</span>
+                }
                 @if (dish().difficulty === 'easy') {
                     <span class="difficulty-badge easy">Легко</span>
                 }
@@ -168,6 +171,28 @@ import { RatingStarsComponent } from './rating-stars.component';
             }
         }
 
+        .new-badge {
+            position: absolute;
+            top: var(--space-3);
+            left: var(--space-3);
+            padding: 2px var(--space-3);
+            font-size: 11px;
+            font-weight: var(--weight-bold);
+            letter-spacing: 0.06em;
+            border-radius: var(--radius-sm);
+            background: var(--color-accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+            animation: badgePop 400ms var(--ease-out-expo);
+            z-index: 1;
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         .card-body {
             display: flex;
             flex-direction: column;
@@ -241,6 +266,14 @@ export class DishCardComponent {
 
     protected readonly compareService = inject(CompareService);
     private readonly router = inject(Router);
+
+    private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+    protected readonly isNew = computed(() => {
+        const createdAt = this.dish().createdAt;
+        if (!createdAt) return false;
+        return Date.now() - new Date(createdAt).getTime() < DishCardComponent.ONE_WEEK_MS;
+    });
 
     protected readonly primaryImage = () => {
         const images = this.dish().images;

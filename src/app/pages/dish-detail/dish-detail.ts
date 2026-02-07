@@ -41,6 +41,12 @@ export class DishDetailPage {
 
     readonly isLoading = this.dishService.isLoading;
 
+    protected readonly isNew = computed(() => {
+        const d = this.dish();
+        if (!d?.createdAt) return false;
+        return Date.now() - new Date(d.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
+    });
+
     protected readonly activeImageIndex = signal(0);
     protected readonly completedSteps = signal<Set<number>>(new Set());
 

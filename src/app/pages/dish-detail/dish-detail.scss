@@ -210,6 +210,7 @@
 
 .detail-categories {
     display: flex;
+    align-items: center;
     gap: var(--space-2);
     margin-bottom: var(--space-3);
 }
@@ -220,6 +221,25 @@
     color: var(--color-accent);
     text-transform: uppercase;
     letter-spacing: 0.06em;
+}
+
+.new-badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    font-size: 11px;
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.06em;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: #fff;
+    line-height: 1.4;
+    animation: badgePop 400ms var(--ease-out-expo);
+}
+
+@keyframes badgePop {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .detail-title {
