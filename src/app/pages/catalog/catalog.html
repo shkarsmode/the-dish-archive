@@ -27,16 +27,12 @@
         <div class="catalog-inner">
             <!-- Toolbar -->
             <div class="toolbar">
-                <div class="toolbar-search">
-                    <app-search-bar />
-                </div>
                 <div class="toolbar-actions">
                     <button
                         class="filter-button"
                         (click)="openFilters()"
                         [class.has-filters]="dishService.hasActiveFilters()">
                         <span class="material-symbols-outlined">tune</span>
-                        <span class="filter-label">Фільтри</span>
                         @if (dishService.hasActiveFilters()) {
                             <span class="filter-badge">
                                 <span class="material-symbols-outlined">circle</span>
@@ -44,6 +40,9 @@
                         }
                     </button>
                     <app-sort-dropdown />
+                </div>
+                <div class="toolbar-search">
+                    <app-search-bar />
                 </div>
             </div>
 

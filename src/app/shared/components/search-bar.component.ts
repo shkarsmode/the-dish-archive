@@ -31,13 +31,15 @@ import { DishService } from '../../core/services/dish.service';
             align-items: center;
             gap: var(--space-2);
             padding: var(--space-2) var(--space-3);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
+            background: var(--color-bg);
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-full);
             transition: border-color var(--transition-base),
-                        box-shadow var(--transition-base);
+                        box-shadow var(--transition-base),
+                        background-color var(--transition-base);
 
             &.focused {
+                background: var(--color-surface);
                 border-color: var(--color-accent);
                 box-shadow: 0 0 0 3px var(--color-accent-light);
             }
@@ -45,18 +47,28 @@ import { DishService } from '../../core/services/dish.service';
 
         .search-icon {
             color: var(--color-text-tertiary);
-            font-size: 20px;
+            font-size: 18px;
             flex-shrink: 0;
+
+            .focused & {
+                color: var(--color-accent);
+            }
         }
 
         .search-input {
             flex: 1;
-            font-size: var(--text-base);
+            font-size: 16px;
             line-height: 1.4;
             min-width: 0;
+            padding: 2px 0;
+
+            @media (min-width: 768px) {
+                font-size: var(--text-sm);
+            }
 
             &::placeholder {
                 color: var(--color-text-tertiary);
+                font-size: var(--text-sm);
             }
         }
 
@@ -64,21 +76,22 @@ import { DishService } from '../../core/services/dish.service';
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: var(--radius-full);
+            background: var(--color-surface-hover);
             color: var(--color-text-tertiary);
             flex-shrink: 0;
             transition: background-color var(--transition-fast),
                         color var(--transition-fast);
 
             &:hover {
-                background-color: var(--color-surface-hover);
+                background-color: var(--color-border);
                 color: var(--color-text-primary);
             }
 
             .material-symbols-outlined {
-                font-size: 18px;
+                font-size: 14px;
             }
         }
     `,
