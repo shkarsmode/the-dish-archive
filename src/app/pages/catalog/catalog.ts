@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { CATEGORY_LABELS, DishCategory } from '../../core/models/dish.model';
+import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { DishCardComponent } from '../../shared/components/dish-card.component';
@@ -8,6 +8,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state.compone
 import { FilterDrawerComponent } from '../../shared/components/filter-drawer.component';
 import { SearchBarComponent } from '../../shared/components/search-bar.component';
 import { SkeletonCardComponent } from '../../shared/components/skeleton-card.component';
+import { SlotMachineComponent } from '../../shared/components/slot-machine.component';
 import { SortDropdownComponent } from '../../shared/components/sort-dropdown.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
 
@@ -21,6 +22,7 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
         SkeletonCardComponent,
         EmptyStateComponent,
         TagChipComponent,
+        SlotMachineComponent,
     ],
     templateUrl: './catalog.html',
     styleUrl: './catalog.scss',
@@ -30,7 +32,6 @@ export class CatalogPage {
     private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
-    protected readonly isSpinning = signal(false);
 
     protected readonly quickCategories: DishCategory[] = ['quick', 'healthy', 'dessert', 'everyday', 'festive', 'vegetarian'];
     protected readonly skeletonItems = Array.from({ length: 6 });
@@ -85,15 +86,8 @@ export class CatalogPage {
         this.filterDrawer()?.open();
     }
 
-    protected goToRandomDish(): void {
-        const dishes = this.dishService.filteredDishes();
-        if (dishes.length === 0) return;
-        this.isSpinning.set(true);
-        setTimeout(() => {
-            const random = dishes[Math.floor(Math.random() * dishes.length)];
-            this.isSpinning.set(false);
-            this.router.navigate(['/dish', random.slug]);
-        }, 600);
+    protected onSlotResult(dish: Dish): void {
+        this.router.navigate(['/dish', dish.slug]);
     }
 
     protected goToPage(page: number): void {

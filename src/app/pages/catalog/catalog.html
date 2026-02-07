@@ -7,10 +7,7 @@
             <p class="hero-subtitle">
                 {{ greeting().suggestion }} Улюблені рецепти, зібрані з турботою.
             </p>
-            <button class="random-recipe-button" (click)="goToRandomDish()" [class.spinning]="isSpinning()">
-                <span class="material-symbols-outlined random-icon">casino</span>
-                <span>Випадковий рецепт</span>
-            </button>
+            <app-slot-machine (spun)="onSlotResult($event)" />
 
             <!-- Inline Stats Strip -->
             @if (collectionStats(); as stats) {

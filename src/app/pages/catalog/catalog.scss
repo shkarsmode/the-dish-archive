@@ -77,45 +77,6 @@
     }
 }
 
-.random-recipe-button {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-4);
-    padding: var(--space-2) var(--space-5);
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    border-radius: var(--radius-full);
-    transition: background-color var(--transition-base),
-                transform var(--transition-base),
-                box-shadow var(--transition-base);
-
-    &:hover {
-        background: var(--color-accent-hover);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
-
-    .random-icon {
-        font-size: 18px;
-        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    &.spinning .random-icon {
-        transform: rotate(720deg);
-    }
-
-    @include m.tablet {
-        margin-top: var(--space-6);
-    }
-}
-
 // ── Stats Strip (inline in hero) ────────────────────────────
 .stats-strip {
     display: flex;
