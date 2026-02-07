@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Directive, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
 
 @Directive({
     selector: '[appReveal]',
@@ -9,6 +9,7 @@ import { Directive, ElementRef, inject, OnDestroy, OnInit } from '@angular/core'
 })
 export class RevealDirective implements OnInit, OnDestroy {
     private readonly el = inject(ElementRef);
+    private readonly cdr = inject(ChangeDetectorRef);
     private observer?: IntersectionObserver;
     protected isRevealed = false;
 
@@ -17,6 +18,7 @@ export class RevealDirective implements OnInit, OnDestroy {
             ([entry]) => {
                 if (entry.isIntersecting) {
                     this.isRevealed = true;
+                    this.cdr.markForCheck();
                     this.observer?.disconnect();
                 }
             },
