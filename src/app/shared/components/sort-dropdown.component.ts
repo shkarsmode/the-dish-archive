@@ -149,7 +149,6 @@ import { DishService } from '../../core/services/dish.service';
             }
 
             &.snapping {
-                animation: none;
                 transition: transform 200ms var(--ease-out-expo);
             }
 
@@ -296,7 +295,6 @@ export class SortDropdownComponent {
         }
         if (this.isSnapping()) {
             this.isSnapping.set(false);
-            this.dragTransform.set('');
         }
     }
 
@@ -330,10 +328,13 @@ export class SortDropdownComponent {
             // Slide down from current position
             this.isDragClosing.set(true);
             this.dragTransform.set(`translateY(100vh)`);
-        } else {
+        } else if (dy > 5) {
             // Snap back smoothly
             this.isSnapping.set(true);
             this.dragTransform.set('translateY(0)');
+        } else {
+            // Barely moved — reset instantly
+            this.dragTransform.set('');
         }
     }
 
