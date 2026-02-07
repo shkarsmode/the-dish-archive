@@ -115,47 +115,47 @@ export interface DishData {
 }
 
 export const CATEGORY_LABELS: Record<DishCategory, string> = {
-    quick: 'Быстрое',
+    quick: 'Швидке',
     healthy: 'ПП',
     dessert: 'Десерт',
-    everyday: 'На каждый день',
-    festive: 'Праздничное',
-    vegetarian: 'Вегетарианское',
-    breakfast: 'Завтрак',
-    lunch: 'Обед',
-    dinner: 'Ужин',
+    everyday: 'На кожен день',
+    festive: 'Святкове',
+    vegetarian: 'Вегетаріанське',
+    breakfast: 'Сніданок',
+    lunch: 'Обід',
+    dinner: 'Вечеря',
     snack: 'Перекус',
     soup: 'Суп',
     salad: 'Салат',
-    baking: 'Выпечка',
+    baking: 'Випічка',
 };
 
 export const DIFFICULTY_LABELS: Record<DishDifficulty, string> = {
     easy: 'Легко',
-    medium: 'Средне',
-    hard: 'Сложно',
+    medium: 'Середнє',
+    hard: 'Складно',
 };
 
 export const TASTE_LABELS: Record<keyof TasteProfile, string> = {
-    sweet: 'Сладкое',
-    salty: 'Солёное',
-    sour: 'Кислое',
-    bitter: 'Горькое',
-    spicy: 'Острое',
-    umami: 'Умами',
+    sweet: 'Солодке',
+    salty: 'Солоне',
+    sour: 'Кисле',
+    bitter: 'Гірке',
+    spicy: 'Гостре',
+    umami: 'Умамі',
 };
 
 export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: 'date-desc', label: 'Сначала новые' },
-    { value: 'date-asc', label: 'Сначала старые' },
-    { value: 'rating-desc', label: 'По рейтингу ↓' },
-    { value: 'rating-asc', label: 'По рейтингу ↑' },
-    { value: 'price-asc', label: 'Дешевле' },
-    { value: 'price-desc', label: 'Дороже' },
-    { value: 'time-asc', label: 'Быстрее' },
-    { value: 'time-desc', label: 'Дольше' },
-    { value: 'calories-asc', label: 'Меньше калорий' },
-    { value: 'calories-desc', label: 'Больше калорий' },
+    { value: 'date-desc', label: 'Спочатку нові' },
+    { value: 'date-asc', label: 'Спочатку старі' },
+    { value: 'rating-desc', label: 'За рейтингом ↓' },
+    { value: 'rating-asc', label: 'За рейтингом ↑' },
+    { value: 'price-asc', label: 'Дешевше' },
+    { value: 'price-desc', label: 'Дорожче' },
+    { value: 'time-asc', label: 'Швидше' },
+    { value: 'time-desc', label: 'Довше' },
+    { value: 'calories-asc', label: 'Менше калорій' },
+    { value: 'calories-desc', label: 'Більше калорій' },
 ];
 
 export const DEFAULT_FILTER_STATE: FilterState = {

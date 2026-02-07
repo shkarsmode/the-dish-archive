@@ -18,19 +18,19 @@ import { CompareService } from '../../core/services/compare.service';
                                 <button
                                     class="compare-remove"
                                     (click)="compareService.remove(dish.id)"
-                                    [attr.aria-label]="'Убрать ' + dish.title + ' из сравнения'">
+                                    [attr.aria-label]="'Прибрати ' + dish.title + ' з порівняння'">
                                     <span class="material-symbols-outlined">close</span>
                                 </button>
                             </div>
                         }
                     </div>
                     <div class="compare-actions">
-                        <span class="compare-count">{{ compareService.count() }} из 4</span>
+                        <span class="compare-count">{{ compareService.count() }} з 4</span>
                         <button
                             class="compare-button"
                             [disabled]="!compareService.canCompare()"
                             (click)="showModal = true">
-                            Сравнить
+                            Порівняти
                         </button>
                         <button class="compare-clear" (click)="compareService.clear()">
                             <span class="material-symbols-outlined">close</span>
@@ -42,10 +42,10 @@ import { CompareService } from '../../core/services/compare.service';
 
         @if (showModal && compareService.canCompare()) {
             <div class="modal-backdrop" (click)="showModal = false">
-                <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-label="Сравнение блюд">
+                <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-label="Порівняння страв">
                     <div class="modal-header">
-                        <h2 class="modal-title">Сравнение блюд</h2>
-                        <button class="modal-close" (click)="showModal = false" aria-label="Закрыть">
+                        <h2 class="modal-title">Порівняння страв</h2>
+                        <button class="modal-close" (click)="showModal = false" aria-label="Закрити">
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>
@@ -68,37 +68,37 @@ import { CompareService } from '../../core/services/compare.service';
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="row-label">Оценка</td>
+                                    <td class="row-label">Оцінка</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
                                         <td class="row-value">{{ dish.rating }} <span class="unit">/ 5</span></td>
                                     }
                                 </tr>
                                 <tr>
-                                    <td class="row-label">Стоимость</td>
+                                    <td class="row-label">Вартість</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
-                                        <td class="row-value">{{ dish.price.amount }} <span class="unit">₽</span></td>
+                                        <td class="row-value">{{ dish.price.amount }} <span class="unit">грн</span></td>
                                     }
                                 </tr>
                                 <tr>
-                                    <td class="row-label">Время</td>
+                                    <td class="row-label">Час</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
-                                        <td class="row-value">{{ dish.cookingTime.total }} <span class="unit">мин</span></td>
+                                        <td class="row-value">{{ dish.cookingTime.total }} <span class="unit">хв</span></td>
                                     }
                                 </tr>
                                 <tr>
-                                    <td class="row-label">Калории</td>
+                                    <td class="row-label">Калорії</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
                                         <td class="row-value">{{ dish.calories }} <span class="unit">ккал</span></td>
                                     }
                                 </tr>
                                 <tr>
-                                    <td class="row-label">Порции</td>
+                                    <td class="row-label">Порції</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
                                         <td class="row-value">{{ dish.servings }}</td>
                                     }
                                 </tr>
                                 <tr>
-                                    <td class="row-label">Сложность</td>
+                                    <td class="row-label">Складність</td>
                                     @for (dish of compareService.selectedDishes(); track dish.id) {
                                         <td class="row-value">{{ difficultyLabel(dish.difficulty) }}</td>
                                     }
@@ -327,8 +327,8 @@ export class CompareBarComponent {
     protected difficultyLabel(difficulty: string): string {
         const map: Record<string, string> = {
             easy: 'Легко',
-            medium: 'Средне',
-            hard: 'Сложно',
+            medium: 'Середнє',
+            hard: 'Складно',
         };
         return map[difficulty] ?? difficulty;
     }

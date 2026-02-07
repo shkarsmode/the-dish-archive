@@ -76,7 +76,7 @@ export class DishDetailPage {
     }
 
     protected formatDate(isoString: string): string {
-        return new Date(isoString).toLocaleDateString('ru-RU', {
+        return new Date(isoString).toLocaleDateString('uk-UA', {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
@@ -93,7 +93,7 @@ export class DishDetailPage {
             `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" fill="%23F0EDE8">` +
             `<rect width="800" height="500"/>` +
             `<text x="400" y="250" text-anchor="middle" dy=".3em" fill="%23A0A0A0" font-family="Inter,sans-serif" font-size="16">` +
-            `Изображение недоступно</text></svg>`
+            `Зображення недоступне</text></svg>`
         );
     }
 }

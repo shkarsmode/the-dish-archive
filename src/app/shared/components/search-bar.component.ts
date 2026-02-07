@@ -9,17 +9,17 @@ import { DishService } from '../../core/services/dish.service';
             <input
                 type="text"
                 class="search-input"
-                placeholder="Поиск по названию, тегам, ингредиентам..."
+                placeholder="Пошук за назвою, тегами, інгредієнтами..."
                 [value]="dishService.searchQuery()"
                 (input)="onInput($event)"
                 (focus)="isFocused.set(true)"
                 (blur)="isFocused.set(false)"
-                aria-label="Поиск блюд" />
+                aria-label="Пошук страв" />
             @if (dishService.searchQuery()) {
                 <button
                     class="clear-button"
                     (click)="clearSearch()"
-                    aria-label="Очистить поиск">
+                    aria-label="Очистити пошук">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             }
@@ -29,8 +29,8 @@ import { DishService } from '../../core/services/dish.service';
         .search-bar {
             display: flex;
             align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-3) var(--space-4);
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);

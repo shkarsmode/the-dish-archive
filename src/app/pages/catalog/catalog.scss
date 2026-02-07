@@ -2,11 +2,11 @@
 
 // ── Hero ────────────────────────────────────────────────────
 .hero {
-    padding: var(--space-16) var(--space-5) var(--space-12);
+    padding: var(--space-6) var(--space-3) var(--space-5);
     text-align: center;
 
     @include m.tablet {
-        padding: var(--space-20) var(--space-5) var(--space-16);
+        padding: var(--space-16) var(--space-5) var(--space-12);
     }
 }
 
@@ -21,43 +21,60 @@
     color: var(--color-accent);
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
+
+    @include m.tablet {
+        margin-bottom: var(--space-4);
+    }
 }
 
 .hero-title {
     font-family: var(--font-display);
-    font-size: var(--text-4xl);
+    font-size: var(--text-3xl);
     font-weight: var(--weight-bold);
     line-height: var(--leading-tight);
     letter-spacing: -0.02em;
     color: var(--color-text-primary);
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
 
     @include m.tablet {
+        font-size: var(--text-4xl);
+        margin-bottom: var(--space-4);
+    }
+
+    @include m.desktop {
         font-size: var(--text-5xl);
     }
 }
 
 .hero-subtitle {
-    font-size: var(--text-md);
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: var(--leading-relaxed);
     max-width: 440px;
     margin-inline: auto;
 
     @include m.tablet {
+        font-size: var(--text-md);
+    }
+
+    @include m.desktop {
         font-size: var(--text-lg);
     }
 }
 
 // ── Quick Filters ───────────────────────────────────────────
 .quick-filters {
-    padding: 0 var(--space-5) var(--space-8);
+    padding: 0 var(--space-3) var(--space-3);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 
     &::-webkit-scrollbar { display: none; }
+
+    @include m.tablet {
+        padding: 0 var(--space-5) var(--space-8);
+    }
 }
 
 .quick-filters-inner {
@@ -75,7 +92,11 @@
 
 // ── Catalog ─────────────────────────────────────────────────
 .catalog {
-    padding: 0 var(--space-5) var(--space-20);
+    padding: 0 var(--space-3) var(--space-10);
+
+    @include m.tablet {
+        padding: 0 var(--space-5) var(--space-20);
+    }
 }
 
 .catalog-inner {
@@ -86,8 +107,12 @@
 .toolbar {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
-    margin-bottom: var(--space-6);
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+
+    @include m.tablet {
+        margin-bottom: var(--space-6);
+    }
 
     @include m.tablet {
         flex-direction: row;
@@ -185,10 +210,11 @@
 .dish-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-5);
+    gap: var(--space-4);
 
     @include m.tablet {
         grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-5);
     }
 
     @include m.desktop {

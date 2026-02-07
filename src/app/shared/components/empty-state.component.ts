@@ -44,6 +44,6 @@ import { Component, input } from '@angular/core';
 })
 export class EmptyStateComponent {
     readonly icon = input('search_off');
-    readonly title = input('Ничего не найдено');
-    readonly description = input('Попробуйте изменить параметры поиска или фильтров');
+    readonly title = input('Нічого не знайдено');
+    readonly description = input('Спробуйте змінити параметри пошуку або фільтрів');
 }

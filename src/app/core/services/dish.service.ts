@@ -188,7 +188,7 @@ export class DishService {
             },
             error: (error) => {
                 console.error('Failed to load dishes:', error);
-                this.loadError.set('Не удалось загрузить данные');
+                this.loadError.set('Не вдалося завантажити дані');
                 this.isLoading.set(false);
             },
         });

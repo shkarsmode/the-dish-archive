@@ -3,7 +3,7 @@ import { Component, computed, input } from '@angular/core';
 @Component({
     selector: 'app-rating-stars',
     template: `
-        <div class="rating-stars" [class.compact]="compact()" [attr.aria-label]="'Оценка: ' + rating() + ' из 5'">
+        <div class="rating-stars" [class.compact]="compact()" [attr.aria-label]="'Оцінка: ' + rating() + ' з 5'">
             @for (star of stars(); track star.index) {
                 <span class="material-symbols-outlined star"
                       [class.filled]="star.type === 'full'"

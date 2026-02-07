@@ -23,10 +23,10 @@ export class ExportImportService {
             document.body.removeChild(anchor);
             URL.revokeObjectURL(url);
 
-            this.toastService.success('Данные экспортированы');
+            this.toastService.success('Дані експортовано');
         } catch (error) {
             console.error('Export failed:', error);
-            this.toastService.error('Ошибка при экспорте данных');
+            this.toastService.error('Помилка при експорті даних');
         }
     }
 
@@ -38,20 +38,20 @@ export class ExportImportService {
                 const data = JSON.parse(reader.result as string) as DishData;
 
                 if (!this.validateDishData(data)) {
-                    this.toastService.error('Неверный формат данных');
+                    this.toastService.error('Невірний формат даних');
                     return;
                 }
 
                 this.dishService.importDishes(data);
-                this.toastService.success(`Импортировано ${data.dishes.length} блюд`);
+                this.toastService.success(`Імпортовано ${data.dishes.length} страв`);
             } catch (error) {
                 console.error('Import failed:', error);
-                this.toastService.error('Ошибка при чтении файла');
+                this.toastService.error('Помилка при читанні файлу');
             }
         };
 
         reader.onerror = () => {
-            this.toastService.error('Ошибка при чтении файла');
+            this.toastService.error('Помилка при читанні файлу');
         };
 
         reader.readAsText(file);

@@ -23,7 +23,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                         class="compare-toggle"
                         [class.active]="compareService.isSelected(dish().id)()"
                         (click)="toggleCompare($event)"
-                        [attr.aria-label]="'Сравнить ' + dish().title"
+                        [attr.aria-label]="'Порівняти ' + dish().title"
                         [attr.aria-pressed]="compareService.isSelected(dish().id)()">
                         <span class="material-symbols-outlined">compare_arrows</span>
                     </button>
@@ -45,7 +45,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                     <div class="meta-items">
                         <span class="meta-item">
                             <span class="material-symbols-outlined">schedule</span>
-                            {{ dish().cookingTime.total }} мин
+                            {{ dish().cookingTime.total }} хв
                         </span>
                         <span class="meta-item">
                             <span class="material-symbols-outlined">local_fire_department</span>
@@ -53,7 +53,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                         </span>
                         <span class="meta-item">
                             <span class="material-symbols-outlined">payments</span>
-                            {{ dish().price.amount }} ₽
+                            {{ dish().price.amount }} грн
                         </span>
                     </div>
                 </div>
@@ -170,7 +170,11 @@ import { RatingStarsComponent } from './rating-stars.component';
             display: flex;
             flex-direction: column;
             gap: var(--space-2);
-            padding: var(--space-4);
+            padding: var(--space-3);
+
+            @media (min-width: 768px) {
+                padding: var(--space-4);
+            }
         }
 
         .card-categories {
@@ -261,7 +265,7 @@ export class DishCardComponent {
             `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23F0EDE8">` +
             `<rect width="400" height="300"/>` +
             `<text x="200" y="150" text-anchor="middle" dy=".3em" fill="%23A0A0A0" font-family="Inter,sans-serif" font-size="14">` +
-            `Изображение недоступно</text></svg>`
+            `Зображення недоступне</text></svg>`
         );
     }
 }

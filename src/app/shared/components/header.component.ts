@@ -11,20 +11,20 @@ import { FavoritesService } from '../../core/services/favorites.service';
             <div class="header-container">
                 <a class="logo" routerLink="/">
                     <span class="logo-text">The Dish Archive</span>
-                    <span class="logo-subtitle">коллекция рецептов</span>
+                    <span class="logo-subtitle">колекція рецептів</span>
                 </a>
                 <nav class="header-actions" aria-label="Main actions">
                     <button
                         class="icon-button"
                         (click)="handleExport()"
-                        title="Экспорт данных"
-                        aria-label="Экспорт данных">
+                        title="Експорт даних"
+                        aria-label="Експорт даних">
                         <span class="material-symbols-outlined">download</span>
                     </button>
                     <label
                         class="icon-button"
-                        title="Импорт данных"
-                        aria-label="Импорт данных"
+                        title="Імпорт даних"
+                        aria-label="Імпорт даних"
                         tabindex="0"
                         role="button"
                         (keydown.enter)="importInput.click()">
@@ -40,8 +40,8 @@ import { FavoritesService } from '../../core/services/favorites.service';
                         class="icon-button favorites-indicator"
                         routerLink="/"
                         fragment="catalog"
-                        title="Избранное"
-                        aria-label="Избранное">
+                        title="Обране"
+                        aria-label="Обране">
                         <span class="material-symbols-outlined" [class.filled]="favoritesService.count() > 0">
                             favorite
                         </span>

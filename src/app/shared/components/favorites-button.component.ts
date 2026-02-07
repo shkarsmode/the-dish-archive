@@ -8,7 +8,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
             class="favorites-button"
             [class.active]="favoritesService.isFavorite(dishId())()"
             (click)="handleClick($event)"
-            [attr.aria-label]="favoritesService.isFavorite(dishId())() ? 'Убрать из избранного' : 'Добавить в избранное'"
+            [attr.aria-label]="favoritesService.isFavorite(dishId())() ? 'Прибрати з обраного' : 'Додати до обраного'"
             [attr.aria-pressed]="favoritesService.isFavorite(dishId())()">
             <span class="material-symbols-outlined heart-icon">
                 {{ favoritesService.isFavorite(dishId())() ? 'favorite' : 'favorite_border' }}

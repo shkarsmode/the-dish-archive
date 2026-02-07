@@ -15,7 +15,7 @@ import { ToastService } from '../../core/services/toast.service';
                         <button
                             class="toast-dismiss"
                             (click)="toastService.dismiss(toast.id)"
-                            aria-label="Закрыть уведомление">
+                            aria-label="Закрити сповіщення">
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>

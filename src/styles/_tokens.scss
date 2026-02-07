@@ -107,9 +107,14 @@
 
     // ── Layout ─────────────────────────────────────────────
     --container-max: 1280px;
-    --container-padding: var(--space-5);
-    --header-height: 64px;
+    --container-padding: var(--space-3);
+    --header-height: 56px;
     --card-aspect: 3 / 2;
+
+    @media (min-width: 768px) {
+        --container-padding: var(--space-6);
+        --header-height: 64px;
+    }
 
     // ── Safe Areas (iOS) ───────────────────────────────────
     --safe-top: env(safe-area-inset-top, 0px);

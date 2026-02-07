@@ -17,16 +17,16 @@ import { TagChipComponent } from './tag-chip.component';
     template: `
         @if (isOpen()) {
             <div class="drawer-backdrop" (click)="close()" aria-hidden="true"></div>
-            <aside class="drawer" role="dialog" aria-label="Фильтры" [class.open]="isOpen()">
+            <aside class="drawer" role="dialog" aria-label="Фільтри" [class.open]="isOpen()">
                 <div class="drawer-handle" (click)="close()">
                     <div class="handle-bar"></div>
                 </div>
 
                 <div class="drawer-header">
-                    <h2 class="drawer-title">Фильтры</h2>
+                    <h2 class="drawer-title">Фільтри</h2>
                     <button class="reset-button" (click)="resetAllFilters()"
                             [disabled]="!dishService.hasActiveFilters()">
-                        Сбросить
+                        Скинути
                     </button>
                 </div>
 
@@ -41,13 +41,13 @@ import { TagChipComponent } from './tag-chip.component';
                             <span class="toggle-track">
                                 <span class="toggle-thumb"></span>
                             </span>
-                            <span class="toggle-label">Только избранное</span>
+                            <span class="toggle-label">Тільки обране</span>
                         </label>
                     </div>
 
                     <!-- Categories -->
                     <div class="filter-section">
-                        <h3 class="filter-heading">Категории</h3>
+                        <h3 class="filter-heading">Категорії</h3>
                         <div class="chips-grid">
                             @for (category of allCategories; track category) {
                                 <app-tag-chip
@@ -75,7 +75,7 @@ import { TagChipComponent } from './tag-chip.component';
 
                     <!-- Taste -->
                     <div class="filter-section">
-                        <h3 class="filter-heading">Вкусовой профиль</h3>
+                        <h3 class="filter-heading">Смаковий профіль</h3>
                         <div class="chips-grid">
                             @for (taste of allTasteKeys; track taste) {
                                 <app-tag-chip
@@ -89,11 +89,11 @@ import { TagChipComponent } from './tag-chip.component';
                     <!-- Price Range -->
                     <div class="filter-section">
                         <app-range-slider
-                            label="Стоимость"
+                            label="Вартість"
                             [min]="dishService.priceExtent()[0]"
                             [max]="dishService.priceExtent()[1]"
                             [step]="50"
-                            suffix=" ₽"
+                            suffix=" грн"
                             [initialMin]="dishService.filters().priceRange?.[0] ?? null"
                             [initialMax]="dishService.filters().priceRange?.[1] ?? null"
                             (rangeChanged)="onPriceRangeChange($event)" />
@@ -102,7 +102,7 @@ import { TagChipComponent } from './tag-chip.component';
                     <!-- Calorie Range -->
                     <div class="filter-section">
                         <app-range-slider
-                            label="Калории"
+                            label="Калорії"
                             [min]="dishService.calorieExtent()[0]"
                             [max]="dishService.calorieExtent()[1]"
                             [step]="10"
@@ -115,11 +115,11 @@ import { TagChipComponent } from './tag-chip.component';
                     <!-- Time Range -->
                     <div class="filter-section">
                         <app-range-slider
-                            label="Время готовки"
+                            label="Час приготування"
                             [min]="dishService.timeExtent()[0]"
                             [max]="dishService.timeExtent()[1]"
                             [step]="5"
-                            suffix=" мин"
+                            suffix=" хв"
                             [initialMin]="dishService.filters().timeRange?.[0] ?? null"
                             [initialMax]="dishService.filters().timeRange?.[1] ?? null"
                             (rangeChanged)="onTimeRangeChange($event)" />
@@ -128,7 +128,7 @@ import { TagChipComponent } from './tag-chip.component';
 
                 <div class="drawer-footer">
                     <button class="apply-button" (click)="close()">
-                        Показать {{ dishService.totalFilteredCount() }} блюд
+                        Показати {{ dishService.totalFilteredCount() }} страв
                     </button>
                 </div>
             </aside>

@@ -11,7 +11,7 @@ import { DishService } from '../../core/services/dish.service';
                 (click)="toggleDropdown()"
                 [attr.aria-expanded]="isOpen()"
                 aria-haspopup="listbox"
-                aria-label="Сортировка">
+                aria-label="Сортування">
                 <span class="material-symbols-outlined">sort</span>
                 <span class="sort-label">{{ currentLabel() }}</span>
                 <span class="material-symbols-outlined chevron" [class.rotated]="isOpen()">
@@ -19,7 +19,11 @@ import { DishService } from '../../core/services/dish.service';
                 </span>
             </button>
             @if (isOpen()) {
-                <div class="sort-menu" role="listbox" aria-label="Варианты сортировки">
+                <div class="sort-backdrop" (click)="closeDropdown()"></div>
+                <div class="sort-menu" role="listbox" aria-label="Варіанти сортування">
+                    <div class="sort-menu-handle" (click)="closeDropdown()">
+                        <div class="handle-bar"></div>
+                    </div>
                     @for (option of sortOptions; track option.value) {
                         <button
                             class="sort-option"
@@ -72,18 +76,60 @@ import { DishService } from '../../core/services/dish.service';
             }
         }
 
-        .sort-menu {
-            position: absolute;
-            top: calc(100% + var(--space-1));
-            right: 0;
-            min-width: 200px;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border-light);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            padding: var(--space-1);
+        .sort-backdrop {
+            position: fixed;
+            inset: 0;
+            background: var(--color-backdrop);
             z-index: var(--z-dropdown);
-            animation: scaleIn 150ms var(--ease-out-expo);
+            animation: fadeIn 150ms ease;
+
+            @media (min-width: 768px) {
+                display: none;
+            }
+        }
+
+        .sort-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-surface);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.12);
+            padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+            z-index: calc(var(--z-dropdown) + 1);
+            animation: slideUp 200ms var(--ease-out-expo);
+
+            @media (min-width: 768px) {
+                position: absolute;
+                top: calc(100% + var(--space-1));
+                right: 0;
+                left: auto;
+                bottom: auto;
+                min-width: 200px;
+                border: 1px solid var(--color-border-light);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                padding: var(--space-1);
+                animation: scaleIn 150ms var(--ease-out-expo);
+            }
+        }
+
+        .sort-menu-handle {
+            display: flex;
+            justify-content: center;
+            padding: var(--space-2) 0 var(--space-3);
+
+            @media (min-width: 768px) {
+                display: none;
+            }
+        }
+
+        .handle-bar {
+            width: 36px;
+            height: 4px;
+            background: var(--color-border);
+            border-radius: 2px;
         }
 
         .sort-option {
@@ -132,22 +178,30 @@ export class SortDropdownComponent {
 
     protected currentLabel = () => {
         const currentValue = this.dishService.sortOption();
-        return SORT_OPTIONS.find(o => o.value === currentValue)?.label ?? 'Сортировка';
+        return SORT_OPTIONS.find(o => o.value === currentValue)?.label ?? 'Сортування';
     };
 
     @HostListener('document:click', ['$event'])
     protected onDocumentClick(event: MouseEvent): void {
         if (!this.elementRef.nativeElement.contains(event.target)) {
-            this.isOpen.set(false);
+            this.closeDropdown();
         }
     }
 
     protected toggleDropdown(): void {
-        this.isOpen.update(value => !value);
+        if (this.isOpen()) {
+            this.closeDropdown();
+        } else {
+            this.isOpen.set(true);
+        }
+    }
+
+    protected closeDropdown(): void {
+        this.isOpen.set(false);
     }
 
     protected selectOption(value: SortOption): void {
         this.dishService.updateSort(value);
-        this.isOpen.set(false);
+        this.closeDropdown();
     }
 }
