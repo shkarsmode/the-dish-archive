@@ -94,6 +94,11 @@
 .catalog {
     padding: 0 var(--space-3) var(--space-10);
 
+    // Extra bottom padding on mobile for floating action bar clearance
+    @include m.mobile-only {
+        padding-bottom: calc(var(--space-20) + var(--safe-bottom));
+    }
+
     @include m.tablet {
         padding: 0 var(--space-5) var(--space-20);
     }
@@ -125,16 +130,32 @@
     align-items: center;
     gap: var(--space-1);
     flex-shrink: 0;
+
+    // Mobile: floating pill at bottom center
+    @include m.mobile-only {
+        position: fixed;
+        bottom: calc(var(--space-4) + var(--safe-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: var(--z-sticky);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-light);
+        border-radius: var(--radius-full);
+        box-shadow: 0 4px 20px rgba(28, 28, 28, 0.12),
+                    0 1px 4px rgba(28, 28, 28, 0.06);
+        padding: var(--space-1);
+        gap: var(--space-1);
+    }
 }
 
 .filter-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: var(--radius-full);
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
     position: relative;
     transition: color var(--transition-fast),
                 background-color var(--transition-fast);
@@ -144,8 +165,13 @@
         background-color: var(--color-surface-hover);
     }
 
+    &:active {
+        background-color: var(--color-surface-active);
+    }
+
     &.has-filters {
         color: var(--color-accent-dark);
+        background-color: var(--color-accent-light);
     }
 
     .material-symbols-outlined {
@@ -158,12 +184,6 @@
         font-size: 8px;
         color: var(--color-accent);
         font-variation-settings: 'FILL' 1;
-    }
-}
-
-.filter-label {
-    @include m.mobile-only {
-        display: none;
     }
 }
 

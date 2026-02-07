@@ -47,11 +47,12 @@ import { DishService } from '../../core/services/dish.service';
         }
 
         .sort-trigger {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-sm);
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
             font-size: var(--text-sm);
             color: var(--color-text-secondary);
             white-space: nowrap;
@@ -63,13 +64,34 @@ import { DishService } from '../../core/services/dish.service';
                 background-color: var(--color-surface-hover);
             }
 
+            &:active {
+                background-color: var(--color-surface-active);
+            }
+
             .material-symbols-outlined {
-                font-size: 18px;
+                font-size: 20px;
+            }
+
+            @media (min-width: 768px) {
+                width: auto;
+                height: auto;
+                gap: var(--space-2);
+                padding: var(--space-2) var(--space-3);
+                border-radius: var(--radius-sm);
+
+                .material-symbols-outlined {
+                    font-size: 18px;
+                }
             }
         }
 
         .chevron {
+            display: none;
             transition: transform var(--transition-base);
+
+            @media (min-width: 768px) {
+                display: inline;
+            }
 
             &.rotated {
                 transform: rotate(180deg);
