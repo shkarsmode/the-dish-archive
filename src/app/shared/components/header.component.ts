@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DishService } from '../../core/services/dish.service';
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 
@@ -36,19 +37,20 @@ import { FavoritesService } from '../../core/services/favorites.service';
                             class="sr-only"
                             (change)="handleImport($event)" />
                     </label>
-                    <a
+                    <button
                         class="icon-button favorites-indicator"
-                        routerLink="/"
-                        fragment="catalog"
+                        [class.active]="dishService.filters().favoritesOnly"
+                        (click)="toggleFavorites()"
                         title="Обране"
-                        aria-label="Обране">
+                        aria-label="Обране"
+                        [attr.aria-pressed]="dishService.filters().favoritesOnly">
                         <span class="material-symbols-outlined" [class.filled]="favoritesService.count() > 0">
                             favorite
                         </span>
                         @if (favoritesService.count() > 0) {
                             <span class="badge">{{ favoritesService.count() }}</span>
                         }
-                    </a>
+                    </button>
                 </nav>
             </div>
         </header>
@@ -140,6 +142,11 @@ import { FavoritesService } from '../../core/services/favorites.service';
                 color: var(--color-favorite);
                 font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             }
+
+            &.active {
+                background-color: var(--color-error-light);
+                color: var(--color-favorite);
+            }
         }
 
         .badge {
@@ -160,8 +167,14 @@ import { FavoritesService } from '../../core/services/favorites.service';
     `,
 })
 export class HeaderComponent {
+    protected readonly dishService = inject(DishService);
     protected readonly favoritesService = inject(FavoritesService);
     private readonly exportImportService = inject(ExportImportService);
+
+    protected toggleFavorites(): void {
+        const current = this.dishService.filters().favoritesOnly;
+        this.dishService.updateFilters({ favoritesOnly: !current });
+    }
 
     protected handleExport(): void {
         this.exportImportService.exportToJson();
