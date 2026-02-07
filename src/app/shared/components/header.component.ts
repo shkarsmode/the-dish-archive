@@ -1,13 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DishService } from '../../core/services/dish.service';
-import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
-import { ThemeService } from '../../core/services/theme.service';
+import { RankService } from '../../core/services/rank.service';
+import { ProfileDrawerComponent } from './profile-drawer.component';
+import { RankBadgeComponent } from './rank-badge.component';
 
 @Component({
     selector: 'app-header',
-    imports: [RouterLink],
+    imports: [RouterLink, ProfileDrawerComponent, RankBadgeComponent],
     template: `
         <header class="header" role="banner">
             <div class="header-container">
@@ -17,36 +18,13 @@ import { ThemeService } from '../../core/services/theme.service';
                 </a>
                 <nav class="header-actions" aria-label="Main actions">
                     <button
-                        class="icon-button theme-toggle"
-                        (click)="themeService.toggle()"
-                        [title]="themeService.theme() === 'light' ? 'Темна тема' : 'Світла тема'"
-                        [attr.aria-label]="themeService.theme() === 'light' ? 'Темна тема' : 'Світла тема'">
-                        <span class="material-symbols-outlined">
-                            {{ themeService.theme() === 'light' ? 'dark_mode' : 'light_mode' }}
-                        </span>
+                        class="icon-button rank-button"
+                        (click)="showProfile.set(true)"
+                        title="Кулінарний профіль"
+                        aria-label="Кулінарний профіль">
+                        <app-rank-badge [rank]="rankService.currentRank()" [size]="28" />
+                        <span class="rank-level">{{ rankService.currentRank().id }}</span>
                     </button>
-                    <button
-                        class="icon-button"
-                        (click)="handleExport()"
-                        title="Експорт даних"
-                        aria-label="Експорт даних">
-                        <span class="material-symbols-outlined">download</span>
-                    </button>
-                    <label
-                        class="icon-button"
-                        title="Імпорт даних"
-                        aria-label="Імпорт даних"
-                        tabindex="0"
-                        role="button"
-                        (keydown.enter)="importInput.click()">
-                        <span class="material-symbols-outlined">upload</span>
-                        <input
-                            #importInput
-                            type="file"
-                            accept=".json"
-                            class="sr-only"
-                            (change)="handleImport($event)" />
-                    </label>
                     <button
                         class="icon-button favorites-indicator"
                         [class.active]="dishService.filters().favoritesOnly"
@@ -81,6 +59,10 @@ import { ThemeService } from '../../core/services/theme.service';
                     </button>
                 </div>
             </div>
+        }
+
+        @if (showProfile()) {
+            <app-profile-drawer (closed)="showProfile.set(false)" />
         }
     `,
     styles: `
@@ -198,6 +180,34 @@ import { ThemeService } from '../../core/services/theme.service';
             border-radius: var(--radius-full);
         }
 
+        .rank-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px !important;
+            border-radius: var(--radius-full) !important;
+            background: var(--color-surface-hover);
+            transition: background var(--transition-fast), transform .15s;
+
+            &:hover {
+                background: var(--color-surface-active);
+                transform: scale(1.06);
+            }
+
+            :host-context([data-theme='dark']) & {
+                background: #2a2a2a;
+                &:hover { background: #333; }
+            }
+        }
+
+        .rank-level {
+            font-size: 11px;
+            font-weight: var(--weight-semibold);
+            color: var(--color-text-secondary);
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
         // Easter Egg Overlay
         .easter-egg-overlay {
             position: fixed;
@@ -280,10 +290,10 @@ import { ThemeService } from '../../core/services/theme.service';
 export class HeaderComponent {
     protected readonly dishService = inject(DishService);
     protected readonly favoritesService = inject(FavoritesService);
-    protected readonly themeService = inject(ThemeService);
-    private readonly exportImportService = inject(ExportImportService);
+    protected readonly rankService = inject(RankService);
 
     protected readonly showEasterEgg = signal(false);
+    protected readonly showProfile = signal(false);
     private logoClickCount = 0;
     private logoClickTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -303,18 +313,5 @@ export class HeaderComponent {
     protected toggleFavorites(): void {
         const current = this.dishService.filters().favoritesOnly;
         this.dishService.updateFilters({ favoritesOnly: !current });
-    }
-
-    protected handleExport(): void {
-        this.exportImportService.exportToJson();
-    }
-
-    protected handleImport(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (file) {
-            this.exportImportService.importFromJson(file);
-            input.value = '';
-        }
     }
 }
