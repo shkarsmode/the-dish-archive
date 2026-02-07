@@ -211,7 +211,7 @@ export class PullToRefreshDirective implements OnInit, OnDestroy {
                 this.indicator.style.transform = 'translateY(-60px)';
                 this.indicator.querySelector('.ptr-inner')!.classList.remove('ptr-boiling');
                 // Reload page
-                window.location.reload();
+                // window.location.reload();
             }, 900);
         } else {
             // Snap back
