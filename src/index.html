@@ -16,6 +16,106 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Preloader -->
+    <div id="app-preloader" class="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">
+                <span class="preloader-icon">🍽</span>
+                <h1 class="preloader-title">The Dish Archive</h1>
+                <div class="preloader-line"></div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #FAFAF7;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0.5s;
+        }
+        .preloader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .preloader-content {
+            text-align: center;
+            animation: preloaderFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .preloader-icon {
+            display: block;
+            font-size: 40px;
+            margin-bottom: 16px;
+            animation: preloaderFloat 2s ease-in-out infinite;
+        }
+        .preloader-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1C1C1C;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .preloader-line {
+            width: 48px;
+            height: 2px;
+            margin: 20px auto 0;
+            background: linear-gradient(90deg, transparent, #B8926A, transparent);
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .preloader-line::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, #B8926A 50%, transparent 100%);
+            animation: preloaderShimmer 1.4s ease-in-out infinite;
+        }
+        @keyframes preloaderFadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes preloaderFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes preloaderShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
     <app-root></app-root>
+    <script>
+        // Remove preloader once Angular app renders (hold for at least 1.2s)
+        var preloaderStart = Date.now();
+        var observer = new MutationObserver(function () {
+            var root = document.querySelector('app-root');
+            if (root && root.children.length > 0) {
+                observer.disconnect();
+                var elapsed = Date.now() - preloaderStart;
+                var minDelay = Math.max(0, 1200 - elapsed);
+                setTimeout(function () {
+                    var preloader = document.getElementById('app-preloader');
+                    if (preloader) {
+                        preloader.classList.add('fade-out');
+                        setTimeout(function () { preloader.remove(); }, 600);
+                    }
+                }, minDelay);
+            }
+        });
+        observer.observe(document.querySelector('app-root'), { childList: true });
+    </script>
 </body>
 </html>
