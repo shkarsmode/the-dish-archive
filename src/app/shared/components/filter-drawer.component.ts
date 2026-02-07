@@ -16,12 +16,15 @@ import { TagChipComponent } from './tag-chip.component';
     imports: [TagChipComponent, RangeSliderComponent],
     template: `
         @if (isOpen()) {
-            <div class="drawer-backdrop" [class.closing]="isClosing()" (click)="close()" aria-hidden="true"></div>
+            <div class="drawer-backdrop" [class.closing]="isClosing() || isDragClosing()" (click)="close()" aria-hidden="true"></div>
             <aside class="drawer" role="dialog" aria-label="Фільтри"
                    [class.open]="isOpen()"
                    [class.closing]="isClosing()"
+                   [class.drag-closing]="isDragClosing()"
+                   [class.snapping]="isSnapping()"
                    [style.transform]="dragTransform()"
-                   (animationend)="onAnimationDone()">
+                   (animationend)="onAnimationDone()"
+                   (transitionend)="onTransitionDone()">
                 <div class="drawer-handle"
                      (touchstart)="onDragStart($event)"
                      (touchmove)="onDragMove($event)"
@@ -173,6 +176,17 @@ import { TagChipComponent } from './tag-chip.component';
 
             &.closing {
                 animation: slideDown 250ms ease forwards;
+            }
+
+            &.drag-closing {
+                animation: none;
+                transition: transform 250ms ease, opacity 200ms ease;
+                opacity: 0;
+            }
+
+            &.snapping {
+                animation: none;
+                transition: transform 200ms var(--ease-out-expo);
             }
 
             @include m.desktop {
@@ -371,6 +385,7 @@ export class FilterDrawerComponent {
     protected readonly dishService = inject(DishService);
     protected readonly isOpen = signal(false);
     protected readonly isClosing = signal(false);
+    protected readonly isDragClosing = signal(false);
     protected readonly dragTransform = signal('');
 
     protected readonly allCategories = ALL_CATEGORIES;
@@ -391,9 +406,10 @@ export class FilterDrawerComponent {
     }
 
     protected onAnimationDone(): void {
-        if (this.isClosing()) {
+        if (this.isClosing() || this.isDragClosing()) {
             this.isOpen.set(false);
             this.isClosing.set(false);
+            this.isDragClosing.set(false);
             this.dragTransform.set('');
             document.body.style.overflow = '';
         }
@@ -421,9 +437,13 @@ export class FilterDrawerComponent {
         this.isDragging = false;
         const dy = this.dragCurrentY - this.dragStartY;
         if (dy > 80) {
-            this.close();
+            // Slide down from current position
+            this.isDragClosing.set(true);
+            this.dragTransform.set(`translateY(100vh)`);
         } else {
-            this.dragTransform.set('');
+            // Snap back with transition
+            this.isDragClosing.set(false);
+            this.dragTransform.set('translateY(0)');
         }
     }
 

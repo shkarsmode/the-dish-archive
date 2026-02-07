@@ -19,11 +19,14 @@ import { DishService } from '../../core/services/dish.service';
                 </span>
             </button>
             @if (isOpen()) {
-                <div class="sort-backdrop" [class.closing]="isClosing()" (click)="closeDropdown()"></div>
+                <div class="sort-backdrop" [class.closing]="isClosing() || isDragClosing()" (click)="closeDropdown()"></div>
                 <div class="sort-menu" role="listbox" aria-label="Варіанти сортування"
                      [class.closing]="isClosing()"
+                     [class.drag-closing]="isDragClosing()"
+                     [class.snapping]="isSnapping()"
                      [style.transform]="dragTransform()"
                      (animationend)="onAnimationDone()"
+                     (transitionend)="onTransitionDone()"
                      (touchstart)="onDragStart($event)"
                      (touchmove)="onDragMove($event)"
                      (touchend)="onDragEnd()">
@@ -139,6 +142,17 @@ import { DishService } from '../../core/services/dish.service';
                 animation: slideDown 200ms ease forwards;
             }
 
+            &.drag-closing {
+                animation: none;
+                transition: transform 250ms ease, opacity 200ms ease;
+                opacity: 0;
+            }
+
+            &.snapping {
+                animation: none;
+                transition: transform 200ms var(--ease-out-expo);
+            }
+
             @media (min-width: 768px) {
                 position: absolute;
                 top: calc(100% + var(--space-1));
@@ -229,6 +243,7 @@ export class SortDropdownComponent {
 
     protected readonly isOpen = signal(false);
     protected readonly isClosing = signal(false);
+    protected readonly isDragClosing = signal(false);
     protected readonly sortOptions = SORT_OPTIONS;
 
     private dragStartY = 0;
@@ -263,9 +278,10 @@ export class SortDropdownComponent {
     }
 
     protected onAnimationDone(): void {
-        if (this.isClosing()) {
+        if (this.isClosing() || this.isDragClosing()) {
             this.isOpen.set(false);
             this.isClosing.set(false);
+            this.isDragClosing.set(false);
             this.dragTransform.set('');
             this.unlockScroll();
         }
@@ -298,9 +314,13 @@ export class SortDropdownComponent {
         this.isDragging = false;
         const dy = this.dragCurrentY - this.dragStartY;
         if (dy > 60) {
-            this.closeDropdown();
+            // Slide down from current position
+            this.isDragClosing.set(true);
+            this.dragTransform.set(`translateY(100vh)`);
         } else {
-            this.dragTransform.set('');
+            // Snap back with transition
+            this.isDragClosing.set(false);
+            this.dragTransform.set('translateY(0)');
         }
     }
 

@@ -156,6 +156,8 @@ export class PullToRefreshDirective implements OnInit, OnDestroy {
 
     private onTouchStart(e: TouchEvent): void {
         if (window.scrollY > 5) return;
+        // Don't activate when a drawer/sort panel is open (they set overflow:hidden)
+        if (document.body.style.overflow === 'hidden') return;
         this.startY = e.touches[0].clientY;
         this.pulling = true;
         this.triggered = false;
