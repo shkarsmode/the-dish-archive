@@ -11,36 +11,21 @@
                 <span class="material-symbols-outlined random-icon">casino</span>
                 <span>Випадковий рецепт</span>
             </button>
+
+            <!-- Inline Stats Strip -->
+            @if (collectionStats(); as stats) {
+                <div class="stats-strip">
+                    <span class="strip-item"><strong>{{ stats.totalRecipes }}</strong> рецептів</span>
+                    <span class="strip-dot">·</span>
+                    <span class="strip-item"><strong>{{ stats.avgRating }}</strong> ★</span>
+                    <span class="strip-dot">·</span>
+                    <span class="strip-item"><strong>{{ stats.favoritesCount }}</strong> ❤</span>
+                    <span class="strip-dot">·</span>
+                    <span class="strip-item"><strong>{{ stats.totalCookingHours }}</strong> год</span>
+                </div>
+            }
         </div>
     </section>
-
-    <!-- Collection Stats -->
-    @if (collectionStats(); as stats) {
-        <section class="collection-stats" aria-label="Статистика колекції">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-emoji">📖</span>
-                    <span class="stat-number">{{ stats.totalRecipes }}</span>
-                    <span class="stat-desc">рецептів</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-emoji">⏱️</span>
-                    <span class="stat-number">{{ stats.totalCookingHours }}</span>
-                    <span class="stat-desc">годин готування</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-emoji">⭐</span>
-                    <span class="stat-number">{{ stats.avgRating }}</span>
-                    <span class="stat-desc">середня оцінка</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-emoji">💖</span>
-                    <span class="stat-number">{{ stats.favoritesCount }}</span>
-                    <span class="stat-desc">улюблених</span>
-                </div>
-            </div>
-        </section>
-    }
 
     <!-- Quick Category Chips -->
     <section class="quick-filters" aria-label="Швидкі фільтри">
