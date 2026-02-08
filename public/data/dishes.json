@@ -1,181 +1,165 @@
 {
     "version": "1.0.0",
-    "lastUpdated": "2026-02-07T12:00:00.000Z",
+    "lastUpdated": "2026-02-08T12:00:00.000Z",
     "dishes": [
         {
             "id": "dish-001",
-            "title": "Класичний борщ",
-            "slug": "klasychnyi-borshch",
-            "description": "Наваристий український борщ на яловичому бульйоні з пампушками. Той самий рецепт, який виходить ідеально щоразу.",
+            "title": "Ліниві хачапурі без духовки",
+            "slug": "lynyvi-khachapuri-bez-dukhovky",
+            "description": "Швидкі ліниві хачапурі на сковороді — м'яке тісто на сметані з тягучою начинкою з моцарели та сулугуні. Ідеальний сніданок за 30 хвилин.",
             "images": [
                 {
-                    "url": "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=800&q=80",
-                    "alt": "Тарілка борщу зі сметаною та зеленню",
+                    "url": "/images/lazy-khachapuri.jpg",
+                    "alt": "Ліниві хачапурі на чорній тарілці",
                     "isPrimary": true
-                },
-                {
-                    "url": "https://images.unsplash.com/photo-1562845929-4b3e92bbb69b?w=800&q=80",
-                    "alt": "Інгредієнти для борщу",
-                    "isPrimary": false
                 }
             ],
             "rating": 5,
-            "price": { "amount": 450, "currency": "UAH" },
-            "cookingTime": { "preparation": 30, "cooking": 90, "total": 120 },
-            "calories": 280,
-            "servings": 6,
-            "difficulty": "medium",
-            "tags": ["борщ", "суп", "українська кухня", "домашнє", "бульйон"],
-            "categories": ["soup", "everyday", "lunch", "dinner"],
+            "price": { "amount": 350, "currency": "UAH" },
+            "cookingTime": { "preparation": 15, "cooking": 20, "total": 35 },
+            "calories": 320,
+            "servings": 4,
+            "difficulty": "easy",
+            "tags": ["хачапурі", "сніданок", "на сковороді", "сир", "без духовки"],
+            "categories": ["breakfast", "quick", "everyday"],
+            "tasteProfile": {
+                "sweet": 1,
+                "salty": 3,
+                "sour": 1,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 4
+            },
+            "ingredients": [
+                { "name": "Сметана 15%", "amount": "400", "unit": "г", "optional": false },
+                { "name": "Сіль", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Цукор", "amount": "0.5", "unit": "ч.л.", "optional": false },
+                { "name": "Сода", "amount": "0.5", "unit": "ч.л.", "optional": false },
+                { "name": "Борошно", "amount": "400-450", "unit": "г", "optional": false },
+                { "name": "Сир моцарела", "amount": "300", "unit": "г", "optional": false },
+                { "name": "Сир сулугуні", "amount": "350", "unit": "г", "optional": false },
+                { "name": "Вершкове масло", "amount": "30", "unit": "г", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "До сметани додати сіль, цукор і соду. Ретельно перемішати — сметана вступає в реакцію та стає більш пухкою.", "duration": 3 },
+                { "order": 2, "description": "Поступово ввести борошно, підсипаючи частинами. Замісити м'яке, еластичне тісто — воно не повинно липнути до рук.", "duration": 5 },
+                { "order": 3, "description": "Готове тісто сформувати в кульку та поділити на 4 рівні частини." },
+                { "order": 4, "description": "Моцарелу й сулугуні натерти на крупну терку, змішати. Поділити сирну масу на 4 частини та сформувати з кожної кульку.", "duration": 5 },
+                { "order": 5, "description": "Кожен шматочок тіста розкачати, викласти всередину сирну кульку та ретельно защіпнути краї, щоб не залишалося отворів. Сформувати кульку й обережно розкачати качалкою в плаский хачапурі." },
+                { "order": 6, "description": "Смажити на добре розігрітій сухій сковороді на вогні нижче середнього. Готувати під кришкою, перевертаючи 2–3 рази до рум'яної скоринки з обох боків.", "duration": 15 },
+                { "order": 7, "description": "Готові хачапурі одразу змастити вершковим маслом." }
+            ],
+            "notes": "Борошна може піти трохи більше або менше — орієнтуйтеся на консистенцію тіста. Смажити обов'язково під кришкою, щоб сир всередині добре розплавився.",
+            "sourceUrl": "https://www.instagram.com/reel/DT5VVNfCJsn/",
+            "createdAt": "2026-02-08T10:00:00.000Z",
+            "updatedAt": "2026-02-08T10:00:00.000Z"
+        },
+        {
+            "id": "dish-002",
+            "title": "Млинці на молоці",
+            "slug": "mlyntsi-na-molotsi",
+            "description": "Перевірені пропорції для ідеальних тоненьких млинців — тісто міцне, але м'якеньке. Більше молока — тонші, менше — суттєвіші. Для солоної начинки — 1 ст.л. цукру.",
+            "images": [
+                {
+                    "url": "/images/mlyntsi-kitchen.jpg",
+                    "alt": "Млинці на тарілках на кухонному столі з гірляндою",
+                    "isPrimary": false
+                },
+                {
+                    "url": "/images/mlyntsi-top.jpg",
+                    "alt": "Млинці трубочками, стопкою та трикутниками — вид зверху",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 120, "currency": "UAH" },
+            "cookingTime": { "preparation": 10, "cooking": 30, "total": 40 },
+            "calories": 190,
+            "servings": 15,
+            "difficulty": "easy",
+            "tags": ["млинці", "сніданок", "на молоці", "класика", "тісто"],
+            "categories": ["breakfast", "quick", "everyday", "snack"],
             "tasteProfile": {
                 "sweet": 2,
+                "salty": 1,
+                "sour": 0,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 1
+            },
+            "ingredients": [
+                { "name": "Яйця", "amount": "3", "unit": "шт", "optional": false },
+                { "name": "Молоко", "amount": "500", "unit": "мл", "optional": false },
+                { "name": "Борошно", "amount": "250", "unit": "г", "optional": false },
+                { "name": "Цукор", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Сіль", "amount": "0.5", "unit": "ч.л.", "optional": false },
+                { "name": "Вершкове масло (розтоплене)", "amount": "30", "unit": "г", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "Яйця збити з цукром і сіллю до однорідності.", "duration": 2 },
+                { "order": 2, "description": "Додати половину молока та ВСЕ борошно. Замішати густеньке тісто без грудочок.", "duration": 3 },
+                { "order": 3, "description": "Влити решту молока, перемішати до рідкої консистенції. Додати розтоплене вершкове масло.", "duration": 2 },
+                { "order": 4, "description": "Добре розігріти сковороду, злегка змастити олією або маслом.", "duration": 2 },
+                { "order": 5, "description": "Набирати тісто половником, наливати на сковороду тонким шаром, швидко обертаючи, щоб тісто розтеклось рівномірно." },
+                { "order": 6, "description": "Смажити на середньому вогні до золотистих бочків — приблизно 1–1.5 хвилини з кожного боку.", "duration": 25 },
+                { "order": 7, "description": "Готові млинці складати стопкою, за бажанням змащуючи маслом. Подавати з улюбленою начинкою." }
+            ],
+            "notes": "Додаємо половину молока і ВСЕ борошно на етапі густого тіста — так легше уникнути грудочок. Тісто можна зберігати як заготовку, але тоді краще замінити масло на олію або дати тісту відійти від холодильника перед приготуванням.",
+            "sourceUrl": "https://www.instagram.com/p/DTlJVJPiNmc/",
+            "createdAt": "2026-02-08T11:00:00.000Z",
+            "updatedAt": "2026-02-08T11:00:00.000Z"
+        },
+        {
+            "id": "dish-003",
+            "title": "Млинці-брізолі з курячим фаршем",
+            "slug": "mlyntsi-brizoli-z-kuriachym-farshem",
+            "description": "Яєчні млинці з курячим фаршем, сиром та маринованими огірками або помідорами, запечені у духовці. Ідеальний варіант для обіду чи вечері.",
+            "images": [
+                {
+                    "url": "/images/brizoli-oven.jpg",
+                    "alt": "Млинці-брізолі у формі для випічки в духовці",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 280, "currency": "UAH" },
+            "cookingTime": { "preparation": 20, "cooking": 30, "total": 50 },
+            "calories": 210,
+            "servings": 6,
+            "difficulty": "easy",
+            "tags": ["брізолі", "курка", "фарш", "у духовці", "білкове"],
+            "categories": ["lunch", "dinner", "everyday", "healthy"],
+            "tasteProfile": {
+                "sweet": 0,
                 "salty": 3,
-                "sour": 3,
+                "sour": 1,
                 "bitter": 0,
                 "spicy": 1,
                 "umami": 4
             },
             "ingredients": [
-                { "name": "Яловичина на кістці", "amount": "500", "unit": "г", "optional": false },
-                { "name": "Буряк", "amount": "2", "unit": "шт", "optional": false },
-                { "name": "Картопля", "amount": "3", "unit": "шт", "optional": false },
-                { "name": "Капуста білокачанна", "amount": "300", "unit": "г", "optional": false },
-                { "name": "Морква", "amount": "1", "unit": "шт", "optional": false },
-                { "name": "Цибуля ріпчаста", "amount": "1", "unit": "шт", "optional": false },
-                { "name": "Томатна паста", "amount": "2", "unit": "ст.л.", "optional": false },
-                { "name": "Часник", "amount": "3", "unit": "зубчики", "optional": false },
-                { "name": "Лавровий лист", "amount": "2", "unit": "шт", "optional": false },
-                { "name": "Оцет", "amount": "1", "unit": "ст.л.", "optional": false },
-                { "name": "Сметана", "amount": "за смаком", "unit": "", "optional": true },
-                { "name": "Зелень", "amount": "за смаком", "unit": "", "optional": true }
+                { "name": "Яйця", "amount": "5", "unit": "шт", "optional": false },
+                { "name": "Молоко", "amount": "5", "unit": "ст.л.", "optional": false },
+                { "name": "Курячий фарш", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Цибуля", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Часник", "amount": "2", "unit": "зубчики", "optional": false },
+                { "name": "Сіль", "amount": "за смаком", "unit": "", "optional": false },
+                { "name": "Перець", "amount": "за смаком", "unit": "", "optional": false },
+                { "name": "Сир тертий", "amount": "80", "unit": "г", "optional": false },
+                { "name": "Мариновані огірки", "amount": "70", "unit": "г", "optional": true },
+                { "name": "Помідор", "amount": "70", "unit": "г", "optional": true }
             ],
             "steps": [
-                { "order": 1, "description": "Зварити бульйон з яловичини на кістці. Зняти піну. Варити 1–1.5 години до м'якості м'яса.", "duration": 90 },
-                { "order": 2, "description": "Буряк натерти на великій тертці та тушкувати на сковороді з оцтом і томатною пастою 15 хвилин.", "duration": 15 },
-                { "order": 3, "description": "Картоплю нарізати кубиками, додати в проціджений бульйон і варити 10 хвилин." },
-                { "order": 4, "description": "Моркву і цибулю нарізати та обсмажити до золотистості.", "duration": 10 },
-                { "order": 5, "description": "Додати до бульйону нашатковану капусту, варити 5 хвилин." },
-                { "order": 6, "description": "Додати бурякову та морквяно-цибулеву зажарки. Варити ще 10 хвилин." },
-                { "order": 7, "description": "Додати часник, лавровий лист, сіль, перець. Дати настоятися 20 хвилин." },
-                { "order": 8, "description": "Подавати зі сметаною та свіжою зеленню." }
+                { "order": 1, "description": "Збити яйця з молоком, сіллю і перцем. Посмажити тонкі яєчні млинці на сковороді з обох боків на малому вогні. Має вийти 6 млинців.", "duration": 10 },
+                { "order": 2, "description": "Подрібнити цибулю і часник, додати до фаршу. Посолити, поперчити й все добре вимішати.", "duration": 5 },
+                { "order": 3, "description": "Змастити кожен млинець тонким шаром фаршу. Викласти нарізаний огірок чи помідор, присипати тертим сиром." },
+                { "order": 4, "description": "Скрутити млинці в рулети й щільно укласти у форму для випічки.", "duration": 3 },
+                { "order": 5, "description": "Запікати при 180°C протягом 30 хвилин. Подавати гарячими.", "duration": 30 }
             ],
-            "notes": "Борщ стає смачнішим наступного дня. Буряк обов'язково тушкувати окремо з оцтом — інакше втратить колір.",
-            "sourceUrl": "https://example.com/borshch-recipe",
-            "createdAt": "2026-01-15T10:30:00.000Z",
-            "updatedAt": "2026-01-15T10:30:00.000Z"
-        },
-        {
-            "id": "dish-002",
-            "title": "Тірамісу",
-            "slug": "tiramisu",
-            "description": "Найніжніший італійський десерт з маскарпоне та кавовою просочкою. Без яєць у чистому вигляді — безпечний та неймовірно смачний.",
-            "images": [
-                {
-                    "url": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800&q=80",
-                    "alt": "Порція тірамісу з какао",
-                    "isPrimary": true
-                },
-                {
-                    "url": "https://images.unsplash.com/photo-1542124948-dc391252a940?w=800&q=80",
-                    "alt": "Тірамісу у скляній формі",
-                    "isPrimary": false
-                }
-            ],
-            "rating": 5,
-            "price": { "amount": 800, "currency": "UAH" },
-            "cookingTime": { "preparation": 30, "cooking": 0, "total": 30 },
-            "calories": 450,
-            "servings": 8,
-            "difficulty": "easy",
-            "tags": ["десерт", "італійська кухня", "без випічки", "маскарпоне", "кава"],
-            "categories": ["dessert", "festive"],
-            "tasteProfile": {
-                "sweet": 5,
-                "salty": 0,
-                "sour": 0,
-                "bitter": 2,
-                "spicy": 0,
-                "umami": 1
-            },
-            "ingredients": [
-                { "name": "Маскарпоне", "amount": "500", "unit": "г", "optional": false },
-                { "name": "Вершки 33%", "amount": "300", "unit": "мл", "optional": false },
-                { "name": "Цукрова пудра", "amount": "100", "unit": "г", "optional": false },
-                { "name": "Савоярді (печиво)", "amount": "200", "unit": "г", "optional": false },
-                { "name": "Еспресо (охолоджений)", "amount": "300", "unit": "мл", "optional": false },
-                { "name": "Какао-порошок", "amount": "2", "unit": "ст.л.", "optional": false },
-                { "name": "Ванільний екстракт", "amount": "1", "unit": "ч.л.", "optional": true },
-                { "name": "Амаретто", "amount": "2", "unit": "ст.л.", "optional": true }
-            ],
-            "steps": [
-                { "order": 1, "description": "Збити вершки до стійких піків. Прибрати в холодильник.", "duration": 5 },
-                { "order": 2, "description": "Маскарпоне змішати з цукровою пудрою та ванільним екстрактом до однорідності.", "duration": 3 },
-                { "order": 3, "description": "Обережно вмішати збиті вершки в маскарпоне рухами знизу вгору.", "duration": 3 },
-                { "order": 4, "description": "Приготувати еспресо, охолодити. Додати амаретто за бажанням." },
-                { "order": 5, "description": "Кожне савоярді швидко вмочити в каву (не замочувати!) і викласти перший шар." },
-                { "order": 6, "description": "Викласти половину крему, розрівняти. Повторити шар печива та крему." },
-                { "order": 7, "description": "Накрити і прибрати в холодильник мінімум на 6 годин, краще на ніч.", "duration": 360 },
-                { "order": 8, "description": "Перед подачею щедро посипати какао через сито." }
-            ],
-            "notes": "Головний секрет — не замочувати савоярді, а швидко вмочувати. Десерт обов'язково має постояти в холодильнику мінімум 6 годин.",
-            "sourceUrl": "https://example.com/tiramisu-recipe",
-            "createdAt": "2026-01-20T14:00:00.000Z",
-            "updatedAt": "2026-01-25T09:15:00.000Z"
-        },
-        {
-            "id": "dish-003",
-            "title": "Том Ям з креветками",
-            "slug": "tom-yam-z-krevetkami",
-            "description": "Пряний тайський суп з креветками, грибами та кокосовим молоком. Ідеальний баланс кислого, гострого та солодкого.",
-            "images": [
-                {
-                    "url": "https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=800&q=80",
-                    "alt": "Тарілка том яму з креветками",
-                    "isPrimary": true
-                }
-            ],
-            "rating": 4.5,
-            "price": { "amount": 650, "currency": "UAH" },
-            "cookingTime": { "preparation": 15, "cooking": 25, "total": 40 },
-            "calories": 190,
-            "servings": 4,
-            "difficulty": "medium",
-            "tags": ["суп", "тайська кухня", "креветки", "гостре", "кокосове молоко"],
-            "categories": ["soup", "dinner", "healthy", "quick"],
-            "tasteProfile": {
-                "sweet": 1,
-                "salty": 3,
-                "sour": 4,
-                "bitter": 0,
-                "spicy": 4,
-                "umami": 5
-            },
-            "ingredients": [
-                { "name": "Креветки (великі)", "amount": "400", "unit": "г", "optional": false },
-                { "name": "Кокосове молоко", "amount": "400", "unit": "мл", "optional": false },
-                { "name": "Гриби шампіньйони", "amount": "200", "unit": "г", "optional": false },
-                { "name": "Паста Том Ям", "amount": "3", "unit": "ст.л.", "optional": false },
-                { "name": "Лемонграс", "amount": "2", "unit": "стебла", "optional": false },
-                { "name": "Лайм", "amount": "2", "unit": "шт", "optional": false },
-                { "name": "Рибний соус", "amount": "2", "unit": "ст.л.", "optional": false },
-                { "name": "Цукор", "amount": "1", "unit": "ч.л.", "optional": false },
-                { "name": "Помідори черрі", "amount": "100", "unit": "г", "optional": true },
-                { "name": "Кінза", "amount": "за смаком", "unit": "", "optional": true },
-                { "name": "Перець чілі", "amount": "1", "unit": "шт", "optional": true }
-            ],
-            "steps": [
-                { "order": 1, "description": "Лемонграс відбити ножем і нарізати шматочками по 3 см. Гриби нарізати пластинками.", "duration": 5 },
-                { "order": 2, "description": "Закип'ятити 500 мл води, додати лемонграс та пасту Том Ям. Варити 5 хвилин.", "duration": 5 },
-                { "order": 3, "description": "Додати гриби, варити 3 хвилини.", "duration": 3 },
-                { "order": 4, "description": "Влити кокосове молоко, довести до кипіння.", "duration": 3 },
-                { "order": 5, "description": "Додати креветки. Варити 3–4 хвилини до готовності.", "duration": 4 },
-                { "order": 6, "description": "Зняти з вогню. Додати рибний соус, сік лайма, цукор. Перемішати." },
-                { "order": 7, "description": "Розлити по тарілках, додати черрі, кінзу та чілі за смаком." }
-            ],
-            "notes": "Не переварювати креветки — стануть гумовими. Лемонграс не їдять, його виловлюють з тарілки. Гостроту регулювати кількістю пасти.",
-            "sourceUrl": "https://example.com/tom-yam-recipe",
-            "createdAt": "2026-02-01T18:45:00.000Z",
-            "updatedAt": "2026-02-01T18:45:00.000Z"
+            "notes": "Начинки можуть бути різними — перець, гриби, шпинат. Робіть млинці якомога тоншими. Можна комбінувати два варіанти начинки: частину з огірками, частину з помідорами.",
+            "sourceUrl": "https://www.instagram.com/reel/DGqz03ptyUK/",
+            "createdAt": "2026-02-08T12:00:00.000Z",
+            "updatedAt": "2026-02-08T12:00:00.000Z"
         }
     ]
 }
