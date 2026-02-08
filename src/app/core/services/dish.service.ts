@@ -23,8 +23,8 @@ export class DishService {
     readonly searchQuery = signal('');
     readonly sortOption = signal<SortOption>('date-desc');
     readonly filters = signal<FilterState>({ ...DEFAULT_FILTER_STATE });
-    readonly currentPage = signal(1);
-    readonly pageSize = signal(12);
+    readonly visibleCount = signal(12);
+    private readonly batchSize = 12;
 
     readonly allTags = computed(() => {
         const tagSet = new Set<string>();
@@ -153,15 +153,12 @@ export class DishService {
 
     readonly totalFilteredCount = computed(() => this.filteredDishes().length);
 
-    readonly totalPages = computed(() =>
-        Math.max(1, Math.ceil(this.filteredDishes().length / this.pageSize()))
-    );
+    readonly visibleDishes = computed(() => {
+        return this.filteredDishes().slice(0, this.visibleCount());
+    });
 
-    readonly paginatedDishes = computed(() => {
-        const page = this.currentPage();
-        const size = this.pageSize();
-        const startIndex = (page - 1) * size;
-        return this.filteredDishes().slice(startIndex, startIndex + size);
+    readonly hasMore = computed(() => {
+        return this.visibleCount() < this.filteredDishes().length;
     });
 
     readonly hasActiveFilters = computed(() => {
@@ -199,9 +196,15 @@ export class DishService {
         return computed(() => this.allDishesSignal().find(dish => dish.slug === slug));
     }
 
+    loadMore(): void {
+        if (this.hasMore()) {
+            this.visibleCount.update(c => c + this.batchSize);
+        }
+    }
+
     updateSearch(query: string): void {
         this.searchQuery.set(query);
-        this.currentPage.set(1);
+        this.visibleCount.set(this.batchSize);
     }
 
     updateSort(option: SortOption): void {
@@ -210,18 +213,13 @@ export class DishService {
 
     updateFilters(partialFilters: Partial<FilterState>): void {
         this.filters.update(current => ({ ...current, ...partialFilters }));
-        this.currentPage.set(1);
+        this.visibleCount.set(this.batchSize);
     }
 
     resetFilters(): void {
         this.filters.set({ ...DEFAULT_FILTER_STATE });
         this.searchQuery.set('');
-        this.currentPage.set(1);
-    }
-
-    goToPage(page: number): void {
-        const clamped = Math.max(1, Math.min(page, this.totalPages()));
-        this.currentPage.set(clamped);
+        this.visibleCount.set(this.batchSize);
     }
 
     importDishes(data: DishData): void {

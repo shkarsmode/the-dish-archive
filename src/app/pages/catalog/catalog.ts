@@ -1,4 +1,4 @@
-import { Component, computed, inject, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
@@ -27,14 +27,45 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
     templateUrl: './catalog.html',
     styleUrl: './catalog.scss',
 })
-export class CatalogPage {
+export class CatalogPage implements OnDestroy {
     protected readonly dishService = inject(DishService);
     private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
+    protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
+
+    private observer: IntersectionObserver | null = null;
 
     protected readonly quickCategories: DishCategory[] = ['quick', 'healthy', 'dessert', 'everyday', 'festive', 'vegetarian'];
     protected readonly skeletonItems = Array.from({ length: 6 });
+    protected loadingMore = false;
+
+    constructor() {
+        effect(() => {
+            const sentinel = this.scrollSentinel();
+            this.observer?.disconnect();
+            if (sentinel) {
+                this.observer = new IntersectionObserver(
+                    (entries) => {
+                        const entry = entries[0];
+                        if (entry.isIntersecting && this.dishService.hasMore() && !this.loadingMore) {
+                            this.loadingMore = true;
+                            setTimeout(() => {
+                                this.dishService.loadMore();
+                                this.loadingMore = false;
+                            }, 400);
+                        }
+                    },
+                    { rootMargin: '200px' }
+                );
+                this.observer.observe(sentinel.nativeElement);
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.observer?.disconnect();
+    }
 
     // ── Time-of-day greeting ──
     protected readonly greeting = computed(() => {
@@ -88,30 +119,5 @@ export class CatalogPage {
 
     protected onSlotResult(dish: Dish): void {
         this.router.navigate(['/dish', dish.slug]);
-    }
-
-    protected goToPage(page: number): void {
-        this.dishService.goToPage(page);
-        document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    protected getPageNumbers(): number[] {
-        const total = this.dishService.totalPages();
-        const current = this.dishService.currentPage();
-        const pages: number[] = [];
-
-        if (total <= 7) {
-            for (let i = 1; i <= total; i++) pages.push(i);
-        } else {
-            pages.push(1);
-            if (current > 3) pages.push(-1);
-            for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-                pages.push(i);
-            }
-            if (current < total - 2) pages.push(-1);
-            pages.push(total);
-        }
-
-        return pages;
     }
 }

@@ -87,52 +87,28 @@
                         <app-skeleton-card />
                     }
                 </div>
-            } @else if (dishService.paginatedDishes().length === 0) {
+            } @else if (dishService.visibleDishes().length === 0) {
                 <app-empty-state
                     icon="search_off"
                     title="Нічого не знайдено"
                     description="Спробуйте змінити параметри пошуку або скинути фільтри" />
             } @else {
                 <div class="dish-grid">
-                    @for (dish of dishService.paginatedDishes(); track dish.id) {
+                    @for (dish of dishService.visibleDishes(); track dish.id) {
                         <app-dish-card [dish]="dish" />
                     }
                 </div>
 
-                <!-- Pagination -->
-                @if (dishService.totalPages() > 1) {
-                    <nav class="pagination" aria-label="Навігація по сторінках">
-                        <button
-                            class="page-button"
-                            [disabled]="dishService.currentPage() === 1"
-                            (click)="goToPage(dishService.currentPage() - 1)"
-                            aria-label="Попередня сторінка">
-                            <span class="material-symbols-outlined">chevron_left</span>
-                        </button>
-
-                        @for (pageNumber of getPageNumbers(); track $index) {
-                            @if (pageNumber === -1) {
-                                <span class="page-ellipsis">...</span>
-                            } @else {
-                                <button
-                                    class="page-button"
-                                    [class.active]="pageNumber === dishService.currentPage()"
-                                    (click)="goToPage(pageNumber)"
-                                    [attr.aria-current]="pageNumber === dishService.currentPage() ? 'page' : null"
-                                    [attr.aria-label]="'Сторінка ' + pageNumber">
-                                    {{ pageNumber }}
-                                </button>
-                            }
-                        }
-
-                        <button
-                            class="page-button"
-                            [disabled]="dishService.currentPage() === dishService.totalPages()"
-                            (click)="goToPage(dishService.currentPage() + 1)"
-                            aria-label="Наступна сторінка">
-                            <span class="material-symbols-outlined">chevron_right</span>
-                        </button>
-                    </nav>
+                <!-- Infinite Scroll Sentinel -->
+                @if (dishService.hasMore()) {
+                    <div class="load-more-sentinel" #scrollSentinel>
+                        <div class="load-more-spinner">
+                            <span class="spinner-dot"></span>
+                            <span class="spinner-dot"></span>
+                            <span class="spinner-dot"></span>
+                        </div>
+                        <span class="load-more-text">Завантажуємо ще…</span>
+                    </div>
                 }
             }
         </div>
