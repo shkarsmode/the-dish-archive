@@ -849,6 +849,322 @@
             "sourceUrl": "https://www.instagram.com/reel/DRP3r2QiAfZ/",
             "createdAt": "2026-02-08T22:30:00.000Z",
             "updatedAt": "2026-02-08T22:30:00.000Z"
+        },
+        {
+            "id": "dish-022",
+            "title": "Чізкейк «Snickers»",
+            "slug": "chizkejk-snickers",
+            "description": "Розкішний чізкейк у стилі батончика Snickers — пісочна основа з какао, ніжна сирна начинка, домашня карамель з підсмаженим арахісом зверху. Ідеальний святковий десерт.",
+            "images": [
+                {
+                    "url": "/images/cheesecake-snickers.jpg",
+                    "alt": "Чізкейк Снікерс з карамеллю та арахісом",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 650, "currency": "UAH" },
+            "cookingTime": { "preparation": 30, "cooking": 55, "total": 505 },
+            "calories": 420,
+            "servings": 8,
+            "difficulty": "hard",
+            "tags": ["чізкейк", "снікерс", "карамель", "арахіс", "какао", "крем сир"],
+            "categories": ["dessert", "baking", "festive"],
+            "tasteProfile": {
+                "sweet": 5,
+                "salty": 2,
+                "sour": 1,
+                "bitter": 1,
+                "spicy": 0,
+                "umami": 1
+            },
+            "ingredients": [
+                { "name": "Цукрове печиво", "amount": "300", "unit": "г", "optional": false },
+                { "name": "Вершкове масло (для основи)", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Какао порошок", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Крем сир", "amount": "700", "unit": "г", "optional": false },
+                { "name": "Яйця", "amount": "3", "unit": "шт", "optional": false },
+                { "name": "Цукор", "amount": "130", "unit": "г", "optional": false },
+                { "name": "Ванільний цукор", "amount": "20", "unit": "г", "optional": false },
+                { "name": "Вершки 33-36%", "amount": "200", "unit": "мл", "optional": false },
+                { "name": "Лимонний сік", "amount": "1", "unit": "ст.л.", "optional": false },
+                { "name": "Цукор (для карамелі)", "amount": "150", "unit": "г", "optional": false },
+                { "name": "Вершкове масло (для карамелі)", "amount": "40", "unit": "г", "optional": false },
+                { "name": "Гарячі вершки (для карамелі)", "amount": "100", "unit": "мл", "optional": false },
+                { "name": "Сіль", "amount": "1", "unit": "дрібка", "optional": false },
+                { "name": "Арахіс підсмажений", "amount": "100", "unit": "г", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "Печиво подрібнити в крихту, додати розтоплене вершкове масло та какао порошок. Все ретельно перемішати.", "duration": 5 },
+                { "order": 2, "description": "У роз'ємній формі, застеленій пергаментом, сформувати основу та бортики за допомогою склянки. Відправити на 30 хв. до холодильника або морозильної камери.", "duration": 30 },
+                { "order": 3, "description": "Для чізкейку крем сир поєднати з яйцями, цукром, ванільним цукром, вершками. Все перемішати вінчиком до однорідності, вкінці додати лимонний сік.", "duration": 10 },
+                { "order": 4, "description": "Випікати чізкейк у розігрітій до 200°C духовці 10 хв., після чого зменшити температуру до 110°C і випікати ще 45 хв.", "duration": 55 },
+                { "order": 5, "description": "Дати чізкейку повністю охолонути. Структура гарячого чізкейка трішки грає всередині, але після охолодження стає стабільною." },
+                { "order": 6, "description": "Для карамелі у посудині з товстим дном на мінімальному вогні розтопити цукор, додати вершкове масло, гарячі вершки та сіль. Проварити 4-5 хв. — карамель має трішки загуснути та ліниво стікати з лопатки.", "duration": 10 },
+                { "order": 7, "description": "До теплої (не гарячої) карамелі додати підсмажений арахіс, покрити чізкейк зверху та відправити на 6-8 год. до холодильника.", "duration": 420 }
+            ],
+            "notes": "Чізкейк обов'язково потрібно повністю охолодити перед нанесенням карамелі. Карамель має бути теплою, але не гарячою, інакше чізкейк може потріскатися. Найкраще залишити в холодильнику на ніч.",
+            "sourceUrl": "https://www.instagram.com/reel/DPI8GmBDIvq/",
+            "createdAt": "2026-02-08T23:00:00.000Z",
+            "updatedAt": "2026-02-08T23:00:00.000Z"
+        },
+        {
+            "id": "dish-023",
+            "title": "Ягідні кекси",
+            "slug": "yahidni-keksy",
+            "description": "Швидкі ягідні кекси за кілька хвилин — м'яке тісто з чорницями або будь-якими сезонними ягодами. Ідеальна літня випічка на 10-12 штук.",
+            "images": [
+                {
+                    "url": "/images/berry-muffins.jpg",
+                    "alt": "Ягідні кекси з чорницями",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 180, "currency": "UAH" },
+            "cookingTime": { "preparation": 10, "cooking": 20, "total": 30 },
+            "calories": 250,
+            "servings": 12,
+            "difficulty": "easy",
+            "tags": ["кекси", "ягоди", "чорниці", "випічка", "швидко"],
+            "categories": ["baking", "dessert", "quick"],
+            "tasteProfile": {
+                "sweet": 4,
+                "salty": 0,
+                "sour": 1,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 0
+            },
+            "ingredients": [
+                { "name": "Борошно", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Цукор", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Вершкове масло", "amount": "90", "unit": "г", "optional": false },
+                { "name": "Молоко", "amount": "100", "unit": "мл", "optional": false },
+                { "name": "Яйця", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Розпушувач", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Ягоди (чорниці)", "amount": "150", "unit": "г", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "До масла кімнатної температури додати цукор і ретельно перемішати.", "duration": 2 },
+                { "order": 2, "description": "Додати яйця та молоко, перемішати до однорідності.", "duration": 2 },
+                { "order": 3, "description": "Просіяти борошно з розпушувачем, додати до тіста і ретельно перемішати.", "duration": 3 },
+                { "order": 4, "description": "Додати ягоди (можна будь-які — чорниці, малину тощо). Акуратно перемішати, щоб не пошкодити ягоди.", "duration": 2 },
+                { "order": 5, "description": "Викласти тісто у форми для кексів і випікати при 200°C протягом 20 хвилин до зарум'янення.", "duration": 20 }
+            ],
+            "notes": "Можна використовувати будь-які сезонні ягоди. Якщо ягоди кислі (наприклад, смородина), варто додати більше цукру. Кількість кексів залежить від розміру форми — 10-12 шт.",
+            "sourceUrl": "https://www.instagram.com/reel/DLmszEftALn/",
+            "createdAt": "2026-02-08T23:30:00.000Z",
+            "updatedAt": "2026-02-08T23:30:00.000Z"
+        },
+        {
+            "id": "dish-024",
+            "title": "Високобілковий хліб",
+            "slug": "vysokobilkovyj-khlib",
+            "description": "Корисний високобілковий хліб без борошна — на основі вівсяних пластівців та кисломолочного сиру. Ідеальна основа для бутербродів з авокадо або рибкою. Вихід — 2 булки.",
+            "images": [
+                {
+                    "url": "/images/protein-bread.jpg",
+                    "alt": "Високобілковий хліб з насінням",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 4,
+            "price": { "amount": 200, "currency": "UAH" },
+            "cookingTime": { "preparation": 10, "cooking": 50, "total": 60 },
+            "calories": 180,
+            "servings": 2,
+            "difficulty": "easy",
+            "tags": ["хліб", "високобілковий", "корисний", "без борошна", "вівсянка", "ПП"],
+            "categories": ["healthy", "breakfast", "baking"],
+            "tasteProfile": {
+                "sweet": 0,
+                "salty": 2,
+                "sour": 1,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 2
+            },
+            "ingredients": [
+                { "name": "Вівсяні пластівці", "amount": "250", "unit": "г", "optional": false },
+                { "name": "Яйця", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Сир кисломолочний", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Сіль", "amount": "0.5", "unit": "ч.л.", "optional": false },
+                { "name": "Розпушувач", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Насіння (зернята, кунжут)", "amount": "2-3", "unit": "ст.л.", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Вівсяні пластівці перемолоти в блендері до стану борошна.", "duration": 2 },
+                { "order": 2, "description": "До кисломолочного сиру додати яйця та переблендерити до однорідності.", "duration": 2 },
+                { "order": 3, "description": "Всипати вівсяне борошно, змішане з розпушувачем та сіллю, і замісити однорідну масу.", "duration": 3 },
+                { "order": 4, "description": "Розділити тісто на дві частини, викласти на деко, застелене просиліконеним пергаментом. Сформувати дві булки та посипати насінням.", "duration": 3 },
+                { "order": 5, "description": "Випікати в добре розігрітій духовці при 180°C протягом 45-55 хвилин (орієнтуватися на свою духовку).", "duration": 50 }
+            ],
+            "notes": "Можна використовувати безглютенову вівсянку та безлактозний сир. Чудово поєднується з авокадо, рибою або іншими корисними жирами для повноцінного прийому їжі.",
+            "sourceUrl": "https://www.instagram.com/reel/DLXw9EuNAym/",
+            "createdAt": "2026-02-08T23:45:00.000Z",
+            "updatedAt": "2026-02-08T23:45:00.000Z"
+        },
+        {
+            "id": "dish-025",
+            "title": "Сінабони з корицею",
+            "slug": "sinabony-z-koryceyu",
+            "description": "Класичні сінабони — м'які дріжджові булочки з начинкою з кориці та цукру, покриті ніжним кремом з крем-сиру. Вихід — 8-10 штук.",
+            "images": [
+                {
+                    "url": "/images/cinnamon-rolls.jpg",
+                    "alt": "Сінабони з корицею та кремом",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 350, "currency": "UAH" },
+            "cookingTime": { "preparation": 40, "cooking": 35, "total": 195 },
+            "calories": 380,
+            "servings": 10,
+            "difficulty": "medium",
+            "tags": ["сінабони", "кориця", "булочки", "дріжджові", "крем-сир"],
+            "categories": ["baking", "dessert"],
+            "tasteProfile": {
+                "sweet": 5,
+                "salty": 1,
+                "sour": 0,
+                "bitter": 0,
+                "spicy": 1,
+                "umami": 0
+            },
+            "ingredients": [
+                { "name": "Борошно", "amount": "540", "unit": "г", "optional": false },
+                { "name": "Молоко", "amount": "250", "unit": "мл", "optional": false },
+                { "name": "Сухі дріжджі", "amount": "8", "unit": "г", "optional": false },
+                { "name": "Яйця", "amount": "2", "unit": "шт", "optional": false },
+                { "name": "Вершкове масло (для тіста)", "amount": "85", "unit": "г", "optional": false },
+                { "name": "Цукор (для тіста)", "amount": "135", "unit": "г", "optional": false },
+                { "name": "Сіль", "amount": "5", "unit": "г", "optional": false },
+                { "name": "Цукор (для начинки)", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Кориця", "amount": "30", "unit": "г", "optional": false },
+                { "name": "Вершкове масло (для начинки)", "amount": "80", "unit": "г", "optional": false },
+                { "name": "Крем сир", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Цукрова пудра", "amount": "100", "unit": "г", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "Приготувати опару: у теплому молоці розчинити дріжджі, додати трішки цукру та борошна. Перемішати, накрити та залишити в теплому місці на 10-15 хвилин.", "duration": 15 },
+                { "order": 2, "description": "Просіяти борошно, додати цукор та сіль, перемішати. Вбити яйця, влити опару та розтоплене вершкове масло. Замісити тісто спочатку лопаткою, потім руками, поки не перестане липнути.", "duration": 15 },
+                { "order": 3, "description": "Сформувати кульку, покласти в змащену олією миску, накрити харчовою плівкою та залишити в теплому місці на 1-2 години до подвоєння об'єму.", "duration": 120 },
+                { "order": 4, "description": "Тісто обім'яти та розкачати у прямокутник товщиною 0.5 см. Змастити м'яким вершковим маслом та рівномірно посипати сумішшю цукру з корицею, залишивши один край без посипки.", "duration": 10 },
+                { "order": 5, "description": "Скрутити тісто в тугий рулет та нарізати на 8-10 рівних частин. Викласти у форму для випікання.", "duration": 5 },
+                { "order": 6, "description": "Випікати в розігрітій до 180°C духовці протягом 30-35 хвилин до золотистого кольору.", "duration": 35 },
+                { "order": 7, "description": "Для крему змішати крем-сир з цукровою пудрою до однорідності. Гарячі булочки відразу змастити кремом та дати постояти 10 хвилин.", "duration": 12 }
+            ],
+            "notes": "Тісто має добре відлипати від рук — якщо після довгого вимішування все ще липне, додайте трішечки борошна. Крем наносити саме на гарячі булочки, щоб він трохи розтанув та просочив тісто.",
+            "sourceUrl": "https://www.instagram.com/reel/DPoHfGFiN3v/",
+            "createdAt": "2026-02-08T23:50:00.000Z",
+            "updatedAt": "2026-02-08T23:50:00.000Z"
+        },
+        {
+            "id": "dish-026",
+            "title": "Круасани з шинкою і сиром",
+            "slug": "kruasany-z-shynkoyu-i-syrom",
+            "description": "Швидкі круасани з готового листково-дріжджового тіста з начинкою з шинки та сиру, посипані кунжутом. Чудова закуска або перекус.",
+            "images": [
+                {
+                    "url": "/images/ham-cheese-croissants.jpg",
+                    "alt": "Круасани з шинкою і сиром посипані кунжутом",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 4,
+            "price": { "amount": 200, "currency": "UAH" },
+            "cookingTime": { "preparation": 15, "cooking": 25, "total": 40 },
+            "calories": 310,
+            "servings": 8,
+            "difficulty": "easy",
+            "tags": ["круасани", "шинка", "сир", "листкове тісто", "кунжут", "перекус"],
+            "categories": ["snack", "quick", "everyday"],
+            "tasteProfile": {
+                "sweet": 0,
+                "salty": 3,
+                "sour": 0,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 3
+            },
+            "ingredients": [
+                { "name": "Листково-дріжджове тісто", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Шинка", "amount": "200", "unit": "г", "optional": false },
+                { "name": "Сир", "amount": "150", "unit": "г", "optional": false },
+                { "name": "Жовток", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Кунжут", "amount": "2", "unit": "ст.л.", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Листково-дріжджове тісто розкачати та нарізати на трикутники.", "duration": 5 },
+                { "order": 2, "description": "На широкий край кожного трикутника покласти шинку та сир.", "duration": 5 },
+                { "order": 3, "description": "Скрутити круасани від широкого краю до вузького, надаючи їм характерну форму.", "duration": 5 },
+                { "order": 4, "description": "Змастити круасани збитим жовтком та посипати кунжутом.", "duration": 2 },
+                { "order": 5, "description": "Випікати в розігрітій до 180°C духовці протягом 20-30 хвилин до золотистого кольору.", "duration": 25 }
+            ],
+            "notes": "Використовуйте готове листково-дріжджове тісто для швидкості. Можна експериментувати з начинками — додати гірчицю, зелень або інші сири.",
+            "sourceUrl": "https://www.instagram.com/reel/DP151uWDdhN/",
+            "createdAt": "2026-02-08T23:55:00.000Z",
+            "updatedAt": "2026-02-08T23:55:00.000Z"
+        },
+        {
+            "id": "dish-027",
+            "title": "Сочники з сиром",
+            "slug": "sochnyky-z-syrom",
+            "description": "Класичні сочники — ніжне пісочне тісто на сметані з кисломолочною сирною начинкою. М'які, розсипчасті та дуже смачні. Вихід — 12-13 штук.",
+            "images": [
+                {
+                    "url": "/images/sochnyky.jpg",
+                    "alt": "Сочники з сиром присипані цукровою пудрою",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 220, "currency": "UAH" },
+            "cookingTime": { "preparation": 80, "cooking": 30, "total": 110 },
+            "calories": 290,
+            "servings": 13,
+            "difficulty": "easy",
+            "tags": ["сочники", "сир", "випічка", "печиво", "сметана"],
+            "categories": ["baking", "dessert", "everyday"],
+            "tasteProfile": {
+                "sweet": 4,
+                "salty": 1,
+                "sour": 1,
+                "bitter": 0,
+                "spicy": 0,
+                "umami": 1
+            },
+            "ingredients": [
+                { "name": "Борошно (для тіста)", "amount": "300", "unit": "г", "optional": false },
+                { "name": "Вершкове масло", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Розпушувач", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Яйце", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Цукор (для тіста)", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Сметана (для тіста)", "amount": "100", "unit": "г", "optional": false },
+                { "name": "Ванільний цукор", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Сир кисломолочний", "amount": "300", "unit": "г", "optional": false },
+                { "name": "Цукор (для начинки)", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Борошно (для начинки)", "amount": "1", "unit": "ст.л.", "optional": false },
+                { "name": "Сметана (для начинки)", "amount": "1", "unit": "ст.л.", "optional": false },
+                { "name": "Білок", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Ванільний цукор (для начинки)", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Жовток (для змащування)", "amount": "1", "unit": "шт", "optional": false },
+                { "name": "Цукрова пудра", "amount": "2", "unit": "ст.л.", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "До борошна додати розпушувач і м'яке вершкове масло, перетерти руками в крихту.", "duration": 5 },
+                { "order": 2, "description": "В окремій мисці з'єднати яйце, цукор, ванільний цукор і сметану. Додати до борошняної крихти та замісити м'яке тісто. Загорнути в пакет і відправити в холодильник на 1 годину.", "duration": 65 },
+                { "order": 3, "description": "Для начинки з'єднати сир, цукор, борошно, сметану, білок і ванільний цукор. Перемішати до однорідності.", "duration": 5 },
+                { "order": 4, "description": "Тісто поділити на 12-13 частин. Кожну розкачати в коло, на одну половину викласти чайну ложку сирної начинки і накрити другою половиною тіста.", "duration": 15 },
+                { "order": 5, "description": "Змастити сочники жовтком і випікати в розігрітій до 180°C духовці протягом 30 хвилин.", "duration": 30 },
+                { "order": 6, "description": "За бажанням остиглі сочники присипати цукровою пудрою." }
+            ],
+            "notes": "Тісто м'яке — обов'язково охолодити в холодильнику перед формуванням. Не кладіть занадто багато начинки, щоб сочники не розкрились під час випікання.",
+            "sourceUrl": "https://www.instagram.com/reel/DAOOwJzNs36/",
+            "createdAt": "2026-02-09T00:00:00.000Z",
+            "updatedAt": "2026-02-09T00:00:00.000Z"
         }
     ]
 }
