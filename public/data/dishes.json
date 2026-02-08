@@ -786,6 +786,11 @@
                     "url": "/images/trdelnyk.jpg",
                     "alt": "Трдельник з шоколадом та кокосовою стружкою",
                     "isPrimary": true
+                },
+                {
+                    "url": "/images/trdelnyk2.jpg",
+                    "alt": "Трдельник крупним планом",
+                    "isPrimary": false
                 }
             ],
             "rating": 5,
