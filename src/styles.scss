@@ -168,3 +168,17 @@ button, [role="link"] {
         }
     }
 }
+
+
+// View Transitions polish
+@supports (view-transition-name: none) {
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 320ms;
+    }
+
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+}

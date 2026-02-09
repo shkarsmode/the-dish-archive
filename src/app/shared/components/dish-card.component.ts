@@ -18,6 +18,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                     [src]="primaryImage()"
                     [alt]="dish().images[0]?.alt || dish().title"
                     loading="lazy"
+                    [style.viewTransitionName]="'dish-image-' + dish().id"
                     (error)="onImageError($event)" />
                 <div class="card-image-overlay">
                     <app-favorites-button [dishId]="dish().id" />
@@ -287,8 +288,19 @@ export class DishCardComponent {
         return CATEGORY_LABELS[category] ?? category;
     }
 
+    private runWithViewTransition(navigate: () => Promise<boolean> | void): void {
+        const documentAny = document as unknown as { startViewTransition?: (cb: () => Promise<unknown> | void) => void };
+
+        if (typeof documentAny.startViewTransition !== 'function') {
+            void navigate();
+            return;
+        }
+
+        documentAny.startViewTransition(() => navigate());
+    }
+
     protected openDish(): void {
-        this.router.navigate(['/dish', this.dish().slug]);
+        this.runWithViewTransition(() => this.router.navigate(['/dish', this.dish().slug]));
     }
 
     protected toggleCompare(event: Event): void {

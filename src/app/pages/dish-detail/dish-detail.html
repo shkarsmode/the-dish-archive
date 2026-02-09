@@ -43,6 +43,7 @@
                 [src]="currentImage"
                 [alt]="currentImageAlt"
                 class="hero-image"
+                [style.viewTransitionName]="'dish-image-' + dish()!.id"
                 (error)="onImageError($event)" />
 
             <!-- Image Gallery Thumbnails -->
