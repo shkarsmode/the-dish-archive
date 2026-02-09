@@ -132,6 +132,29 @@
     }
 }
 
+.nav-action-btn {
+    @include m.flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    transition: background-color var(--transition-fast),
+                color var(--transition-fast);
+
+    @include m.hover {
+        background: var(--color-surface-hover);
+        color: var(--color-accent);
+    }
+
+    &:active {
+        transform: scale(0.92);
+    }
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+}
+
 // ── Hero Image ──────────────────────────────────────────────
 .detail-hero {
     position: relative;

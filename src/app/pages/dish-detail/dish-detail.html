@@ -34,6 +34,9 @@
                     </a>
                 }
                 <app-favorites-button [dishId]="dish()!.id" />
+                <button class="nav-action-btn share-btn" (click)="shareDish()" aria-label="Поділитися рецептом">
+                    <span class="material-symbols-outlined">share</span>
+                </button>
             </div>
         </nav>
 

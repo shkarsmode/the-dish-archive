@@ -14,6 +14,7 @@ import {
 import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
 import { PaletteService } from '../../core/services/palette.service';
+import { ToastService } from '../../core/services/toast.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
@@ -34,6 +35,7 @@ export class DishDetailPage {
     private readonly router = inject(Router);
     protected readonly checklistService = inject(ChecklistService);
     private readonly paletteService = inject(PaletteService);
+    private readonly toastService = inject(ToastService);
     private readonly el = inject(ElementRef<HTMLElement>);
 
     private readonly slug = toSignal(
@@ -116,6 +118,33 @@ export class DishDetailPage {
 
     protected selectImage(index: number): void {
         this.activeImageIndex.set(index);
+    }
+
+    protected async shareDish(): Promise<void> {
+        const d = this.dish();
+        if (!d) return;
+
+        const url = window.location.href;
+        const text = `${d.title} — ${d.cookingTime.total} хв · ${d.calories} ккал`;
+
+        // Native share (mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: d.title, text, url });
+                return;
+            } catch {
+                // User cancelled — do nothing
+                return;
+            }
+        }
+
+        // Fallback: copy link
+        try {
+            await navigator.clipboard.writeText(url);
+            this.toastService.success('Посилання скопійовано');
+        } catch {
+            this.toastService.error('Не вдалося скопіювати');
+        }
     }
 
     protected onHeroLoad(event: Event): void {
