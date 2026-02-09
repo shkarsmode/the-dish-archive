@@ -269,13 +269,25 @@ export class SortDropdownComponent {
             this.closeDropdown();
         } else {
             this.isClosing.set(false);
+            this.isDragClosing.set(false);
             this.isOpen.set(true);
             this.lockScroll();
         }
     }
 
     protected closeDropdown(): void {
-        this.isClosing.set(true);
+        if (window.innerWidth >= 768) {
+            // Desktop: no backdrop animation — close immediately with a tiny delay
+            // so the scaleIn reverse animation can play
+            this.isClosing.set(true);
+            setTimeout(() => {
+                this.isOpen.set(false);
+                this.isClosing.set(false);
+                this.dragTransform.set('');
+            }, 160);
+        } else {
+            this.isClosing.set(true);
+        }
     }
 
     protected onAnimationDone(): void {
