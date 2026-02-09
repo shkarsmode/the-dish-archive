@@ -133,20 +133,7 @@
             @if (getTasteEntries(dish()!).length > 0) {
                 <div class="detail-section">
                     <h2 class="section-title">Смаковий профіль</h2>
-                    <div class="taste-profile">
-                        @for (taste of getTasteEntries(dish()!); track taste.key) {
-                            <div class="taste-row">
-                                <span class="taste-label">{{ taste.label }}</span>
-                                <div class="taste-bar-track">
-                                    <div
-                                        class="taste-bar-fill"
-                                        [style.width.%]="taste.value * 20">
-                                    </div>
-                                </div>
-                                <span class="taste-value">{{ taste.value }}</span>
-                            </div>
-                        }
-                    </div>
+                    <app-taste-radar [tasteProfile]="dish()!.tasteProfile" />
                 </div>
             }
 

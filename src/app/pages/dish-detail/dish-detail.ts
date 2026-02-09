@@ -16,10 +16,11 @@ import { DishService } from '../../core/services/dish.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
+import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
 
 @Component({
     selector: 'app-dish-detail',
-    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent],
+    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
 })
