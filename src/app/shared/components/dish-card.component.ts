@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { CompareService } from '../../core/services/compare.service';
+import { DisplayMode } from '../../core/services/settings.service';
 import { RevealDirective } from '../directives/reveal.directive';
 import { FavoritesButtonComponent } from './favorites-button.component';
 import { RatingStarsComponent } from './rating-stars.component';
@@ -10,6 +11,10 @@ import { RatingStarsComponent } from './rating-stars.component';
     selector: 'app-dish-card',
     imports: [RatingStarsComponent, FavoritesButtonComponent],
     hostDirectives: [RevealDirective],
+    host: {
+        '[class.mode-compact]': "displayMode() === 'compact'",
+        '[class.mode-spacious]': "displayMode() === 'spacious'",
+    },
     template: `
         <article class="dish-card" (click)="openDish()" role="link" tabindex="0"
                  (keydown.enter)="openDish()" [attr.aria-label]="dish().title">
@@ -69,6 +74,10 @@ import { RatingStarsComponent } from './rating-stars.component';
     styles: `
         @use 'mixins' as m;
 
+        :host {
+            min-width: 0;
+        }
+
         .dish-card {
             display: flex;
             flex-direction: column;
@@ -76,6 +85,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             border-radius: var(--radius-lg);
             overflow: hidden;
             cursor: pointer;
+            min-width: 0;
             box-shadow: var(--shadow-card);
             transition: transform var(--transition-base),
                         box-shadow var(--transition-base);
@@ -108,11 +118,11 @@ import { RatingStarsComponent } from './rating-stars.component';
                 border-radius: 12px;
             }
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 aspect-ratio: 4 / 3;
             }
 
-            :host-context([data-display-mode='spacious']) & {
+            :host(.mode-spacious) & {
                 aspect-ratio: 16 / 10;
             }
         }
@@ -215,7 +225,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                 padding: var(--space-4);
             }
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 gap: var(--space-1);
                 padding: var(--space-2);
 
@@ -224,7 +234,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                 }
             }
 
-            :host-context([data-display-mode='spacious']) & {
+            :host(.mode-spacious) & {
                 gap: var(--space-3);
                 padding: var(--space-4);
 
@@ -254,7 +264,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             line-height: var(--leading-snug);
             color: var(--color-text-primary);
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 font-size: var(--text-base);
                 line-height: var(--leading-tight);
                 display: -webkit-box;
@@ -263,7 +273,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                 overflow: hidden;
             }
 
-            :host-context([data-display-mode='spacious']) & {
+            :host(.mode-spacious) & {
                 font-size: var(--text-xl);
             }
         }
@@ -274,13 +284,13 @@ import { RatingStarsComponent } from './rating-stars.component';
             color: var(--color-text-secondary);
             line-height: var(--leading-relaxed);
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 -webkit-line-clamp: 1;
                 font-size: var(--text-xs);
                 line-height: var(--leading-normal);
             }
 
-            :host-context([data-display-mode='spacious']) & {
+            :host(.mode-spacious) & {
                 -webkit-line-clamp: 3;
                 font-size: var(--text-md);
             }
@@ -294,20 +304,20 @@ import { RatingStarsComponent } from './rating-stars.component';
             padding-top: var(--space-3);
             border-top: 1px solid var(--color-border-light);
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 padding-top: var(--space-2);
                 gap: var(--space-1);
             }
 
-            :host-context([data-display-mode='compact']) & app-rating-stars {
+            :host(.mode-compact) & app-rating-stars {
                 display: none;
             }
 
-            :host-context([data-display-mode='compact']) & .meta-price {
+            :host(.mode-compact) & .meta-price {
                 display: none;
             }
 
-            :host-context([data-display-mode='spacious']) & {
+            :host(.mode-spacious) & {
                 padding-top: var(--space-4);
                 gap: var(--space-3);
             }
@@ -318,7 +328,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             gap: var(--space-4);
             flex-wrap: wrap;
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 gap: var(--space-2);
             }
         }
@@ -335,7 +345,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                 font-size: 15px;
             }
 
-            :host-context([data-display-mode='compact']) & {
+            :host(.mode-compact) & {
                 font-size: 10px;
                 gap: 2px;
 
@@ -348,6 +358,7 @@ import { RatingStarsComponent } from './rating-stars.component';
 })
 export class DishCardComponent {
     readonly dish = input.required<Dish>();
+    readonly displayMode = input<DisplayMode>('cozy');
 
     protected readonly compareService = inject(CompareService);
     private readonly router = inject(Router);

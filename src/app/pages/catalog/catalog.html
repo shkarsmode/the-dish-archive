@@ -95,7 +95,7 @@
             } @else {
                 <div class="dish-grid">
                     @for (dish of dishService.visibleDishes(); track dish.id) {
-                        <app-dish-card [dish]="dish" />
+                        <app-dish-card [dish]="dish" [displayMode]="settingsService.displayMode()" />
                     }
                 </div>
 
