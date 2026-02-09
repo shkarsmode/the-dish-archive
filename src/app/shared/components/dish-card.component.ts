@@ -57,7 +57,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                             <span class="material-symbols-outlined">local_fire_department</span>
                             {{ dish().calories }} ккал
                         </span>
-                        <span class="meta-item">
+                        <span class="meta-item meta-price">
                             <span class="material-symbols-outlined">payments</span>
                             {{ dish().price.amount }} грн
                         </span>
@@ -297,6 +297,14 @@ import { RatingStarsComponent } from './rating-stars.component';
             :host-context([data-display-mode='compact']) & {
                 padding-top: var(--space-2);
                 gap: var(--space-1);
+            }
+
+            :host-context([data-display-mode='compact']) & app-rating-stars {
+                display: none;
+            }
+
+            :host-context([data-display-mode='compact']) & .meta-price {
+                display: none;
             }
 
             :host-context([data-display-mode='spacious']) & {
