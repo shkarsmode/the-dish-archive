@@ -131,11 +131,13 @@ export class TasteRadarComponent {
         ).map((points, i) => ({ level: i, points: points })).map(r => r.points)
     );
 
+    private readonly BASE_R = this.R / this.LEVELS; // first ring = minimum radius
+
     readonly shapePoints = computed(() => {
         const tp = this.tasteProfile();
         return this.KEYS.map((key, i) => {
             const val = Math.max(0, Math.min(this.MAX, tp[key] ?? 0));
-            const r = (val / this.MAX) * this.R || 2;
+            const r = this.BASE_R + (val / this.MAX) * (this.R - this.BASE_R);
             const p = this.point(i, r);
             return `${p.x},${p.y}`;
         }).join(' ');
@@ -165,7 +167,7 @@ export class TasteRadarComponent {
         const tp = this.tasteProfile();
         return this.KEYS.map((key, i) => {
             const val = Math.max(0, Math.min(this.MAX, tp[key] ?? 0));
-            const r = (val / this.MAX) * this.R || 2;
+            const r = this.BASE_R + (val / this.MAX) * (this.R - this.BASE_R);
             const p = this.point(i, r);
             return { key, value: val, x: p.x, y: p.y };
         });
