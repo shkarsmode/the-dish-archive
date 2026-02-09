@@ -150,6 +150,7 @@
     aspect-ratio: 16 / 10;
     object-fit: cover;
     animation: fadeIn 400ms ease;
+    border-radius: 24px;
 
     @include m.tablet {
         aspect-ratio: 16 / 9;

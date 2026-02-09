@@ -13,7 +13,7 @@
 html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
 }
@@ -145,6 +145,11 @@ button, [role="link"] {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* Utility class: apply smooth scrolling only when explicitly needed */
+.smooth-scroll {
+    scroll-behavior: smooth !important;
 }
 
 // ── Reveal Animation ────────────────────────────────────────

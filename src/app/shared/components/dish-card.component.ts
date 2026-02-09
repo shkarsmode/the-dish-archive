@@ -105,6 +105,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                 height: 100%;
                 object-fit: cover;
                 transition: transform 400ms var(--ease-out-expo);
+                border-radius: 24px;
             }
         }
 
