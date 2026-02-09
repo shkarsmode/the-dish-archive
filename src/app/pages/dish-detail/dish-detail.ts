@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -13,6 +13,7 @@ import {
 } from '../../core/models/dish.model';
 import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
+import { PaletteService } from '../../core/services/palette.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
@@ -23,12 +24,17 @@ import { TasteRadarComponent } from '../../shared/components/taste-radar.compone
     imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
+    host: {
+        style: 'display: block; transition: --color-accent 600ms ease, --color-accent-light 600ms ease, --color-accent-dark 600ms ease, --color-accent-hover 600ms ease;',
+    },
 })
 export class DishDetailPage {
     private readonly route = inject(ActivatedRoute);
     private readonly dishService = inject(DishService);
     private readonly router = inject(Router);
     protected readonly checklistService = inject(ChecklistService);
+    private readonly paletteService = inject(PaletteService);
+    private readonly el = inject(ElementRef<HTMLElement>);
 
     private readonly slug = toSignal(
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))
@@ -110,6 +116,18 @@ export class DishDetailPage {
 
     protected selectImage(index: number): void {
         this.activeImageIndex.set(index);
+    }
+
+    protected onHeroLoad(event: Event): void {
+        const img = event.target as HTMLImageElement;
+        const palette = this.paletteService.extractFromImage(img);
+        if (!palette) return;
+
+        const host = this.el.nativeElement;
+        host.style.setProperty('--color-accent', palette.accent);
+        host.style.setProperty('--color-accent-light', palette.accentLight);
+        host.style.setProperty('--color-accent-dark', palette.accentDark);
+        host.style.setProperty('--color-accent-hover', palette.accentHover);
     }
 
     protected onImageError(event: Event): void {

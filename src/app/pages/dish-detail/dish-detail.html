@@ -44,6 +44,7 @@
                 [alt]="currentImageAlt"
                 class="hero-image"
                 [style.viewTransitionName]="'dish-image-' + dish()!.id"
+                (load)="onHeroLoad($event)"
                 (error)="onImageError($event)" />
 
             <!-- Image Gallery Thumbnails -->

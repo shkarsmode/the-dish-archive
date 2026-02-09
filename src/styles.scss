@@ -1,6 +1,31 @@
 @use 'styles/tokens';
 @use 'styles/animations';
 
+// ── Register accent properties for smooth transitions ───────
+@property --color-accent {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #B8926A;
+}
+
+@property --color-accent-light {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #F5EDE3;
+}
+
+@property --color-accent-dark {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #96754F;
+}
+
+@property --color-accent-hover {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #A6835E;
+}
+
 // ── Reset & Base ────────────────────────────────────────────
 *,
 *::before,
