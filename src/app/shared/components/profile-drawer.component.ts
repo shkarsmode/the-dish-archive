@@ -76,7 +76,7 @@ import { RankBadgeComponent } from './rank-badge.component';
             <div class="settings-section">
                 <h3 class="section-label">Налаштування</h3>
                 <div class="settings-list">
-                    <button class="setting-row" (click)="themeService.toggle()">
+                    <button class="setting-row" (click)="themeService.toggle($event)">
                         <span class="material-symbols-outlined setting-icon">
                             {{ themeService.theme() === 'light' ? 'dark_mode' : 'light_mode' }}
                         </span>
