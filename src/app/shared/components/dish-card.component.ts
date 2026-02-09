@@ -107,6 +107,14 @@ import { RatingStarsComponent } from './rating-stars.component';
                 transition: transform 400ms var(--ease-out-expo);
                 border-radius: 12px;
             }
+
+            :host-context([data-display-mode='compact']) & {
+                aspect-ratio: 4 / 3;
+            }
+
+            :host-context([data-display-mode='spacious']) & {
+                aspect-ratio: 16 / 10;
+            }
         }
 
         .card-image-overlay {
@@ -206,6 +214,24 @@ import { RatingStarsComponent } from './rating-stars.component';
             @media (min-width: 768px) {
                 padding: var(--space-4);
             }
+
+            :host-context([data-display-mode='compact']) & {
+                gap: var(--space-1);
+                padding: var(--space-2);
+
+                @media (min-width: 768px) {
+                    padding: var(--space-3);
+                }
+            }
+
+            :host-context([data-display-mode='spacious']) & {
+                gap: var(--space-3);
+                padding: var(--space-4);
+
+                @media (min-width: 768px) {
+                    padding: var(--space-5);
+                }
+            }
         }
 
         .card-categories {
@@ -227,6 +253,19 @@ import { RatingStarsComponent } from './rating-stars.component';
             font-weight: var(--weight-semibold);
             line-height: var(--leading-snug);
             color: var(--color-text-primary);
+
+            :host-context([data-display-mode='compact']) & {
+                font-size: var(--text-base);
+                line-height: var(--leading-tight);
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            :host-context([data-display-mode='spacious']) & {
+                font-size: var(--text-xl);
+            }
         }
 
         .card-description {
@@ -234,6 +273,17 @@ import { RatingStarsComponent } from './rating-stars.component';
             font-size: var(--text-sm);
             color: var(--color-text-secondary);
             line-height: var(--leading-relaxed);
+
+            :host-context([data-display-mode='compact']) & {
+                -webkit-line-clamp: 1;
+                font-size: var(--text-xs);
+                line-height: var(--leading-normal);
+            }
+
+            :host-context([data-display-mode='spacious']) & {
+                -webkit-line-clamp: 3;
+                font-size: var(--text-md);
+            }
         }
 
         .card-meta {
@@ -243,12 +293,26 @@ import { RatingStarsComponent } from './rating-stars.component';
             margin-top: var(--space-1);
             padding-top: var(--space-3);
             border-top: 1px solid var(--color-border-light);
+
+            :host-context([data-display-mode='compact']) & {
+                padding-top: var(--space-2);
+                gap: var(--space-1);
+            }
+
+            :host-context([data-display-mode='spacious']) & {
+                padding-top: var(--space-4);
+                gap: var(--space-3);
+            }
         }
 
         .meta-items {
             display: flex;
             gap: var(--space-4);
             flex-wrap: wrap;
+
+            :host-context([data-display-mode='compact']) & {
+                gap: var(--space-2);
+            }
         }
 
         .meta-item {
@@ -261,6 +325,15 @@ import { RatingStarsComponent } from './rating-stars.component';
 
             .material-symbols-outlined {
                 font-size: 15px;
+            }
+
+            :host-context([data-display-mode='compact']) & {
+                font-size: 10px;
+                gap: 2px;
+
+                .material-symbols-outlined {
+                    font-size: 13px;
+                }
             }
         }
     `,

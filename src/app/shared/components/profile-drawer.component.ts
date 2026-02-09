@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, output } from '@a
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { CookRank, RANKS, RankService } from '../../core/services/rank.service';
+import { DisplayMode, SettingsService } from '../../core/services/settings.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { RankBadgeComponent } from './rank-badge.component';
 
@@ -92,6 +93,23 @@ import { RankBadgeComponent } from './rank-badge.component';
                         <span class="setting-text">Експорт даних</span>
                         <span class="material-symbols-outlined setting-arrow">chevron_right</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- Display Mode -->
+            <div class="settings-section">
+                <h3 class="section-label">Відображення</h3>
+                <div class="display-mode-control">
+                    @for (mode of displayModes; track mode.value) {
+                        <button
+                            class="display-mode-option"
+                            [class.active]="settingsService.displayMode() === mode.value"
+                            (click)="setDisplayMode(mode.value)">
+                            <span class="material-symbols-outlined display-mode-icon">{{ mode.icon }}</span>
+                            <span class="display-mode-label">{{ mode.label }}</span>
+                            <span class="display-mode-hint">{{ mode.hint }}</span>
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -408,6 +426,66 @@ import { RankBadgeComponent } from './rank-badge.component';
             color: var(--color-text-tertiary);
         }
 
+        // ── Display Mode ───
+        .display-mode-control {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-2);
+        }
+
+        .display-mode-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: var(--space-3) var(--space-2);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
+            border: 1.5px solid var(--color-border-light);
+            cursor: pointer;
+            transition: border-color var(--transition-fast),
+                        background var(--transition-fast);
+            text-align: center;
+            font-family: var(--font-body);
+
+            :host-context([data-theme='dark']) & {
+                background: #242424;
+                border-color: #333;
+            }
+
+            @include m.hover {
+                border-color: var(--color-border);
+            }
+
+            &.active {
+                border-color: var(--color-accent);
+                background: var(--color-accent-light);
+
+                .display-mode-icon {
+                    color: var(--color-accent);
+                }
+            }
+        }
+
+        .display-mode-icon {
+            font-size: 20px;
+            color: var(--color-text-tertiary);
+            transition: color var(--transition-fast);
+        }
+
+        .display-mode-label {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--color-text-primary);
+            line-height: 1.2;
+        }
+
+        .display-mode-hint {
+            font-size: 10px;
+            color: var(--color-text-tertiary);
+            line-height: 1.3;
+        }
+
         // ── All Ranks Grid ───
         .all-ranks-section {
             margin-bottom: var(--space-4);
@@ -487,11 +565,18 @@ export class ProfileDrawerComponent {
     protected readonly rankService = inject(RankService);
     protected readonly themeService = inject(ThemeService);
     protected readonly favoritesService = inject(FavoritesService);
+    protected readonly settingsService = inject(SettingsService);
     private readonly exportImportService = inject(ExportImportService);
     readonly closed = output<void>();
 
     readonly allRanks = RANKS;
     readonly totalRanks = RANKS.length;
+
+    readonly displayModes = [
+        { value: 'compact' as DisplayMode, icon: 'view_comfy', label: 'Компактно', hint: 'Більше страв' },
+        { value: 'cozy' as DisplayMode, icon: 'grid_view', label: 'Звично', hint: 'Баланс' },
+        { value: 'spacious' as DisplayMode, icon: 'view_agenda', label: 'Просторо', hint: 'Великі картки' },
+    ];
 
     readonly unlockedCount = computed(() =>
         RANKS.filter(r => r.threshold <= this.rankService.totalDishes()).length
@@ -503,5 +588,9 @@ export class ProfileDrawerComponent {
 
     handleExport(): void {
         this.exportImportService.exportToJson();
+    }
+
+    setDisplayMode(mode: DisplayMode): void {
+        this.settingsService.updateSettings({ displayMode: mode });
     }
 }

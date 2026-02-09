@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { DishCardComponent } from '../../shared/components/dish-card.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 import { FilterDrawerComponent } from '../../shared/components/filter-drawer.component';
@@ -31,6 +32,7 @@ export class CatalogPage implements OnDestroy {
     protected readonly dishService = inject(DishService);
     private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
+    protected readonly settingsService = inject(SettingsService);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
     protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
 
