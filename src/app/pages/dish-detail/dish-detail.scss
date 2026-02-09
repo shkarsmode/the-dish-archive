@@ -292,16 +292,43 @@
 // ── Stats Bar ───────────────────────────────────────────────
 .stats-bar {
     display: flex;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-    padding: var(--space-5);
+    flex-direction: column;
+    gap: 0;
+    padding: var(--space-4) var(--space-5);
     background: var(--color-surface);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-lg);
     margin-bottom: var(--space-6);
 
+    // On desktop, single row
     @include m.tablet {
-        gap: var(--space-6);
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--space-5);
+        padding: var(--space-5) var(--space-6);
+    }
+}
+
+.stats-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+
+    @include m.tablet {
+        gap: var(--space-5);
+    }
+}
+
+.stats-row--top {
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border-light);
+    margin-bottom: var(--space-3);
+
+    @include m.tablet {
+        padding-bottom: 0;
+        border-bottom: none;
+        margin-bottom: 0;
     }
 }
 
@@ -312,20 +339,16 @@
 }
 
 .stat-icon {
-    font-size: 20px;
+    font-size: 18px;
     color: var(--color-accent);
-}
-
-.stat-content {
-    display: flex;
-    align-items: baseline;
-    gap: 3px;
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'opsz' 20;
 }
 
 .stat-value {
     font-size: var(--text-md);
     font-weight: var(--weight-semibold);
     font-variant-numeric: tabular-nums;
+    color: var(--color-text-primary);
 }
 
 .stat-label {

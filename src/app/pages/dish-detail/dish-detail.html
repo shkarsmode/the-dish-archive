@@ -83,40 +83,34 @@
 
             <!-- Stats Bar -->
             <div class="stats-bar">
-                <div class="stat">
-                    <app-rating-stars [rating]="dish()!.rating" />
-                </div>
-                <div class="stat">
-                    <span class="material-symbols-outlined stat-icon">schedule</span>
-                    <div class="stat-content">
+                <div class="stats-row stats-row--top">
+                    <div class="stat">
+                        <app-rating-stars [rating]="dish()!.rating" />
+                    </div>
+                    <div class="stat">
+                        <span class="material-symbols-outlined stat-icon">schedule</span>
                         <span class="stat-value">{{ dish()!.cookingTime.total }}</span>
                         <span class="stat-label">хв</span>
                     </div>
-                </div>
-                <div class="stat">
-                    <span class="material-symbols-outlined stat-icon">local_fire_department</span>
-                    <div class="stat-content">
+                    <div class="stat">
+                        <span class="material-symbols-outlined stat-icon">local_fire_department</span>
                         <span class="stat-value">{{ dish()!.calories }}</span>
                         <span class="stat-label">ккал</span>
                     </div>
                 </div>
-                <div class="stat">
-                    <span class="material-symbols-outlined stat-icon">payments</span>
-                    <div class="stat-content">
+                <div class="stats-row stats-row--bottom">
+                    <div class="stat">
+                        <span class="material-symbols-outlined stat-icon">payments</span>
                         <span class="stat-value">{{ dish()!.price.amount }}</span>
                         <span class="stat-label">грн</span>
                     </div>
-                </div>
-                <div class="stat">
-                    <span class="material-symbols-outlined stat-icon">group</span>
-                    <div class="stat-content">
+                    <div class="stat">
+                        <span class="material-symbols-outlined stat-icon">group</span>
                         <span class="stat-value">{{ dish()!.servings }}</span>
                         <span class="stat-label">порц.</span>
                     </div>
-                </div>
-                <div class="stat">
-                    <span class="material-symbols-outlined stat-icon">trending_up</span>
-                    <div class="stat-content">
+                    <div class="stat">
+                        <span class="material-symbols-outlined stat-icon">trending_up</span>
                         <span class="stat-value">{{ getDifficultyLabel(dish()!.difficulty) }}</span>
                     </div>
                 </div>
