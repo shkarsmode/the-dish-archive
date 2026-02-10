@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { CompareService } from '../../core/services/compare.service';
+import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
 import { DisplayMode } from '../../core/services/settings.service';
 import { RevealDirective } from '../directives/reveal.directive';
 import { FavoritesButtonComponent } from './favorites-button.component';
@@ -14,6 +15,7 @@ import { RatingStarsComponent } from './rating-stars.component';
     host: {
         '[class.mode-compact]': "displayMode() === 'compact'",
         '[class.mode-spacious]': "displayMode() === 'spacious'",
+        '[attr.data-slug]': 'dish().slug',
     },
     template: `
         <article class="dish-card" (click)="openDish()" role="link" tabindex="0"
@@ -361,6 +363,7 @@ export class DishCardComponent {
     readonly displayMode = input<DisplayMode>('cozy');
 
     protected readonly compareService = inject(CompareService);
+    private readonly scrollRestorationService = inject(ScrollRestorationService);
     private readonly router = inject(Router);
 
     private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -393,6 +396,7 @@ export class DishCardComponent {
     }
 
     protected openDish(): void {
+        this.scrollRestorationService.saveDishSlug(this.dish().slug);
         this.runWithViewTransition(() => this.router.navigate(['/dish', this.dish().slug]));
     }
 

@@ -1,8 +1,9 @@
-import { Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { DishCardComponent } from '../../shared/components/dish-card.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
@@ -33,6 +34,7 @@ export class CatalogPage implements OnDestroy {
     private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
     protected readonly settingsService = inject(SettingsService);
+    private readonly scrollRestoration = inject(ScrollRestorationService);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
     protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
 
@@ -62,6 +64,28 @@ export class CatalogPage implements OnDestroy {
                 );
                 this.observer.observe(sentinel.nativeElement);
             }
+        });
+
+        // Scroll restoration: scroll to & focus the card the user came from
+        afterNextRender(() => {
+            const slug = this.scrollRestoration.consume();
+            if (!slug) return;
+
+            // Wait for cards to render, then scroll & focus
+            const tryScroll = (attempts = 0) => {
+                const card = document.querySelector<HTMLElement>(`app-dish-card[data-slug="${slug}"]`);
+                if (card) {
+                    // Small delay to let Angular's scroll restoration settle
+                    setTimeout(() => {
+                        card.scrollIntoView({ block: 'center', behavior: 'instant' });
+                        const focusable = card.querySelector<HTMLElement>('.dish-card') ?? card;
+                        focusable.focus({ preventScroll: true });
+                    }, 50);
+                } else if (attempts < 20) {
+                    requestAnimationFrame(() => tryScroll(attempts + 1));
+                }
+            };
+            tryScroll();
         });
     }
 
