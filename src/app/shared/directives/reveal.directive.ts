@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Directive, ElementRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
 
 @Directive({
     selector: '[appReveal]',
@@ -10,10 +11,17 @@ import { ChangeDetectorRef, Directive, ElementRef, inject, OnDestroy, OnInit } f
 export class RevealDirective implements OnInit, OnDestroy {
     private readonly el = inject(ElementRef);
     private readonly cdr = inject(ChangeDetectorRef);
+    private readonly scrollRestoration = inject(ScrollRestorationService);
     private observer?: IntersectionObserver;
     protected isRevealed = false;
 
     ngOnInit(): void {
+        // Skip fade-in animation when returning from a dish detail page
+        if (this.scrollRestoration.isRestoring) {
+            this.isRevealed = true;
+            return;
+        }
+
         this.observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {

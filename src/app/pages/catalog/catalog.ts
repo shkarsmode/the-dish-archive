@@ -69,7 +69,10 @@ export class CatalogPage implements OnDestroy {
         // Scroll restoration: scroll to & focus the card the user came from
         afterNextRender(() => {
             const slug = this.scrollRestoration.consume();
-            if (!slug) return;
+            if (!slug) {
+                this.scrollRestoration.doneRestoring();
+                return;
+            }
 
             // Wait for cards to render, then scroll & focus
             const tryScroll = (attempts = 0) => {
@@ -80,9 +83,12 @@ export class CatalogPage implements OnDestroy {
                         card.scrollIntoView({ block: 'center', behavior: 'instant' });
                         const focusable = card.querySelector<HTMLElement>('.dish-card') ?? card;
                         focusable.focus({ preventScroll: true });
+                        this.scrollRestoration.doneRestoring();
                     }, 50);
                 } else if (attempts < 20) {
                     requestAnimationFrame(() => tryScroll(attempts + 1));
+                } else {
+                    this.scrollRestoration.doneRestoring();
                 }
             };
             tryScroll();
