@@ -1165,6 +1165,58 @@
             "sourceUrl": "https://www.instagram.com/reel/DAOOwJzNs36/",
             "createdAt": "2026-02-09T00:00:00.000Z",
             "updatedAt": "2026-02-09T00:00:00.000Z"
+        },
+        {
+            "id": "dish-028",
+            "title": "Фрикадельки з макаронами в одній сковороді",
+            "slug": "frykadelky-z-makaronamy-v-odnii-skovorodi",
+            "description": "Ситна вечеря в одній сковороді — маленькі фрикадельки з фаршу, обсмажені до рум'яності, з макаронами у томатному соусі. Швидко, просто і дуже смачно.",
+            "images": [
+                {
+                    "url": "/images/frykadelky-pasta.jpg",
+                    "alt": "Фрикадельки з макаронами у томатному соусі в сковороді",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 280, "currency": "UAH" },
+            "cookingTime": { "preparation": 15, "cooking": 25, "total": 40 },
+            "calories": 350,
+            "servings": 4,
+            "difficulty": "easy",
+            "tags": ["фрикадельки", "макарони", "фарш", "в одній сковороді", "вечеря", "томатний соус"],
+            "categories": ["dinner", "quick", "everyday"],
+            "tasteProfile": {
+                "sweet": 1,
+                "salty": 3,
+                "sour": 2,
+                "bitter": 0,
+                "spicy": 1,
+                "umami": 5
+            },
+            "ingredients": [
+                { "name": "Фарш м'ясний", "amount": "500", "unit": "г", "optional": false },
+                { "name": "Вершкове масло", "amount": "30", "unit": "г", "optional": false },
+                { "name": "Часник", "amount": "2-3", "unit": "зуб.", "optional": false },
+                { "name": "Томатна паста", "amount": "2-3", "unit": "ст.л.", "optional": false },
+                { "name": "Дрібні макарони", "amount": "250", "unit": "г", "optional": false },
+                { "name": "Вода", "amount": "500", "unit": "мл", "optional": false },
+                { "name": "Сіль", "amount": "1", "unit": "ч.л.", "optional": false },
+                { "name": "Перець чорний", "amount": "0.5", "unit": "ч.л.", "optional": false },
+                { "name": "Травки/приправки", "amount": "за смаком", "unit": "", "optional": true }
+            ],
+            "steps": [
+                { "order": 1, "description": "Фарш добре відбити, приправити сіллю та перцем. Сформувати маленькі фрикадельки.", "duration": 10 },
+                { "order": 2, "description": "Обсмажити фрикадельки на максимальному вогні до рум'яної скоринки з усіх боків.", "duration": 5 },
+                { "order": 3, "description": "Додати шматочок вершкового масла та подрібнений часник, перемішати.", "duration": 2 },
+                { "order": 4, "description": "Додати томатну пасту, травки та приправки. Добре перемішати.", "duration": 2 },
+                { "order": 5, "description": "Всипати макарони, влити воду. Перемішати та готувати під кришкою до готовності макаронів.", "duration": 15 },
+                { "order": 6, "description": "Перемішати, за потреби досолити. Подавати гарячим." }
+            ],
+            "notes": "Фарш краще готувати як на котлети — добре відбити для кращої консистенції. Фрикадельки мають бути маленькими, щоб швидше просмажились. Макарони обирайте дрібні — вони краще вбирають соус.",
+            "sourceUrl": "https://www.instagram.com/reel/DFDlh5kNRGo/",
+            "createdAt": "2026-02-13T00:00:00.000Z",
+            "updatedAt": "2026-02-13T00:00:00.000Z"
         }
     ]
 }
