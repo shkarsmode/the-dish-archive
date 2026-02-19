@@ -29,12 +29,13 @@ import { RatingStarsComponent } from './rating-stars.component';
                     (error)="onImageError($event)" />
                 <div class="card-image-overlay">
                     <app-favorites-button [dishId]="dish().id" />
+                    @let isDishSelected = compareService.isSelected(dish().id);
                     <button
                         class="compare-toggle"
-                        [class.active]="compareService.isSelected(dish().id)()"
+                        [class.active]="isDishSelected"
                         (click)="toggleCompare($event)"
                         [attr.aria-label]="'Порівняти ' + dish().title"
-                        [attr.aria-pressed]="compareService.isSelected(dish().id)()">
+                        [attr.aria-pressed]="isDishSelected">
                         <span class="material-symbols-outlined">compare_arrows</span>
                     </button>
                 </div>

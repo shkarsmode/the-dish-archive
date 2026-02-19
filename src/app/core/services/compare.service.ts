@@ -31,10 +31,12 @@ export class CompareService {
         );
     }
 
+    selectedDishesIds = computed(() => 
+        new Set(this.selectedDishes().map(dish => dish?.id))
+    );
+
     isSelected(dishId: string) {
-        return computed(() =>
-            this.selectedDishes().some(dish => dish.id === dishId)
-        );
+        return this.selectedDishesIds().has(dishId);
     }
 
     clear(): void {
