@@ -11,6 +11,9 @@ export class CompareService {
     readonly isVisible = computed(() => this.selectedDishes().length > 0);
     readonly canCompare = computed(() => this.selectedDishes().length >= 2);
     readonly isFull = computed(() => this.selectedDishes().length >= MAX_COMPARE_ITEMS);
+    readonly selectedDishesIds = computed(() => 
+        new Set(this.selectedDishes().map(dish => dish?.id))
+    );
 
     toggle(dish: Dish): void {
         this.selectedDishes.update(current => {
@@ -30,10 +33,6 @@ export class CompareService {
             current.filter(dish => dish.id !== dishId)
         );
     }
-
-    selectedDishesIds = computed(() => 
-        new Set(this.selectedDishes().map(dish => dish?.id))
-    );
 
     isSelected(dishId: string) {
         return this.selectedDishesIds().has(dishId);
