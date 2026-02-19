@@ -1,17 +1,18 @@
-import { Component, ElementRef, inject, input } from '@angular/core';
+import { Component, computed, ElementRef, inject, input } from '@angular/core';
 import { FavoritesService } from '../../core/services/favorites.service';
 
 @Component({
     selector: 'app-favorites-button',
     template: `
+        @let isFavorite_ = isFavorite();
         <button
             class="favorites-button"
-            [class.active]="favoritesService.isFavorite(dishId())()"
+            [class.active]="isFavorite_"
             (click)="handleClick($event)"
-            [attr.aria-label]="favoritesService.isFavorite(dishId())() ? 'Прибрати з обраного' : 'Додати до обраного'"
-            [attr.aria-pressed]="favoritesService.isFavorite(dishId())()">
+            [attr.aria-label]="isFavorite_ ? 'Прибрати з обраного' : 'Додати до обраного'"
+            [attr.aria-pressed]="isFavorite_">
             <span class="material-symbols-outlined heart-icon">
-                {{ favoritesService.isFavorite(dishId())() ? 'favorite' : 'favorite_border' }}
+                {{ isFavorite_ ? 'favorite' : 'favorite_border' }}
             </span>
         </button>
     `,
@@ -57,10 +58,14 @@ export class FavoritesButtonComponent {
     protected readonly favoritesService = inject(FavoritesService);
     private readonly elRef = inject(ElementRef);
 
+    readonly isFavorite = computed(() => {
+        return this.favoritesService.favoriteIds().has(this.dishId());
+    });
+
     protected handleClick(event: Event): void {
         event.stopPropagation();
         event.preventDefault();
-        const wasNotFavorite = !this.favoritesService.isFavorite(this.dishId())();
+        const wasNotFavorite = !this.isFavorite();
         this.favoritesService.toggle(this.dishId());
 
         if (wasNotFavorite) {

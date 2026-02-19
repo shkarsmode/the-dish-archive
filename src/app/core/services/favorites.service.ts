@@ -4,7 +4,7 @@ const STORAGE_KEY = 'dish-archive-favorites';
 
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
-    private readonly favoriteIds = signal<Set<string>>(this.loadFromStorage());
+    public readonly favoriteIds = signal<Set<string>>(this.loadFromStorage());
 
     readonly count = computed(() => this.favoriteIds().size);
 
@@ -19,10 +19,6 @@ export class FavoritesService {
             this.saveToStorage(updatedSet);
             return updatedSet;
         });
-    }
-
-    isFavorite(dishId: string) {
-        return computed(() => this.favoriteIds().has(dishId));
     }
 
     getAllFavoriteIds(): string[] {

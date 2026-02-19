@@ -126,7 +126,7 @@ export class DishService {
         // Favorites only
         if (filterState.favoritesOnly) {
             dishes = dishes.filter(dish =>
-                this.favoritesService.isFavorite(dish.id)()
+                this.favoritesService.favoriteIds().has(dish.id)
             );
         }
 
