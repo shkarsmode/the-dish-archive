@@ -2,7 +2,7 @@
     <!-- Hero Section -->
     <section class="hero" aria-label="Заголовок">
         <div class="hero-inner">
-            <span class="hero-greeting">{{ greeting().emoji }} {{ greeting().text }}, Булкіна!</span>
+            <span class="hero-greeting">{{ greeting().emoji }} {{ greeting().text }}, {{ adminService.isAuthenticated() ? 'Булкіна' : 'мандрівнику смаків' }}!</span>
             <h1 class="hero-title">Кулінарна<br>книга</h1>
             <p class="hero-subtitle">
                 {{ greeting().suggestion }} Улюблені рецепти, зібрані з турботою.
