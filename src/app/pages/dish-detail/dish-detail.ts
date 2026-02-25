@@ -11,6 +11,7 @@ import {
     Dish,
     DishCategory,
     DishDifficulty,
+    ImageItem,
     Ingredient,
     TASTE_LABELS,
     TasteProfile,
@@ -51,6 +52,12 @@ export class DishDetailPage {
     protected readonly newTag = signal('');
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly categoryLabels = CATEGORY_LABELS;
+
+    // Image manager state
+    protected readonly isImageManagerOpen = signal(false);
+    protected readonly editImages = signal<ImageItem[]>([]);
+    protected readonly isUploadingImage = signal(false);
+    protected readonly editingAltIndex = signal<number | null>(null);
 
     private readonly slug = toSignal(
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))
@@ -413,5 +420,103 @@ export class DishDetailPage {
             );
             return { ...d, steps };
         });
+    }
+
+    // ── Image Manager ──
+
+    protected openImageManager(): void {
+        const d = this.dish();
+        if (!d) return;
+        this.editImages.set(JSON.parse(JSON.stringify(d.images)));
+        this.isImageManagerOpen.set(true);
+        this.editingAltIndex.set(null);
+    }
+
+    protected closeImageManager(): void {
+        this.isImageManagerOpen.set(false);
+        this.editImages.set([]);
+        this.editingAltIndex.set(null);
+    }
+
+    protected async onImageFileSelected(event: Event): Promise<void> {
+        const input = event.target as HTMLInputElement;
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        this.isUploadingImage.set(true);
+        try {
+            for (const file of Array.from(files)) {
+                const result = await this.adminService.uploadImage(file);
+                const newImage: ImageItem = {
+                    url: result.url,
+                    alt: this.dish()?.title ?? 'Фото страви',
+                    isPrimary: this.editImages().length === 0,
+                };
+                this.editImages.update(imgs => [...imgs, newImage]);
+            }
+            this.toastService.success('Зображення завантажено');
+        } catch {
+            this.toastService.error('Помилка завантаження');
+        } finally {
+            this.isUploadingImage.set(false);
+            input.value = '';
+        }
+    }
+
+    protected removeImage(index: number): void {
+        this.editImages.update(imgs => {
+            const next = imgs.filter((_, i) => i !== index);
+            // If removed was primary, make first one primary
+            if (next.length > 0 && !next.some(img => img.isPrimary)) {
+                next[0] = { ...next[0], isPrimary: true };
+            }
+            return next;
+        });
+    }
+
+    protected setPrimaryImage(index: number): void {
+        this.editImages.update(imgs =>
+            imgs.map((img, i) => ({ ...img, isPrimary: i === index }))
+        );
+    }
+
+    protected moveImage(index: number, direction: -1 | 1): void {
+        const target = index + direction;
+        this.editImages.update(imgs => {
+            if (target < 0 || target >= imgs.length) return imgs;
+            const copy = [...imgs];
+            [copy[index], copy[target]] = [copy[target], copy[index]];
+            return copy;
+        });
+    }
+
+    protected startEditAlt(index: number): void {
+        this.editingAltIndex.set(index);
+    }
+
+    protected updateImageAlt(index: number, alt: string): void {
+        this.editImages.update(imgs =>
+            imgs.map((img, i) => i === index ? { ...img, alt } : img)
+        );
+    }
+
+    protected finishEditAlt(): void {
+        this.editingAltIndex.set(null);
+    }
+
+    protected async saveImages(): Promise<void> {
+        const d = this.dish();
+        if (!d) return;
+
+        this.isSaving.set(true);
+        try {
+            await this.dishService.updateDish(d.id, { images: this.editImages() });
+            this.toastService.success('Зображення збережено ✨');
+            this.closeImageManager();
+        } catch {
+            this.toastService.error('Помилка збереження');
+        } finally {
+            this.isSaving.set(false);
+        }
     }
 }

@@ -104,10 +104,22 @@ export class AdminService {
         this.adminModeSignal.set(false);
     }
 
-    // setApiUrl(url: string): void {
-    //     this.apiUrl.set(url);
-    //     try {
-    //         localStorage.setItem(API_URL, url);
-    //     } catch {}
-    // }
+    /** Upload an image file to the backend (Cloudinary), returns { url, publicId } */
+    uploadImage(file: File): Promise<{ url: string; publicId: string }> {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        return new Promise((resolve, reject) => {
+            this.http
+                .post<{ url: string; publicId: string }>(
+                    `${this.apiUrl()}/api/dishes/upload`,
+                    formData,
+                    { headers: { Authorization: this.authHeaders['Authorization'] ?? '' } }
+                )
+                .subscribe({
+                    next: (res) => resolve(res),
+                    error: (err) => reject(err),
+                });
+        });
+    }
 }

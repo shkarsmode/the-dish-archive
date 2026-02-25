@@ -63,6 +63,14 @@
                 (load)="onHeroLoad($event)"
                 (error)="onImageError($event)" />
 
+            <!-- Admin: Edit images button -->
+            @if (adminService.isAdminMode()) {
+                <button class="hero-edit-images-btn" (click)="openImageManager()">
+                    <span class="material-symbols-outlined">photo_library</span>
+                    Редагувати фото
+                </button>
+            }
+
             <!-- Image Gallery Thumbnails -->
             @if (dish()!.images.length > 1) {
                 <div class="gallery-thumbs">
@@ -78,6 +86,111 @@
                 </div>
             }
         </div>
+
+        <!-- Image Manager Modal -->
+        @if (isImageManagerOpen()) {
+            <div class="img-manager-backdrop" (click)="closeImageManager()"></div>
+            <div class="img-manager">
+                <div class="img-manager-header">
+                    <h3>
+                        <span class="material-symbols-outlined">photo_library</span>
+                        Менеджер зображень
+                    </h3>
+                    <button class="img-manager-close" (click)="closeImageManager()">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div class="img-manager-body">
+                    <!-- Upload area -->
+                    <label class="img-upload-area" [class.uploading]="isUploadingImage()">
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif"
+                            multiple hidden (change)="onImageFileSelected($event)" />
+                        @if (isUploadingImage()) {
+                            <div class="loading-spinner"></div>
+                            <span>Завантажую...</span>
+                        } @else {
+                            <span class="material-symbols-outlined img-upload-icon">cloud_upload</span>
+                            <span class="img-upload-text">Натисни або перетягни фото</span>
+                            <span class="img-upload-hint">JPEG, PNG, WebP, AVIF · до 10 МБ</span>
+                        }
+                    </label>
+
+                    <!-- Image list -->
+                    @if (editImages().length > 0) {
+                        <div class="img-manager-list">
+                            @for (img of editImages(); track img.url; let i = $index) {
+                                <div class="img-manager-card" [class.is-primary]="img.isPrimary">
+                                    <div class="img-card-preview">
+                                        <img [src]="img.url" [alt]="img.alt" (error)="onImageError($event)" />
+                                        @if (img.isPrimary) {
+                                            <span class="img-primary-badge">Головне</span>
+                                        }
+                                    </div>
+                                    <div class="img-card-info">
+                                        <!-- Alt text -->
+                                        @if (editingAltIndex() === i) {
+                                            <input class="edit-input-sm img-alt-input"
+                                                [ngModel]="img.alt"
+                                                (ngModelChange)="updateImageAlt(i, $event)"
+                                                (blur)="finishEditAlt()"
+                                                (keydown.enter)="finishEditAlt()" />
+                                        } @else {
+                                            <span class="img-alt-text" (click)="startEditAlt(i)"
+                                                title="Натисни щоб змінити alt">
+                                                {{ img.alt || 'Без опису' }}
+                                                <span class="material-symbols-outlined" style="font-size:13px">edit</span>
+                                            </span>
+                                        }
+
+                                        <!-- Actions -->
+                                        <div class="img-card-actions">
+                                            @if (!img.isPrimary) {
+                                                <button class="img-action-btn" title="Зробити головним"
+                                                    (click)="setPrimaryImage(i)">
+                                                    <span class="material-symbols-outlined">star</span>
+                                                </button>
+                                            }
+                                            @if (i > 0) {
+                                                <button class="img-action-btn" title="Перемістити ліворуч"
+                                                    (click)="moveImage(i, -1)">
+                                                    <span class="material-symbols-outlined">chevron_left</span>
+                                                </button>
+                                            }
+                                            @if (i < editImages().length - 1) {
+                                                <button class="img-action-btn" title="Перемістити праворуч"
+                                                    (click)="moveImage(i, 1)">
+                                                    <span class="material-symbols-outlined">chevron_right</span>
+                                                </button>
+                                            }
+                                            <button class="img-action-btn img-action-delete" title="Видалити"
+                                                (click)="removeImage(i)">
+                                                <span class="material-symbols-outlined">delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    } @else {
+                        <div class="img-manager-empty">
+                            <span class="material-symbols-outlined">image_not_supported</span>
+                            <span>Немає зображень</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="img-manager-footer">
+                    <span class="img-manager-count">{{ editImages().length }} фото</span>
+                    <div class="edit-actions">
+                        <button class="edit-save-btn" (click)="saveImages()" [disabled]="isSaving()">
+                            @if (isSaving()) { Зберігаю... } @else { Зберегти }
+                        </button>
+                        <button class="edit-cancel-btn" (click)="closeImageManager()">Скасувати</button>
+                    </div>
+                </div>
+            </div>
+        }
 
         <div class="detail-content">
             <!-- Header -->
