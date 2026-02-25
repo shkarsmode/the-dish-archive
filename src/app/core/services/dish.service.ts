@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import {
     DEFAULT_FILTER_STATE,
     Dish,
@@ -8,12 +9,14 @@ import {
     SortOption,
     TasteProfile,
 } from '../models/dish.model';
+import { AdminService } from './admin.service';
 import { FavoritesService } from './favorites.service';
 
 @Injectable({ providedIn: 'root' })
 export class DishService {
     private readonly httpClient = inject(HttpClient);
     private readonly favoritesService = inject(FavoritesService);
+    private readonly adminService = inject(AdminService);
 
     private readonly allDishesSignal = signal<Dish[]>([]);
     readonly allDishes = this.allDishesSignal.asReadonly();
@@ -179,15 +182,27 @@ export class DishService {
     }
 
     private loadDishes(): void {
-        this.httpClient.get<DishData>('data/dishes.json').subscribe({
+        const backendUrl = `${this.adminService.apiUrl()}/api/dishes`;
+
+        this.httpClient.get<DishData>(backendUrl).subscribe({
             next: (data) => {
                 this.allDishesSignal.set(data.dishes);
                 this.isLoading.set(false);
             },
-            error: (error) => {
-                console.error('Failed to load dishes:', error);
-                this.loadError.set('Не вдалося завантажити дані');
-                this.isLoading.set(false);
+            error: (backendError) => {
+                console.error('Failed to load dishes from backend:', backendError);
+
+                this.httpClient.get<DishData>('data/dishes.json').subscribe({
+                    next: (data) => {
+                        this.allDishesSignal.set(data.dishes);
+                        this.isLoading.set(false);
+                    },
+                    error: (localError) => {
+                        console.error('Failed to load local dishes fallback:', localError);
+                        this.loadError.set('Не вдалося завантажити дані');
+                        this.isLoading.set(false);
+                    },
+                });
             },
         });
     }
@@ -232,5 +247,47 @@ export class DishService {
             lastUpdated: new Date().toISOString(),
             dishes: this.allDishesSignal(),
         };
+    }
+
+    /** Update a dish via the backend API and refresh local state */
+    async updateDish(id: string, updates: Partial<Dish>): Promise<Dish> {
+        const url = `${this.adminService.apiUrl()}/api/dishes/${id}`;
+        const updatedDish = await firstValueFrom(
+            this.httpClient.put<Dish>(url, updates, {
+                headers: this.adminService.authHeaders,
+            })
+        );
+
+        // Update local signal immediately
+        this.allDishesSignal.update(dishes =>
+            dishes.map(d => (d.id === id ? { ...d, ...updatedDish } : d))
+        );
+
+        return updatedDish;
+    }
+
+    /** Create a dish via the backend API */
+    async createDish(dish: Partial<Dish>): Promise<Dish> {
+        const url = `${this.adminService.apiUrl()}/api/dishes`;
+        const created = await firstValueFrom(
+            this.httpClient.post<Dish>(url, dish, {
+                headers: this.adminService.authHeaders,
+            })
+        );
+
+        this.allDishesSignal.update(dishes => [...dishes, created]);
+        return created;
+    }
+
+    /** Delete a dish via the backend API */
+    async deleteDish(id: string): Promise<void> {
+        const url = `${this.adminService.apiUrl()}/api/dishes/${id}`;
+        await firstValueFrom(
+            this.httpClient.delete(url, {
+                headers: this.adminService.authHeaders,
+            })
+        );
+
+        this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
     }
 }

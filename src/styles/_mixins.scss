@@ -69,6 +69,20 @@ $breakpoint-xl: 1280px;
     justify-content: center;
 }
 
+// Reset button base (useful when styling custom icon buttons)
+@mixin reset-button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 // Only apply hover styles on devices with a pointer (no sticky hovers on touch)
 @mixin hover {
     @media (hover: hover) and (pointer: fine) {

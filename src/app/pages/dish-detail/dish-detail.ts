@@ -1,16 +1,21 @@
 import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import {
+    ALL_CATEGORIES,
     CATEGORY_LABELS,
+    CookingStep,
     DIFFICULTY_LABELS,
     Dish,
     DishCategory,
     DishDifficulty,
+    Ingredient,
     TASTE_LABELS,
     TasteProfile,
 } from '../../core/models/dish.model';
+import { AdminService } from '../../core/services/admin.service';
 import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
 import { PaletteService } from '../../core/services/palette.service';
@@ -22,7 +27,7 @@ import { TasteRadarComponent } from '../../shared/components/taste-radar.compone
 
 @Component({
     selector: 'app-dish-detail',
-    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent],
+    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
     host: {
@@ -37,6 +42,15 @@ export class DishDetailPage {
     private readonly paletteService = inject(PaletteService);
     private readonly toastService = inject(ToastService);
     private readonly el = inject(ElementRef<HTMLElement>);
+    protected readonly adminService = inject(AdminService);
+
+    // Inline editing state
+    protected readonly editingField = signal<string | null>(null);
+    protected readonly editDraft = signal<Partial<Dish>>({});
+    protected readonly isSaving = signal(false);
+    protected readonly newTag = signal('');
+    protected readonly allCategories = ALL_CATEGORIES;
+    protected readonly categoryLabels = CATEGORY_LABELS;
 
     private readonly slug = toSignal(
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))
@@ -247,5 +261,157 @@ export class DishDetailPage {
 
             setTimeout(() => el.remove(), 2500);
         }
+    }
+
+    // ── Inline editing ──
+
+    protected startEditing(field: string): void {
+        if (!this.adminService.isAdminMode()) return;
+        const d = this.dish();
+        if (!d) return;
+
+        this.editingField.set(field);
+        // Create a deep copy of current dish as draft
+        this.editDraft.set(JSON.parse(JSON.stringify(d)));
+    }
+
+    protected isEditing(field: string): boolean {
+        return this.adminService.isAdminMode() && this.editingField() === field;
+    }
+
+    protected cancelEditing(): void {
+        this.editingField.set(null);
+        this.editDraft.set({});
+    }
+
+    protected async saveField(field: string): Promise<void> {
+        const d = this.dish();
+        const draft = this.editDraft();
+        if (!d || !draft) return;
+
+        this.isSaving.set(true);
+        try {
+            const updates: Partial<Dish> = {};
+            (updates as any)[field] = (draft as any)[field];
+            await this.dishService.updateDish(d.id, updates);
+            this.toastService.success('Збережено ✨');
+            this.editingField.set(null);
+        } catch {
+            this.toastService.error('Помилка збереження');
+        } finally {
+            this.isSaving.set(false);
+        }
+    }
+
+    protected async saveFullDish(): Promise<void> {
+        const d = this.dish();
+        const draft = this.editDraft();
+        if (!d) return;
+
+        this.isSaving.set(true);
+        try {
+            await this.dishService.updateDish(d.id, draft);
+            this.toastService.success('Страву збережено ✨');
+            this.editingField.set(null);
+        } catch {
+            this.toastService.error('Помилка збереження');
+        } finally {
+            this.isSaving.set(false);
+        }
+    }
+
+    protected updateDraft(field: string, value: any): void {
+        this.editDraft.update(d => ({ ...d, [field]: value }));
+    }
+
+    protected updateNestedDraft(path: string, value: any): void {
+        this.editDraft.update(d => {
+            const copy = JSON.parse(JSON.stringify(d));
+            const keys = path.split('.');
+            let obj = copy;
+            for (let i = 0; i < keys.length - 1; i++) {
+                obj = obj[keys[i]];
+            }
+            obj[keys[keys.length - 1]] = value;
+            return copy;
+        });
+    }
+
+    protected addTag(): void {
+        const tag = this.newTag().trim();
+        if (!tag) return;
+        this.editDraft.update(d => {
+            const tags = [...(d.tags ?? [])];
+            if (!tags.includes(tag)) tags.push(tag);
+            return { ...d, tags };
+        });
+        this.newTag.set('');
+    }
+
+    protected removeTag(tag: string): void {
+        this.editDraft.update(d => ({
+            ...d,
+            tags: (d.tags ?? []).filter(t => t !== tag),
+        }));
+    }
+
+    protected toggleCategory(cat: DishCategory): void {
+        this.editDraft.update(d => {
+            const cats = [...(d.categories ?? [])];
+            const idx = cats.indexOf(cat);
+            if (idx >= 0) cats.splice(idx, 1);
+            else cats.push(cat);
+            return { ...d, categories: cats };
+        });
+    }
+
+    protected addIngredient(): void {
+        this.editDraft.update(d => {
+            const ingredients = [...(d.ingredients ?? [])];
+            ingredients.push({ name: '', amount: '', unit: '', optional: false });
+            return { ...d, ingredients };
+        });
+    }
+
+    protected removeIngredient(index: number): void {
+        this.editDraft.update(d => {
+            const ingredients = [...(d.ingredients ?? [])];
+            ingredients.splice(index, 1);
+            return { ...d, ingredients };
+        });
+    }
+
+    protected updateIngredient(index: number, field: keyof Ingredient, value: any): void {
+        this.editDraft.update(d => {
+            const ingredients = [...(d.ingredients ?? [])].map((ing, i) =>
+                i === index ? { ...ing, [field]: value } : ing
+            );
+            return { ...d, ingredients };
+        });
+    }
+
+    protected addStep(): void {
+        this.editDraft.update(d => {
+            const steps = [...(d.steps ?? [])];
+            steps.push({ order: steps.length + 1, description: '', duration: undefined });
+            return { ...d, steps };
+        });
+    }
+
+    protected removeStep(index: number): void {
+        this.editDraft.update(d => {
+            const steps = [...(d.steps ?? [])].filter((_, i) => i !== index)
+                .map((s, i) => ({ ...s, order: i + 1 }));
+            return { ...d, steps };
+        });
+    }
+
+    protected updateStep(index: number, field: keyof CookingStep, value: any): void {
+        this.editDraft.update(d => {
+            const steps = [...(d.steps ?? [])].map((step, i) =>
+                i === index ? { ...step, [field]: value } : step
+            );
+            return { ...d, steps };
+        });
     }
 }

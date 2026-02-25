@@ -14,8 +14,21 @@
     </div>
 } @else {
     <article class="dish-detail"
+        [class.admin-editing]="adminService.isAdminMode()"
         (touchstart)="onTouchStart($event)"
         (touchend)="onTouchEnd($event)">
+
+        <!-- Admin Mode Bar -->
+        @if (adminService.isAdminMode()) {
+            <div class="admin-bar">
+                <span class="material-symbols-outlined">edit</span>
+                Режим редагування — тапніть на текст щоб змінити
+                @if (isSaving()) {
+                    <span class="admin-bar-saving">зберігаю...</span>
+                }
+            </div>
+        }
+
         <!-- Back Button -->
         <nav class="detail-nav">
             <a routerLink="/" class="back-button" aria-label="Назад до каталогу">
@@ -69,59 +82,218 @@
         <div class="detail-content">
             <!-- Header -->
             <header class="detail-header">
-                <div class="detail-categories">
-                    @for (category of dish()!.categories; track category) {
-                        <span class="category-label">{{ getCategoryLabel(category) }}</span>
-                    }
-                    @if (isNew()) {
-                        <span class="new-badge">НОВЕ</span>
-                    }
-                </div>
-                <h1 class="detail-title">{{ dish()!.title }}</h1>
-                <p class="detail-description">{{ dish()!.description }}</p>
+                <!-- Categories (editable) -->
+                @if (isEditing('categories')) {
+                    <div class="edit-block">
+                        <div class="edit-categories-grid">
+                            @for (cat of allCategories; track cat) {
+                                <button
+                                    class="edit-cat-chip"
+                                    [class.selected]="editDraft().categories?.includes(cat)"
+                                    (click)="toggleCategory(cat)">
+                                    {{ categoryLabels[cat] }}
+                                </button>
+                            }
+                        </div>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('categories')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                } @else {
+                    <div class="detail-categories" [class.editable]="adminService.isAdminMode()" (click)="startEditing('categories')">
+                        @for (category of dish()!.categories; track category) {
+                            <span class="category-label">{{ getCategoryLabel(category) }}</span>
+                        }
+                        @if (isNew()) {
+                            <span class="new-badge">НОВЕ</span>
+                        }
+                        @if (adminService.isAdminMode()) {
+                            <span class="edit-hint-icon material-symbols-outlined">edit</span>
+                        }
+                    </div>
+                }
+
+                <!-- Title (editable) -->
+                @if (isEditing('title')) {
+                    <div class="edit-block">
+                        <input class="edit-input edit-title-input"
+                            [ngModel]="editDraft().title"
+                            (ngModelChange)="updateDraft('title', $event)"
+                            (keydown.enter)="saveField('title')"
+                            (keydown.escape)="cancelEditing()" />
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('title')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                } @else {
+                    <h1 class="detail-title" [class.editable]="adminService.isAdminMode()" (click)="startEditing('title')">
+                        {{ dish()!.title }}
+                        @if (adminService.isAdminMode()) {
+                            <span class="edit-hint-icon material-symbols-outlined">edit</span>
+                        }
+                    </h1>
+                }
+
+                <!-- Description (editable) -->
+                @if (isEditing('description')) {
+                    <div class="edit-block">
+                        <textarea class="edit-textarea"
+                            rows="3"
+                            [ngModel]="editDraft().description"
+                            (ngModelChange)="updateDraft('description', $event)"
+                            (keydown.escape)="cancelEditing()"></textarea>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('description')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                } @else {
+                    <p class="detail-description" [class.editable]="adminService.isAdminMode()" (click)="startEditing('description')">
+                        {{ dish()!.description }}
+                        @if (adminService.isAdminMode()) {
+                            <span class="edit-hint-icon material-symbols-outlined">edit</span>
+                        }
+                    </p>
+                }
             </header>
 
-            <!-- Stats Bar -->
-            <div class="stats-bar">
-                <div class="stats-row stats-row--top">
-                    <div class="stat">
-                        <app-rating-stars [rating]="dish()!.rating" />
+            <!-- Stats Bar (editable) -->
+            @if (isEditing('stats')) {
+                <div class="edit-block stats-edit">
+                    <div class="edit-stats-grid">
+                        <label class="edit-stat-field">
+                            <span>Рейтинг (1-5)</span>
+                            <input type="number" min="0" max="5" class="edit-input-sm"
+                                [ngModel]="editDraft().rating"
+                                (ngModelChange)="updateDraft('rating', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Підготовка (хв)</span>
+                            <input type="number" min="0" class="edit-input-sm"
+                                [ngModel]="editDraft().cookingTime?.preparation"
+                                (ngModelChange)="updateNestedDraft('cookingTime.preparation', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Готування (хв)</span>
+                            <input type="number" min="0" class="edit-input-sm"
+                                [ngModel]="editDraft().cookingTime?.cooking"
+                                (ngModelChange)="updateNestedDraft('cookingTime.cooking', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Всього (хв)</span>
+                            <input type="number" min="0" class="edit-input-sm"
+                                [ngModel]="editDraft().cookingTime?.total"
+                                (ngModelChange)="updateNestedDraft('cookingTime.total', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Калорії</span>
+                            <input type="number" min="0" class="edit-input-sm"
+                                [ngModel]="editDraft().calories"
+                                (ngModelChange)="updateDraft('calories', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Ціна (грн)</span>
+                            <input type="number" min="0" class="edit-input-sm"
+                                [ngModel]="editDraft().price?.amount"
+                                (ngModelChange)="updateNestedDraft('price.amount', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Порцій</span>
+                            <input type="number" min="1" class="edit-input-sm"
+                                [ngModel]="editDraft().servings"
+                                (ngModelChange)="updateDraft('servings', +$event)" />
+                        </label>
+                        <label class="edit-stat-field">
+                            <span>Складність</span>
+                            <select class="edit-input-sm"
+                                [ngModel]="editDraft().difficulty"
+                                (ngModelChange)="updateDraft('difficulty', $event)">
+                                <option value="easy">Легко</option>
+                                <option value="medium">Середнє</option>
+                                <option value="hard">Складно</option>
+                            </select>
+                        </label>
                     </div>
-                    <div class="stat">
-                        <span class="material-symbols-outlined stat-icon">schedule</span>
-                        <span class="stat-value">{{ dish()!.cookingTime.total }}</span>
-                        <span class="stat-label">хв</span>
-                    </div>
-                    <div class="stat">
-                        <span class="material-symbols-outlined stat-icon">local_fire_department</span>
-                        <span class="stat-value">{{ dish()!.calories }}</span>
-                        <span class="stat-label">ккал</span>
+                    <div class="edit-actions">
+                        <button class="edit-save-btn" (click)="saveFullDish()">Зберегти все</button>
+                        <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
                     </div>
                 </div>
-                <div class="stats-row stats-row--bottom">
-                    <div class="stat">
-                        <span class="material-symbols-outlined stat-icon">payments</span>
-                        <span class="stat-value">{{ dish()!.price.amount }}</span>
-                        <span class="stat-label">грн</span>
+            } @else {
+                <div class="stats-bar" [class.editable]="adminService.isAdminMode()" (click)="startEditing('stats')">
+                    <div class="stats-row stats-row--top">
+                        <div class="stat">
+                            <app-rating-stars [rating]="dish()!.rating" />
+                        </div>
+                        <div class="stat">
+                            <span class="material-symbols-outlined stat-icon">schedule</span>
+                            <span class="stat-value">{{ dish()!.cookingTime.total }}</span>
+                            <span class="stat-label">хв</span>
+                        </div>
+                        <div class="stat">
+                            <span class="material-symbols-outlined stat-icon">local_fire_department</span>
+                            <span class="stat-value">{{ dish()!.calories }}</span>
+                            <span class="stat-label">ккал</span>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <span class="material-symbols-outlined stat-icon">group</span>
-                        <span class="stat-value">{{ dish()!.servings }}</span>
-                        <span class="stat-label">порц.</span>
+                    <div class="stats-row stats-row--bottom">
+                        <div class="stat">
+                            <span class="material-symbols-outlined stat-icon">payments</span>
+                            <span class="stat-value">{{ dish()!.price.amount }}</span>
+                            <span class="stat-label">грн</span>
+                        </div>
+                        <div class="stat">
+                            <span class="material-symbols-outlined stat-icon">group</span>
+                            <span class="stat-value">{{ dish()!.servings }}</span>
+                            <span class="stat-label">порц.</span>
+                        </div>
+                        <div class="stat">
+                            <span class="material-symbols-outlined stat-icon">trending_up</span>
+                            <span class="stat-value">{{ getDifficultyLabel(dish()!.difficulty) }}</span>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <span class="material-symbols-outlined stat-icon">trending_up</span>
-                        <span class="stat-value">{{ getDifficultyLabel(dish()!.difficulty) }}</span>
-                    </div>
+                    @if (adminService.isAdminMode()) {
+                        <span class="edit-hint-icon edit-hint-corner material-symbols-outlined">edit</span>
+                    }
                 </div>
-            </div>
+            }
 
-            <!-- Tags -->
-            @if (dish()!.tags.length > 0) {
+            <!-- Tags (editable) -->
+            @if (isEditing('tags')) {
                 <div class="detail-section tags-section">
+                    <div class="edit-block">
+                        <div class="tags-list">
+                            @for (tag of editDraft().tags ?? []; track tag) {
+                                <span class="edit-tag">
+                                    {{ tag }}
+                                    <button class="edit-tag-remove" (click)="removeTag(tag)">×</button>
+                                </span>
+                            }
+                        </div>
+                        <div class="edit-tag-add">
+                            <input class="edit-input-sm"
+                                placeholder="Новий тег..."
+                                [ngModel]="newTag()"
+                                (ngModelChange)="newTag.set($event)"
+                                (keydown.enter)="addTag()" />
+                            <button class="edit-save-btn" style="padding: 4px 12px" (click)="addTag()">+</button>
+                        </div>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('tags')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                </div>
+            } @else if (dish()!.tags.length > 0 || adminService.isAdminMode()) {
+                <div class="detail-section tags-section" [class.editable]="adminService.isAdminMode()" (click)="startEditing('tags')">
                     <div class="tags-list">
                         @for (tag of dish()!.tags; track tag) {
                             <app-tag-chip [label]="tag" [clickable]="false" />
+                        }
+                        @if (adminService.isAdminMode()) {
+                            <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </div>
                 </div>
@@ -135,116 +307,241 @@
                 </div>
             }
 
-            <!-- Ingredients -->
-            <div class="detail-section">
-                <h2 class="section-title">
-                    <span class="material-symbols-outlined section-icon">grocery</span>
-                    Інгредієнти
-                    <span class="ingredient-count">{{ dish()!.ingredients.length }}</span>
-                    @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
-                        <button class="checklist-clear" (click)="checklistService.clearDish(dish()!.id)">
-                            Скинути
-                        </button>
-                    }
-                </h2>
-                @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
-                    <div class="checklist-progress">
-                        <div class="checklist-progress-bar">
-                            <div class="checklist-progress-fill"
-                                 [style.width.%]="(checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count / dish()!.ingredients.length) * 100">
-                            </div>
+            <!-- Ingredients (editable) -->
+            @if (isEditing('ingredients')) {
+                <div class="detail-section">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">grocery</span>
+                        Інгредієнти
+                    </h2>
+                    <div class="edit-block">
+                        <div class="edit-ingredients-list">
+                            @for (ing of editDraft().ingredients ?? []; track $index; let i = $index) {
+                                <div class="edit-ingredient-row">
+                                    <input class="edit-input-sm edit-ing-name" placeholder="Назва"
+                                        [ngModel]="ing.name"
+                                        (ngModelChange)="updateIngredient(i, 'name', $event)" />
+                                    <input class="edit-input-sm edit-ing-amount" placeholder="К-сть"
+                                        [ngModel]="ing.amount"
+                                        (ngModelChange)="updateIngredient(i, 'amount', $event)" />
+                                    <input class="edit-input-sm edit-ing-unit" placeholder="Од."
+                                        [ngModel]="ing.unit"
+                                        (ngModelChange)="updateIngredient(i, 'unit', $event)" />
+                                    <button class="edit-remove-btn" (click)="removeIngredient(i)">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            }
                         </div>
-                        <span class="checklist-progress-text">
-                            {{ checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count }}/{{ dish()!.ingredients.length }}
-                        </span>
+                        <button class="edit-add-btn" (click)="addIngredient()">
+                            <span class="material-symbols-outlined">add</span>
+                            Додати інгредієнт
+                        </button>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('ingredients')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
                     </div>
-                }
-                <ul class="ingredients-list">
-                    @for (ingredient of dish()!.ingredients; track ingredient.name) {
-                        <li class="ingredient"
-                            [class.optional]="ingredient.optional"
-                            [class.checked]="checklistService.isChecked(dish()!.id, ingredient.name)()"
-                            (click)="toggleIngredient(dish()!.id, ingredient.name, dish()!.ingredients.length)">
-                            <span class="ingredient-check">
-                                <span class="material-symbols-outlined">
-                                    {{ checklistService.isChecked(dish()!.id, ingredient.name)() ? 'check_circle' : 'radio_button_unchecked' }}
-                                </span>
-                            </span>
-                            <span class="ingredient-name">
-                                {{ ingredient.name }}
-                                @if (ingredient.optional) {
-                                    <span class="optional-badge">опціонально</span>
-                                }
-                            </span>
-                            <span class="ingredient-dots"></span>
-                            <span class="ingredient-amount">
-                                {{ ingredient.amount }}{{ ingredient.unit ? ' ' + ingredient.unit : '' }}
-                            </span>
-                        </li>
-                    }
-                </ul>
-            </div>
-
-            <!-- Steps -->
-            <div class="detail-section">
-                <h2 class="section-title">
-                    <span class="material-symbols-outlined section-icon">format_list_numbered</span>
-                    Приготування
-                </h2>
-                <ol class="steps-list">
-                    @for (step of dish()!.steps; track step.order) {
-                        <li class="step"
-                            [class.step-done]="isStepDone(step.order)"
-                            (click)="toggleStep(step.order)">
-                            <span class="step-number">
-                                @if (isStepDone(step.order)) {
-                                    <span class="material-symbols-outlined step-check">check</span>
-                                } @else {
-                                    {{ step.order }}
-                                }
-                            </span>
-                            <div class="step-content">
-                                <p class="step-text">{{ step.description }}</p>
-                                @if (step.duration) {
-                                    <span class="step-duration">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        {{ step.duration }} хв
-                                    </span>
-                                }
+                </div>
+            } @else {
+                <div class="detail-section" [class.editable-section]="adminService.isAdminMode()">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">grocery</span>
+                        Інгредієнти
+                        <span class="ingredient-count">{{ dish()!.ingredients.length }}</span>
+                        @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
+                            <button class="checklist-clear" (click)="checklistService.clearDish(dish()!.id)">
+                                Скинути
+                            </button>
+                        }
+                        @if (adminService.isAdminMode()) {
+                            <button class="edit-section-btn" (click)="startEditing('ingredients')">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        }
+                    </h2>
+                    @if (checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count > 0) {
+                        <div class="checklist-progress">
+                            <div class="checklist-progress-bar">
+                                <div class="checklist-progress-fill"
+                                     [style.width.%]="(checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count / dish()!.ingredients.length) * 100">
+                                </div>
                             </div>
-                        </li>
+                            <span class="checklist-progress-text">
+                                {{ checklistService.checkedCount(dish()!.id, dish()!.ingredients.length)().count }}/{{ dish()!.ingredients.length }}
+                            </span>
+                        </div>
                     }
-                </ol>
-            </div>
+                    <ul class="ingredients-list">
+                        @for (ingredient of dish()!.ingredients; track ingredient.name) {
+                            <li class="ingredient"
+                                [class.optional]="ingredient.optional"
+                                [class.checked]="checklistService.isChecked(dish()!.id, ingredient.name)()"
+                                (click)="toggleIngredient(dish()!.id, ingredient.name, dish()!.ingredients.length)">
+                                <span class="ingredient-check">
+                                    <span class="material-symbols-outlined">
+                                        {{ checklistService.isChecked(dish()!.id, ingredient.name)() ? 'check_circle' : 'radio_button_unchecked' }}
+                                    </span>
+                                </span>
+                                <span class="ingredient-name">
+                                    {{ ingredient.name }}
+                                    @if (ingredient.optional) {
+                                        <span class="optional-badge">опціонально</span>
+                                    }
+                                </span>
+                                <span class="ingredient-dots"></span>
+                                <span class="ingredient-amount">
+                                    {{ ingredient.amount }}{{ ingredient.unit ? ' ' + ingredient.unit : '' }}
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
 
-            <!-- Notes -->
-            @if (dish()!.notes) {
+            <!-- Steps (editable) -->
+            @if (isEditing('steps')) {
+                <div class="detail-section">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">format_list_numbered</span>
+                        Приготування
+                    </h2>
+                    <div class="edit-block">
+                        <div class="edit-steps-list">
+                            @for (step of editDraft().steps ?? []; track $index; let i = $index) {
+                                <div class="edit-step-row">
+                                    <span class="edit-step-number">{{ i + 1 }}</span>
+                                    <div class="edit-step-fields">
+                                        <textarea class="edit-textarea-sm" rows="2"
+                                            [ngModel]="step.description"
+                                            (ngModelChange)="updateStep(i, 'description', $event)"></textarea>
+                                        <input type="number" class="edit-input-sm" placeholder="Хвилини"
+                                            [ngModel]="step.duration"
+                                            (ngModelChange)="updateStep(i, 'duration', $event ? +$event : undefined)" />
+                                    </div>
+                                    <button class="edit-remove-btn" (click)="removeStep(i)">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                        <button class="edit-add-btn" (click)="addStep()">
+                            <span class="material-symbols-outlined">add</span>
+                            Додати крок
+                        </button>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('steps')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                </div>
+            } @else {
+                <div class="detail-section" [class.editable-section]="adminService.isAdminMode()">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">format_list_numbered</span>
+                        Приготування
+                        @if (adminService.isAdminMode()) {
+                            <button class="edit-section-btn" (click)="startEditing('steps')">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        }
+                    </h2>
+                    <ol class="steps-list">
+                        @for (step of dish()!.steps; track step.order) {
+                            <li class="step"
+                                [class.step-done]="isStepDone(step.order)"
+                                (click)="toggleStep(step.order)">
+                                <span class="step-number">
+                                    @if (isStepDone(step.order)) {
+                                        <span class="material-symbols-outlined step-check">check</span>
+                                    } @else {
+                                        {{ step.order }}
+                                    }
+                                </span>
+                                <div class="step-content">
+                                    <p class="step-text">{{ step.description }}</p>
+                                    @if (step.duration) {
+                                        <span class="step-duration">
+                                            <span class="material-symbols-outlined">schedule</span>
+                                            {{ step.duration }} хв
+                                        </span>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                </div>
+            }
+
+            <!-- Notes (editable) -->
+            @if (isEditing('notes')) {
                 <div class="detail-section">
                     <h2 class="section-title">
                         <span class="material-symbols-outlined section-icon">sticky_note_2</span>
                         Нотатки
                     </h2>
+                    <div class="edit-block">
+                        <textarea class="edit-textarea" rows="4"
+                            [ngModel]="editDraft().notes"
+                            (ngModelChange)="updateDraft('notes', $event)"
+                            (keydown.escape)="cancelEditing()"></textarea>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('notes')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                </div>
+            } @else if (dish()!.notes || adminService.isAdminMode()) {
+                <div class="detail-section" [class.editable]="adminService.isAdminMode()" (click)="startEditing('notes')">
+                    <h2 class="section-title">
+                        <span class="material-symbols-outlined section-icon">sticky_note_2</span>
+                        Нотатки
+                        @if (adminService.isAdminMode()) {
+                            <span class="edit-hint-icon material-symbols-outlined">edit</span>
+                        }
+                    </h2>
                     <div class="notes-card">
-                        <p>{{ dish()!.notes }}</p>
+                        <p>{{ dish()!.notes || 'Додати нотатки...' }}</p>
                     </div>
                 </div>
             }
 
-            <!-- Source & Dates -->
-            <footer class="detail-footer">
-                @if (dish()!.sourceUrl) {
-                    <a [href]="dish()!.sourceUrl" target="_blank" rel="noopener noreferrer" class="source-link">
-                        <span class="material-symbols-outlined">open_in_new</span>
-                        Джерело рецепта
-                    </a>
-                }
-                <div class="detail-dates">
-                    <span>Додано: {{ formatDate(dish()!.createdAt) }}</span>
-                    @if (dish()!.updatedAt !== dish()!.createdAt) {
-                        <span>Оновлено: {{ formatDate(dish()!.updatedAt) }}</span>
+            <!-- Source & Dates (editable) -->
+            @if (isEditing('source')) {
+                <footer class="detail-footer">
+                    <div class="edit-block">
+                        <label class="edit-stat-field">
+                            <span>URL джерела</span>
+                            <input class="edit-input"
+                                [ngModel]="editDraft().sourceUrl"
+                                (ngModelChange)="updateDraft('sourceUrl', $event)" />
+                        </label>
+                        <div class="edit-actions">
+                            <button class="edit-save-btn" (click)="saveField('sourceUrl')">Зберегти</button>
+                            <button class="edit-cancel-btn" (click)="cancelEditing()">Скасувати</button>
+                        </div>
+                    </div>
+                </footer>
+            } @else {
+                <footer class="detail-footer" [class.editable]="adminService.isAdminMode()" (click)="adminService.isAdminMode() ? startEditing('source') : null">
+                    @if (dish()!.sourceUrl) {
+                        <a [href]="dish()!.sourceUrl" target="_blank" rel="noopener noreferrer" class="source-link"
+                           (click)="$event.stopPropagation()">
+                            <span class="material-symbols-outlined">open_in_new</span>
+                            Джерело рецепта
+                        </a>
                     }
-                </div>
-            </footer>
+                    <div class="detail-dates">
+                        <span>Додано: {{ formatDate(dish()!.createdAt) }}</span>
+                        @if (dish()!.updatedAt !== dish()!.createdAt) {
+                            <span>Оновлено: {{ formatDate(dish()!.updatedAt) }}</span>
+                        }
+                    </div>
+                    @if (adminService.isAdminMode()) {
+                        <span class="edit-hint-icon material-symbols-outlined">edit</span>
+                    }
+                </footer>
+            }
         </div>
     </article>
 }

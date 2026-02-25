@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AdminService } from '../../core/services/admin.service';
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { CookRank, RANKS, RankService } from '../../core/services/rank.service';
@@ -9,7 +11,7 @@ import { RankBadgeComponent } from './rank-badge.component';
 @Component({
     selector: 'app-profile-drawer',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RankBadgeComponent],
+    imports: [RankBadgeComponent, FormsModule],
     template: `
         <div class="backdrop" (click)="closed.emit()"></div>
         <aside class="drawer" role="dialog" aria-label="Профіль кулінара">
@@ -111,6 +113,83 @@ import { RankBadgeComponent } from './rank-badge.component';
                         </button>
                     }
                 </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div class="settings-section admin-section">
+                <h3 class="section-label">
+                    <span class="material-symbols-outlined" style="font-size:18px;color:var(--color-accent)">shield_person</span>
+                    Адмін панель
+                </h3>
+
+                @if (!adminService.isAuthenticated()) {
+                    <!-- Login form -->
+                    <div class="admin-login">
+                        <p class="admin-hint">Увійдіть для редагування рецептів</p>
+                        <div class="admin-form">
+                            <input
+                                type="text"
+                                class="admin-input"
+                                placeholder="Нікнейм"
+                                [(ngModel)]="loginNickname"
+                                (keydown.enter)="handleLogin()" />
+                            <input
+                                type="password"
+                                class="admin-input"
+                                placeholder="Пароль"
+                                [(ngModel)]="loginPassword"
+                                (keydown.enter)="handleLogin()" />
+                            @if (adminService.loginError()) {
+                                <span class="admin-error">{{ adminService.loginError() }}</span>
+                            }
+                            <button
+                                class="admin-login-btn"
+                                (click)="handleLogin()"
+                                [disabled]="adminService.loginLoading()">
+                                @if (adminService.loginLoading()) {
+                                    <span class="admin-spinner"></span>
+                                } @else {
+                                    <span class="material-symbols-outlined" style="font-size:18px">login</span>
+                                }
+                                Увійти
+                            </button>
+                        </div>
+                    </div>
+                } @else {
+                    <!-- Authenticated -->
+                    <div class="admin-authenticated">
+                        <div class="admin-user-row">
+                            <div class="admin-avatar">{{ adminService.nickname()?.charAt(0)?.toUpperCase() }}</div>
+                            <div class="admin-user-info">
+                                <span class="admin-username">{{ adminService.nickname() }}</span>
+                                <span class="admin-role">Адміністратор</span>
+                            </div>
+                        </div>
+
+                        <button
+                            class="admin-mode-toggle"
+                            [class.active]="adminService.isAdminMode()"
+                            (click)="adminService.toggleAdminMode()">
+                            <span class="material-symbols-outlined" style="font-size:20px">edit</span>
+                            <span class="admin-mode-text">
+                                {{ adminService.isAdminMode() ? 'Режим редагування увімкнено' : 'Увімкнути редагування' }}
+                            </span>
+                            <span class="admin-mode-indicator" [class.on]="adminService.isAdminMode()"></span>
+                        </button>
+
+                        @if (adminService.isAdminMode()) {
+                            <p class="admin-tip">
+                                <span class="material-symbols-outlined" style="font-size:16px">lightbulb</span>
+                                Тепер відкрийте будь-яку страву і тапніть на текст, щоб редагувати
+                            </p>
+                        }
+
+                        <button class="admin-logout-btn" (click)="adminService.logout()">
+                            <span class="material-symbols-outlined" style="font-size:18px">logout</span>
+                            Вийти
+                        </button>
+                    </div>
+                }
             </div>
 
             <!-- All ranks -->
@@ -544,6 +623,226 @@ import { RankBadgeComponent } from './rank-badge.component';
             color: var(--color-text-tertiary);
         }
 
+        // ── Admin Panel ───
+        .admin-section {
+            border-top: 1px dashed var(--color-border);
+            padding-top: var(--space-4);
+        }
+
+        .admin-hint {
+            font-size: var(--text-xs);
+            color: var(--color-text-tertiary);
+            margin-bottom: var(--space-3);
+        }
+
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .admin-input {
+            width: 100%;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-sm);
+            font-family: var(--font-body);
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            outline: none;
+            transition: border-color var(--transition-fast);
+            box-sizing: border-box;
+
+            &:focus {
+                border-color: var(--color-accent);
+            }
+
+            :host-context([data-theme='dark']) & {
+                background: #2a2a2a;
+                border-color: #444;
+                &:focus { border-color: var(--color-accent); }
+            }
+        }
+
+        .admin-error {
+            font-size: var(--text-xs);
+            color: var(--color-error);
+        }
+
+        .admin-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: background var(--transition-fast), opacity var(--transition-fast);
+
+            @include m.hover { background: var(--color-accent-hover); }
+            &:disabled { opacity: 0.6; cursor: not-allowed; }
+        }
+
+        .admin-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .admin-authenticated {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .admin-user-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+
+            :host-context([data-theme='dark']) & { background: #242424; }
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--weight-bold);
+            font-size: var(--text-md);
+            flex-shrink: 0;
+        }
+
+        .admin-user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .admin-username {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            color: var(--color-text-primary);
+            text-transform: capitalize;
+        }
+
+        .admin-role {
+            font-size: var(--text-xs);
+            color: var(--color-accent);
+            font-weight: var(--weight-medium);
+        }
+
+        .admin-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-surface);
+            border: 1.5px solid var(--color-border-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-body);
+            transition: all var(--transition-fast);
+            width: 100%;
+            text-align: left;
+
+            :host-context([data-theme='dark']) & {
+                background: #242424;
+                border-color: #333;
+            }
+
+            @include m.hover {
+                border-color: var(--color-accent);
+            }
+
+            &.active {
+                background: var(--color-accent-light);
+                border-color: var(--color-accent);
+                color: var(--color-accent-dark);
+
+                .admin-mode-indicator { background: var(--color-success); }
+            }
+        }
+
+        .admin-mode-text {
+            flex: 1;
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--color-text-primary);
+        }
+
+        .admin-mode-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: var(--radius-full);
+            background: var(--color-border);
+            transition: background var(--transition-fast);
+
+            &.on {
+                background: var(--color-success);
+                box-shadow: 0 0 6px var(--color-success);
+            }
+        }
+
+        .admin-tip {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--color-warning-light);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            color: var(--color-warning);
+            line-height: 1.4;
+
+            :host-context([data-theme='dark']) & {
+                color: var(--color-warning);
+            }
+        }
+
+        .admin-logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: transparent;
+            color: var(--color-text-tertiary);
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+
+            @include m.hover {
+                color: var(--color-error);
+                border-color: var(--color-error);
+                background: var(--color-error-light);
+            }
+        }
+
         // ── Animations ───
         @keyframes drawerFadeIn {
             from { opacity: 0; }
@@ -566,8 +865,12 @@ export class ProfileDrawerComponent {
     protected readonly themeService = inject(ThemeService);
     protected readonly favoritesService = inject(FavoritesService);
     protected readonly settingsService = inject(SettingsService);
+    protected readonly adminService = inject(AdminService);
     private readonly exportImportService = inject(ExportImportService);
     readonly closed = output<void>();
+
+    protected loginNickname = '';
+    protected loginPassword = '';
 
     readonly allRanks = RANKS;
     readonly totalRanks = RANKS.length;
@@ -588,6 +891,11 @@ export class ProfileDrawerComponent {
 
     handleExport(): void {
         this.exportImportService.exportToJson();
+    }
+
+    handleLogin(): void {
+        if (!this.loginNickname || !this.loginPassword) return;
+        this.adminService.login(this.loginNickname, this.loginPassword);
     }
 
     setDisplayMode(mode: DisplayMode): void {
