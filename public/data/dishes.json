@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "lastUpdated": "2026-02-18T00:00:00.000Z",
+    "lastUpdated": "2026-02-25T00:00:00.000Z",
     "dishes": [
         {
             "id": "dish-001",
@@ -1269,6 +1269,58 @@
             "sourceUrl": "https://www.instagram.com/reels/DUYeIfQjKnF/",
             "createdAt": "2026-02-18T00:00:00.000Z",
             "updatedAt": "2026-02-18T00:00:00.000Z"
+        },
+        {
+            "id": "dish-030",
+            "title": "Торт «Черепашка»",
+            "slug": "tort-cherepashka",
+            "description": "Домашній торт «Черепашка» з шоколадного бісквітного тіста та сметанно-шоколадного крему. Шматочки бісквіта занурюються в крем і викладаються гіркою.",
+            "images": [
+                {
+                    "url": "/images/tort-cherepashka.jpg",
+                    "alt": "Торт Черепашка з шоколадним кремом",
+                    "isPrimary": true
+                }
+            ],
+            "rating": 5,
+            "price": { "amount": 220, "currency": "UAH" },
+            "cookingTime": { "preparation": 20, "cooking": 15, "total": 155 },
+            "calories": 360,
+            "servings": 8,
+            "difficulty": "easy",
+            "tags": ["торт", "черепашка", "шоколадний", "сметанний крем", "десерт"],
+            "categories": ["dessert", "baking", "festive"],
+            "tasteProfile": {
+                "sweet": 5,
+                "salty": 0,
+                "sour": 1,
+                "bitter": 1,
+                "spicy": 0,
+                "umami": 0
+            },
+            "ingredients": [
+                { "name": "Яйця", "amount": "6", "unit": "шт", "optional": false },
+                { "name": "Цукор (для тіста)", "amount": "1.5", "unit": "склянки", "optional": false },
+                { "name": "Сода, погашена оцтом", "amount": "1.5", "unit": "ч.л.", "optional": false },
+                { "name": "Какао (для тіста)", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Борошно", "amount": "2", "unit": "склянки", "optional": false },
+                { "name": "Вершкове масло", "amount": "1", "unit": "пачка", "optional": false },
+                { "name": "Какао (для крему)", "amount": "2", "unit": "ст.л.", "optional": false },
+                { "name": "Цукор (для крему)", "amount": "1", "unit": "склянка", "optional": false },
+                { "name": "Сметана", "amount": "2", "unit": "склянки", "optional": false }
+            ],
+            "steps": [
+                { "order": 1, "description": "Для тіста з'єднати яйця, цукор, соду (погашену оцтом), какао та борошно. Добре перемішати до однорідності.", "duration": 10 },
+                { "order": 2, "description": "Викласти тісто у форму та випікати при 180°C приблизно 15 хвилин.", "duration": 15 },
+                { "order": 3, "description": "Для крему розтопити вершкове масло, додати какао й цукор, перемішати до однорідності.", "duration": 5 },
+                { "order": 4, "description": "Дати масі охолонути, після чого додати сметану та перемішати до кремової консистенції.", "duration": 10 },
+                { "order": 5, "description": "Готовий корж нарізати кубиками. Кожен кубик занурити в крем і викласти гіркою у формі «черепашки»." },
+                { "order": 6, "description": "Поставити торт у холодильник до повного охолодження й стабілізації крему.", "duration": 120 }
+            ],
+            "notes": "Крем обов'язково має охолонути перед додаванням сметани, щоб вона не згорнулась.",
+            "sourceUrl": "",
+            "createdAt": "2026-02-25T00:00:00.000Z",
+            "updatedAt": "2026-02-25T00:00:00.000Z"
         }
     ]
 }
