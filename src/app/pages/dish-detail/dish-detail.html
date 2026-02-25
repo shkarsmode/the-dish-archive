@@ -199,6 +199,7 @@
         @if (isEditorOpen() && editorSource()) {
             <app-image-editor
                 [imageSource]="editorSource()!"
+                [uploading]="isUploadingImage()"
                 (save$)="onEditorSave($event)"
                 (cancel)="closeEditor()" />
         }

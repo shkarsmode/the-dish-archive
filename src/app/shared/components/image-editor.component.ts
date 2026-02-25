@@ -3,6 +3,7 @@ import {
     Component,
     ElementRef,
     EventEmitter,
+    HostListener,
     Input,
     OnDestroy,
     Output,
@@ -35,7 +36,7 @@ export interface ImageEditorResult {
                         <span class="material-symbols-outlined">tune</span>
                         Редактор зображення
                     </h3>
-                    <button class="ie-close" (click)="cancel.emit()">
+                    <button class="ie-close" (click)="cancel.emit()" [disabled]="isBusy()">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -50,7 +51,10 @@ export interface ImageEditorResult {
 
                     <!-- Crop overlay -->
                     @if (mode() === 'crop') {
-                        <div class="ie-crop-overlay">
+                        <div
+                            class="ie-crop-overlay"
+                            [style.width.px]="cropOverlayWidth()"
+                            [style.height.px]="cropOverlayHeight()">
                             <div class="ie-crop-box"
                                 [style.left.px]="cropX()"
                                 [style.top.px]="cropY()"
@@ -67,6 +71,13 @@ export interface ImageEditorResult {
                                     <div class="ie-crop-line v2"></div>
                                 </div>
                             </div>
+                        </div>
+                    }
+
+                    @if (uploading) {
+                        <div class="ie-busy-overlay">
+                            <div class="ie-spinner"></div>
+                            <span>Завантаження фото...</span>
                         </div>
                     }
                 </div>
@@ -171,10 +182,10 @@ export interface ImageEditorResult {
                         Скинути
                     </button>
                     <div class="ie-actions">
-                        <button class="ie-save-btn" (click)="save()">
-                            @if (isSaving()) { Обробка... } @else { Готово }
+                        <button class="ie-save-btn" (click)="save()" [disabled]="isBusy()">
+                            @if (isSaving()) { Обробка... } @else if (uploading) { Завантаження... } @else { Готово }
                         </button>
-                        <button class="ie-cancel-btn" (click)="cancel.emit()">Скасувати</button>
+                        <button class="ie-cancel-btn" (click)="cancel.emit()" [disabled]="isBusy()">Скасувати</button>
                     </div>
                 </div>
 
@@ -290,8 +301,37 @@ export interface ImageEditorResult {
 
         .ie-crop-overlay {
             position: absolute;
-            inset: 0;
+            inset: unset;
             pointer-events: none;
+        }
+
+        .ie-busy-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            color: var(--color-text-inverse);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            backdrop-filter: blur(2px);
+        }
+
+        .ie-spinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-top-color: var(--color-text-inverse);
+            border-radius: 50%;
+            animation: ieSpin .8s linear infinite;
+        }
+
+        @keyframes ieSpin {
+            to { transform: rotate(360deg); }
         }
 
         .ie-crop-box {
@@ -563,6 +603,11 @@ export interface ImageEditorResult {
             transition: background .15s;
 
             @include m.hover { background: var(--color-accent-dark); }
+
+            &:disabled {
+                opacity: .75;
+                cursor: default;
+            }
         }
 
         .ie-cancel-btn {
@@ -582,6 +627,7 @@ export interface ImageEditorResult {
 })
 export class ImageEditorComponent implements AfterViewInit, OnDestroy {
     @Input({ required: true }) imageSource!: string | File;
+    @Input() uploading = false;
     @Output() readonly save$ = new EventEmitter<ImageEditorResult>();
     @Output() readonly cancel = new EventEmitter<void>();
 
@@ -602,6 +648,10 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
     protected readonly cropW = signal(0);
     protected readonly cropH = signal(0);
     protected readonly cropAspect = signal<'free' | '1:1' | '4:3' | '16:9'>('free');
+    protected readonly cropOverlayLeft = signal(0);
+    protected readonly cropOverlayTop = signal(0);
+    protected readonly cropOverlayWidth = signal(0);
+    protected readonly cropOverlayHeight = signal(0);
 
     // Resize state
     protected readonly resizeW = signal(0);
@@ -629,6 +679,11 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy(): void {
         this.srcImage = null;
         this.currentCanvas = null;
+    }
+
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        this.updateDisplay();
     }
 
     // ── Load ──
@@ -675,6 +730,11 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
         const dw = Math.round(c.width * this.scaleRatio);
         const dh = Math.round(c.height * this.scaleRatio);
 
+        this.cropOverlayLeft.set(Math.max(0, (wW - dw) / 2));
+        this.cropOverlayTop.set(Math.max(0, (wH - dh) / 2));
+        this.cropOverlayWidth.set(dw);
+        this.cropOverlayHeight.set(dh);
+
         displayCanvas.width = dw;
         displayCanvas.height = dh;
         const ctx = displayCanvas.getContext('2d')!;
@@ -690,6 +750,10 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
         this.cropY.set(0);
         this.cropW.set(dw);
         this.cropH.set(dh);
+    }
+
+    protected isBusy(): boolean {
+        return this.isSaving() || this.uploading;
     }
 
     // ── Helpers: real crop size ──
@@ -843,7 +907,7 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
     // ── Save ──
 
     save(): void {
-        if (!this.currentCanvas) return;
+        if (!this.currentCanvas || this.isBusy()) return;
         this.isSaving.set(true);
 
         this.currentCanvas.toBlob(
@@ -864,6 +928,7 @@ export class ImageEditorComponent implements AfterViewInit, OnDestroy {
     // ── Pointer handling for crop drag ──
 
     onBackdropClick(event: Event): void {
+        if (this.isBusy()) return;
         if (event.target === event.currentTarget) {
             this.cancel.emit();
         }
