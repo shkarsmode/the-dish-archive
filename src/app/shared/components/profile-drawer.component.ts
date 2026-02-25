@@ -159,7 +159,9 @@ import { RankBadgeComponent } from './rank-badge.component';
                     <!-- Authenticated -->
                     <div class="admin-authenticated">
                         <div class="admin-user-row">
-                            <div class="admin-avatar">{{ adminService.nickname()?.charAt(0)?.toUpperCase() }}</div>
+                            <div class="admin-avatar">
+                                <img src="/images/Screenshot_1.png" alt="">
+                            </div>
                             <div class="admin-user-info">
                                 <span class="admin-username">{{ adminService.nickname() }}</span>
                                 <span class="admin-role">Адміністратор</span>
@@ -732,6 +734,14 @@ import { RankBadgeComponent } from './rank-badge.component';
             font-weight: var(--weight-bold);
             font-size: var(--text-md);
             flex-shrink: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;  
+            }
         }
 
         .admin-user-info {
