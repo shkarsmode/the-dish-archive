@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AdminService } from '../../core/services/admin.service';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { RankService } from '../../core/services/rank.service';
@@ -39,6 +40,19 @@ import { RankBadgeComponent } from './rank-badge.component';
                             <span class="badge">{{ favoritesService.count() }}</span>
                         }
                     </button>
+                    @if (adminService.isAuthenticated()) {
+                        <button
+                            class="icon-button admin-toggle"
+                            [class.active]="adminService.isAdminMode()"
+                            (click)="adminService.toggleAdminMode()"
+                            title="Увімкнути редагування"
+                            aria-label="Увімкнути редагування">
+                            <span class="material-symbols-outlined">edit</span>
+                            @if (adminService.isAdminMode()) {
+                                <span class="admin-dot"></span>
+                            }
+                        </button>
+                    }
                 </nav>
             </div>
         </header>
@@ -162,6 +176,26 @@ import { RankBadgeComponent } from './rank-badge.component';
                 background-color: var(--color-error-light);
                 color: var(--color-favorite);
             }
+        }
+
+        .admin-toggle {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .admin-toggle .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .admin-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+            box-shadow: 0 0 6px var(--color-success);
         }
 
         .badge {
@@ -291,6 +325,7 @@ export class HeaderComponent {
     protected readonly dishService = inject(DishService);
     protected readonly favoritesService = inject(FavoritesService);
     protected readonly rankService = inject(RankService);
+    protected readonly adminService = inject(AdminService);
 
     protected readonly showEasterEgg = signal(false);
     protected readonly showProfile = signal(false);
