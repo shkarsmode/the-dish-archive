@@ -7,7 +7,7 @@ interface AuthResponse {
 }
 
 const STORAGE_KEY = 'dish-archive-admin';
-const API_URL_KEY = 'the-dish-archive-back-h9xc.vercel.app';
+const API_URL = 'https://the-dish-archive-back-h9xc.vercel.app';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -46,7 +46,7 @@ export class AdminService {
 
     private loadApiUrl(): string {
         try {
-            return localStorage.getItem(API_URL_KEY) ?? 'http://localhost:3000';
+            return API_URL ?? 'http://localhost:3000';
         } catch {
             return 'http://localhost:3000';
         }
@@ -104,10 +104,10 @@ export class AdminService {
         this.adminModeSignal.set(false);
     }
 
-    setApiUrl(url: string): void {
-        this.apiUrl.set(url);
-        try {
-            localStorage.setItem(API_URL_KEY, url);
-        } catch {}
-    }
+    // setApiUrl(url: string): void {
+    //     this.apiUrl.set(url);
+    //     try {
+    //         localStorage.setItem(API_URL, url);
+    //     } catch {}
+    // }
 }
