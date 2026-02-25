@@ -126,6 +126,9 @@
                                         @if (img.isPrimary) {
                                             <span class="img-primary-badge">Головне</span>
                                         }
+                                        <button class="img-edit-overlay-btn" title="Редагувати фото" (click)="openEditorForExisting(i)">
+                                            <span class="material-symbols-outlined">tune</span>
+                                        </button>
                                     </div>
                                     <div class="img-card-info">
                                         <!-- Alt text -->
@@ -190,6 +193,14 @@
                     </div>
                 </div>
             </div>
+        }
+
+        <!-- Image Editor -->
+        @if (isEditorOpen() && editorSource()) {
+            <app-image-editor
+                [imageSource]="editorSource()!"
+                (save$)="onEditorSave($event)"
+                (cancel)="closeEditor()" />
         }
 
         <div class="detail-content">

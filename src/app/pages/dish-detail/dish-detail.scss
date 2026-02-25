@@ -1242,6 +1242,38 @@ select.edit-input-sm {
     }
 }
 
+.img-edit-overlay-btn {
+    @include m.reset-button;
+    position: absolute;
+    bottom: var(--space-2);
+    right: var(--space-2);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity .15s, background .15s;
+    z-index: 2;
+
+    .material-symbols-outlined { font-size: 16px; }
+
+    .img-manager-card:hover &,
+    .img-manager-card:focus-within & {
+        opacity: 1;
+    }
+
+    // Always visible on touch devices
+    @include m.mobile-only {
+        opacity: 1;
+    }
+
+    @include m.hover {
+        background: rgba(0, 0, 0, .8);
+    }
+}
+
 .img-primary-badge {
     position: absolute;
     top: var(--space-2);

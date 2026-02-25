@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,13 +22,14 @@ import { DishService } from '../../core/services/dish.service';
 import { PaletteService } from '../../core/services/palette.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
+import { ImageEditorComponent, ImageEditorResult } from '../../shared/components/image-editor.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
 import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
 
 @Component({
     selector: 'app-dish-detail',
-    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule],
+    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule, ImageEditorComponent],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
     host: {
@@ -58,6 +59,11 @@ export class DishDetailPage {
     protected readonly editImages = signal<ImageItem[]>([]);
     protected readonly isUploadingImage = signal(false);
     protected readonly editingAltIndex = signal<number | null>(null);
+
+    // Image editor state
+    protected readonly isEditorOpen = signal(false);
+    protected readonly editorSource = signal<string | File | null>(null);
+    private editorEditIndex: number | null = null; // null = new image, number = replace existing
 
     private readonly slug = toSignal(
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))
@@ -93,6 +99,41 @@ export class DishDetailPage {
     });
 
     private touchStartX = 0;
+    private lastDishId: string | null = null;
+
+    constructor() {
+        effect(() => {
+            const currentDish = this.dish();
+
+            if (!currentDish) {
+                this.lastDishId = null;
+                this.activeImageIndex.set(0);
+                return;
+            }
+
+            const images = currentDish.images ?? [];
+            if (images.length === 0) {
+                this.activeImageIndex.set(0);
+                this.lastDishId = currentDish.id;
+                return;
+            }
+
+            const isNewDish = this.lastDishId !== currentDish.id;
+            const activeIndex = this.activeImageIndex();
+            const isActiveOutOfRange = activeIndex < 0 || activeIndex >= images.length;
+
+            if (isNewDish || isActiveOutOfRange) {
+                this.activeImageIndex.set(this.getPrimaryImageIndex(images));
+            }
+
+            this.lastDishId = currentDish.id;
+        });
+    }
+
+    private getPrimaryImageIndex(images: ImageItem[]): number {
+        const primaryIndex = images.findIndex(image => image.isPrimary);
+        return primaryIndex >= 0 ? primaryIndex : 0;
+    }
 
     protected get currentImage(): string {
         const dishValue = this.dish();
@@ -443,23 +484,77 @@ export class DishDetailPage {
         const files = input.files;
         if (!files || files.length === 0) return;
 
+        // If single file, open editor; if multiple, upload directly
+        if (files.length === 1) {
+            this.editorEditIndex = null;
+            this.editorSource.set(files[0]);
+            this.isEditorOpen.set(true);
+        } else {
+            this.isUploadingImage.set(true);
+            try {
+                for (const file of Array.from(files)) {
+                    const result = await this.adminService.uploadImage(file);
+                    const newImage: ImageItem = {
+                        url: result.url,
+                        alt: this.dish()?.title ?? 'Фото страви',
+                        isPrimary: this.editImages().length === 0,
+                    };
+                    this.editImages.update(imgs => [...imgs, newImage]);
+                }
+                this.toastService.success('Зображення завантажено');
+            } catch {
+                this.toastService.error('Помилка завантаження');
+            } finally {
+                this.isUploadingImage.set(false);
+            }
+        }
+        input.value = '';
+    }
+
+    // ── Image Editor ──
+
+    protected openEditorForExisting(index: number): void {
+        const img = this.editImages()[index];
+        if (!img) return;
+        this.editorEditIndex = index;
+        this.editorSource.set(img.url);
+        this.isEditorOpen.set(true);
+    }
+
+    protected closeEditor(): void {
+        this.isEditorOpen.set(false);
+        this.editorSource.set(null);
+        this.editorEditIndex = null;
+    }
+
+    protected async onEditorSave(result: ImageEditorResult): Promise<void> {
         this.isUploadingImage.set(true);
         try {
-            for (const file of Array.from(files)) {
-                const result = await this.adminService.uploadImage(file);
+            const file = new File([result.blob], 'edited.jpg', { type: 'image/jpeg' });
+            const uploaded = await this.adminService.uploadImage(file);
+
+            if (this.editorEditIndex !== null) {
+                // Replace existing image
+                const idx = this.editorEditIndex;
+                this.editImages.update(imgs =>
+                    imgs.map((img, i) => i === idx ? { ...img, url: uploaded.url } : img)
+                );
+                this.toastService.success('Фото оновлено');
+            } else {
+                // Add new image
                 const newImage: ImageItem = {
-                    url: result.url,
+                    url: uploaded.url,
                     alt: this.dish()?.title ?? 'Фото страви',
                     isPrimary: this.editImages().length === 0,
                 };
                 this.editImages.update(imgs => [...imgs, newImage]);
+                this.toastService.success('Фото додано');
             }
-            this.toastService.success('Зображення завантажено');
         } catch {
             this.toastService.error('Помилка завантаження');
         } finally {
             this.isUploadingImage.set(false);
-            input.value = '';
+            this.closeEditor();
         }
     }
 
@@ -510,7 +605,9 @@ export class DishDetailPage {
 
         this.isSaving.set(true);
         try {
-            await this.dishService.updateDish(d.id, { images: this.editImages() });
+            const nextImages = this.editImages();
+            await this.dishService.updateDish(d.id, { images: nextImages });
+            this.activeImageIndex.set(this.getPrimaryImageIndex(nextImages));
             this.toastService.success('Зображення збережено ✨');
             this.closeImageManager();
         } catch {
