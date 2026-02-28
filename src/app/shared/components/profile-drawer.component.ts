@@ -96,7 +96,7 @@ import { RankBadgeComponent } from './rank-badge.component';
                         <span class="setting-text">Експорт даних</span>
                         <span class="material-symbols-outlined setting-arrow">chevron_right</span>
                     </button>
-                    <a class="setting-row" routerLink="/changelog" title="Історія змін">
+                    <a class="setting-row" routerLink="/changelog" title="Історія змін" (click)="closed.emit()">
                         <span class="material-symbols-outlined setting-icon">history</span>
                         <span class="setting-text">Історія змін</span>
                         <span class="material-symbols-outlined setting-arrow">chevron_right</span>
