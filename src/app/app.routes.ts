@@ -10,6 +10,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dish-detail/dish-detail').then(m => m.DishDetailPage),
     },
     {
+        path: 'changelog',
+        loadComponent: () => import('./pages/changelog/changelog').then(m => m.ChangelogPage),
+    },
+    {
         path: '**',
         redirectTo: '',
     },

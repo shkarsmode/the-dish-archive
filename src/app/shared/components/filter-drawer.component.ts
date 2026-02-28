@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import {
     ALL_CATEGORIES,
     ALL_TASTE_KEYS,
@@ -17,7 +17,7 @@ import { TagChipComponent } from './tag-chip.component';
     template: `
         @if (isOpen()) {
             <div class="drawer-backdrop" [class.closing]="isClosing() || isDragClosing()" (click)="close()" aria-hidden="true"></div>
-            <aside class="drawer" role="dialog" aria-label="Фільтри"
+            <aside class="drawer" #drawerPanel role="dialog" aria-label="Фільтри"
                    [class.open]="isOpen()"
                    [class.closing]="isClosing()"
                    [class.drag-closing]="isDragClosing()"
@@ -389,12 +389,22 @@ export class FilterDrawerComponent {
     protected readonly isSnapping = signal(false);
     protected readonly dragTransform = signal('');
 
+    protected readonly drawerEl = viewChild<ElementRef>('drawerPanel');
+
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly allTasteKeys = ALL_TASTE_KEYS;
 
     private dragStartY = 0;
     private dragCurrentY = 0;
     private isDragging = false;
+    private closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    @HostListener('document:keydown.escape')
+    onEscapeKey(): void {
+        if (this.isOpen()) {
+            this.close();
+        }
+    }
 
     open(): void {
         this.isClosing.set(false);
@@ -403,24 +413,33 @@ export class FilterDrawerComponent {
     }
 
     close(): void {
+        if (!this.isOpen() || this.isClosing()) return;
         this.isClosing.set(true);
+        // Safety fallback: force close after animation duration + buffer
+        this.closeTimer = setTimeout(() => this.forceClose(), 350);
+    }
+
+    private forceClose(): void {
+        this.isOpen.set(false);
+        this.isClosing.set(false);
+        this.isDragClosing.set(false);
+        this.dragTransform.set('');
+        document.body.style.overflow = '';
+        if (this.closeTimer) {
+            clearTimeout(this.closeTimer);
+            this.closeTimer = null;
+        }
     }
 
     protected onAnimationDone(): void {
         if (this.isClosing()) {
-            this.isOpen.set(false);
-            this.isClosing.set(false);
-            this.dragTransform.set('');
-            document.body.style.overflow = '';
+            this.forceClose();
         }
     }
 
     protected onTransitionDone(): void {
         if (this.isDragClosing()) {
-            this.isOpen.set(false);
-            this.isDragClosing.set(false);
-            this.dragTransform.set('');
-            document.body.style.overflow = '';
+            this.forceClose();
         }
         if (this.isSnapping()) {
             this.isSnapping.set(false);

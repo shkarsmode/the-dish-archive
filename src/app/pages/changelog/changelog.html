@@ -1,0 +1,98 @@
+<div class="changelog-page">
+    <!-- Header -->
+    <div class="changelog-hero">
+        <a routerLink="/" class="back-link">
+            <span class="back-icon">←</span>
+            <span>Каталог</span>
+        </a>
+        <h1 class="page-title">Історія змін</h1>
+        <p class="page-subtitle">Що нового в Архіві Страв</p>
+    </div>
+
+    <!-- Loading -->
+    @if (changelogService.isLoading()) {
+        <div class="timeline">
+            @for (i of [1, 2, 3]; track i) {
+                <div class="timeline-group">
+                    <div class="date-badge skeleton-badge">&nbsp;</div>
+                    <div class="timeline-entries">
+                        @for (j of [1, 2]; track j) {
+                            <div class="entry-card skeleton-card">
+                                <div class="skeleton-line wide"></div>
+                                <div class="skeleton-line medium"></div>
+                                <div class="skeleton-line narrow"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Error -->
+    @if (changelogService.loadError()) {
+        <div class="error-state">
+            <span class="error-icon">⚠️</span>
+            <p class="error-text">{{ changelogService.loadError() }}</p>
+            <button class="retry-button" (click)="changelogService.loadChangelog()">
+                Спробувати знову
+            </button>
+        </div>
+    }
+
+    <!-- Empty -->
+    @if (!changelogService.isLoading() && !changelogService.loadError() && changelogService.groups().length === 0) {
+        <div class="empty-state">
+            <span class="empty-icon">📋</span>
+            <p class="empty-text">Поки що змін немає</p>
+            <p class="empty-subtext">Тут з'являтиметься історія всіх оновлень</p>
+        </div>
+    }
+
+    <!-- Timeline -->
+    @if (!changelogService.isLoading() && changelogService.groups().length > 0) {
+        <div class="timeline">
+            @for (group of changelogService.groups(); track group.date) {
+                <div class="timeline-group">
+                    <div class="date-badge" [class.today]="isToday(group.date)">
+                        <span class="date-dot"></span>
+                        <span class="date-text">{{ getRelativeDate(group.date) }}</span>
+                    </div>
+
+                    <div class="timeline-entries">
+                        @for (entry of group.entries; track entry.id) {
+                            <div class="entry-card" [class]="getActionClass(entry.action)">
+                                <div class="entry-header">
+                                    <span class="entry-icon">{{ getActionIcon(entry.action) }}</span>
+                                    <span class="entry-action-label">{{ getActionLabel(entry.action) }}</span>
+                                    <span class="entry-time">{{ formatTime(entry.date) }}</span>
+                                </div>
+
+                                <h3 class="entry-title">{{ entry.title }}</h3>
+
+                                @if (entry.description) {
+                                    <p class="entry-description">{{ entry.description }}</p>
+                                }
+
+                                @if (entry.changes.length > 0) {
+                                    <ul class="entry-changes">
+                                        @for (change of entry.changes; track change) {
+                                            <li class="change-item">{{ change }}</li>
+                                        }
+                                    </ul>
+                                }
+
+                                @if (entry.dishId && entry.action !== 'removed') {
+                                    <div class="entry-footer">
+                                        <span class="dish-link-label">Страва:</span>
+                                        <span class="dish-link-name">{{ entry.dishTitle }}</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
