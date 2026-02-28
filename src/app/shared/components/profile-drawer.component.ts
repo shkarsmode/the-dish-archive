@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
@@ -11,7 +12,7 @@ import { RankBadgeComponent } from './rank-badge.component';
 @Component({
     selector: 'app-profile-drawer',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RankBadgeComponent, FormsModule],
+    imports: [RankBadgeComponent, FormsModule, RouterLink],
     template: `
         <div class="backdrop" (click)="closed.emit()"></div>
         <aside class="drawer" role="dialog" aria-label="Профіль кулінара">
@@ -95,6 +96,11 @@ import { RankBadgeComponent } from './rank-badge.component';
                         <span class="setting-text">Експорт даних</span>
                         <span class="material-symbols-outlined setting-arrow">chevron_right</span>
                     </button>
+                    <a class="setting-row" routerLink="/changelog" title="Історія змін">
+                        <span class="material-symbols-outlined setting-icon">history</span>
+                        <span class="setting-text">Історія змін</span>
+                        <span class="material-symbols-outlined setting-arrow">chevron_right</span>
+                    </a>
                 </div>
             </div>
 
