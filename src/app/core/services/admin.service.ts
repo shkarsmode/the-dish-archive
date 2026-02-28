@@ -7,7 +7,7 @@ interface AuthResponse {
 }
 
 const STORAGE_KEY = 'dish-archive-admin';
-const API_URL = 'https://the-dish-archive-back-h9xc.vercel.app';
+const API_URL = 'the-dish-archive-back.vercel.app';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
