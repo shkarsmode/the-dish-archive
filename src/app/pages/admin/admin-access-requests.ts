@@ -3,10 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { AdminDataService } from '../../core/services/admin-data.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/family-member.model';
+import { SelectComponent, SelectOption } from '../../shared/components/select.component';
 
 @Component({
     selector: 'app-admin-access-requests',
-    imports: [FormsModule],
+    imports: [FormsModule, SelectComponent],
     template: `
         <div class="page-head">
             <h2 class="page-title">Запити на доступ</h2>
@@ -34,17 +35,12 @@ import { FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/family-member.
                         </div>
 
                         <div class="request-controls">
-                            <select class="control" [ngModel]="familyFor(request.id)" (ngModelChange)="setFamily(request.id, $event)">
-                                <option value="">— Оберіть родину —</option>
-                                @for (family of data.families(); track family.id) {
-                                    <option [value]="family.id">{{ family.name }}</option>
-                                }
-                            </select>
-                            <select class="control" [ngModel]="roleFor(request.id)" (ngModelChange)="setRole(request.id, $event)">
-                                @for (role of roles; track role) {
-                                    <option [value]="role">{{ roleLabels[role] }}</option>
-                                }
-                            </select>
+                            <app-select variant="inline" [options]="familyOptions()" placeholder="— Оберіть родину —"
+                                sheetTitle="Родина" ariaLabel="Родина" [ngModel]="familyFor(request.id)"
+                                (ngModelChange)="setFamily(request.id, $event)" [ngModelOptions]="{ standalone: true }" />
+                            <app-select variant="inline" [options]="roleOptions" sheetTitle="Роль" ariaLabel="Роль"
+                                [ngModel]="roleFor(request.id)" (ngModelChange)="setRole(request.id, $event)"
+                                [ngModelOptions]="{ standalone: true }" />
                             <div class="request-actions">
                                 <button class="btn approve" (click)="approve(request.id)" [disabled]="busy() === request.id || !familyFor(request.id)">
                                     <span class="material-symbols-outlined">check</span> Схвалити
@@ -130,6 +126,10 @@ export class AdminAccessRequestsPage {
 
     protected readonly roles: FamilyRole[] = ['viewer', 'editor', 'admin', 'owner'];
     protected readonly roleLabels = FAMILY_ROLE_LABELS;
+    protected readonly roleOptions: SelectOption[] =
+        this.roles.map(r => ({ value: r, label: FAMILY_ROLE_LABELS[r] }));
+    protected readonly familyOptions = computed<SelectOption[]>(() =>
+        this.data.families().map(f => ({ value: f.id, label: f.name })));
     protected readonly busy = signal<string | null>(null);
 
     private readonly familySelection = signal<Record<string, string>>({});

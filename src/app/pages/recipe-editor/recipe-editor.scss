@@ -8,22 +8,30 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-border);
 }
 .icon-btn {
-    width: 40px; height: 40px; flex: none; border: none; cursor: pointer;
+    width: 44px; height: 44px; flex: none; border: none; cursor: pointer;
     display: grid; place-items: center; border-radius: var(--radius-full);
     background: var(--color-surface-hover); color: var(--color-text-secondary);
 }
 .icon-btn:hover { background: var(--color-surface-active); color: var(--color-text-primary); }
+.icon-btn.subtle { background: transparent; }
+.icon-btn.subtle:hover { background: var(--color-surface-hover); }
+.header-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .editor-title {
     font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-semibold);
-    margin: 0; color: var(--color-text-primary); flex: 1;
+    margin: 0; color: var(--color-text-primary);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.header-actions { display: flex; gap: var(--space-2); }
+.autosave {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: var(--text-xs); color: var(--color-success, var(--color-accent-dark));
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.autosave .material-symbols-outlined { font-size: 14px; }
 
 .btn {
     padding: 10px 18px; border-radius: var(--radius-full); border: none; cursor: pointer;
@@ -52,7 +60,7 @@
 }
 .card-head .card-title { margin: 0; }
 .add-row {
-    width: 34px; height: 34px; border: none; cursor: pointer; border-radius: var(--radius-full);
+    width: 44px; height: 44px; border: none; cursor: pointer; border-radius: var(--radius-full);
     background: var(--color-accent-light); color: var(--color-accent-dark); display: grid; place-items: center;
 }
 
@@ -86,12 +94,12 @@ textarea { resize: vertical; }
 .image-tile { position: relative; aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden; border: 2px solid transparent; }
 .image-tile.primary { border-color: var(--color-accent); }
 .image-tile img { width: 100%; height: 100%; object-fit: cover; }
-.image-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+.image-actions { position: absolute; top: 6px; right: 6px; display: flex; gap: 8px; }
 .image-actions button {
-    width: 28px; height: 28px; border: none; cursor: pointer; border-radius: var(--radius-full);
-    background: rgba(0,0,0,0.55); color: #fff; display: grid; place-items: center;
+    width: 38px; height: 38px; border: none; cursor: pointer; border-radius: var(--radius-full);
+    background: rgba(0,0,0,0.58); color: #fff; display: grid; place-items: center;
 }
-.image-actions button .material-symbols-outlined { font-size: 16px; }
+.image-actions button .material-symbols-outlined { font-size: 18px; }
 .image-actions button.on { background: var(--color-accent); }
 .image-upload {
     aspect-ratio: 1; border: 2px dashed var(--color-border); border-radius: var(--radius-md);
@@ -110,7 +118,7 @@ textarea { resize: vertical; }
     font-weight: var(--weight-bold); color: var(--color-accent); font-family: var(--font-display);
 }
 .row-del {
-    width: 40px; height: 40px; flex: none; border: none; cursor: pointer; border-radius: var(--radius-md);
+    width: 44px; height: 44px; flex: none; border: none; cursor: pointer; border-radius: var(--radius-md);
     background: transparent; color: var(--color-text-tertiary); display: grid; place-items: center;
 }
 .row-del:hover { background: var(--color-error-light); color: var(--color-error); }
@@ -142,4 +150,56 @@ textarea { resize: vertical; }
     background: var(--color-accent-light); color: var(--color-accent-dark); display: grid; place-items: center;
 }
 
-.footer-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+// ── Danger zone (delete) ──
+.danger-card {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    border-color: var(--color-error-light);
+}
+.danger-copy .card-title { margin: 0 0 2px; }
+.danger-hint { margin: 0; font-size: var(--text-xs); color: var(--color-text-tertiary); }
+.btn.danger-outline {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    background: transparent; border: 1px solid var(--color-error); color: var(--color-error);
+}
+.btn.danger-outline:hover:not(:disabled) { background: var(--color-error); color: #fff; }
+.btn.danger-outline .material-symbols-outlined { font-size: 18px; }
+
+// ── Sticky bottom action bar (mobile-first) ──
+.action-bar {
+    position: sticky; bottom: 0; z-index: var(--z-sticky);
+    display: flex; gap: var(--space-2);
+    max-width: 760px; margin: 0 auto;
+    padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--color-border);
+}
+.action-bar .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 48px;
+}
+.action-bar .btn .material-symbols-outlined { font-size: 19px; }
+.action-bar .bar-draft { flex: 0 0 auto; }
+.action-bar .bar-publish { flex: 1; }
+
+@media (min-width: 640px) {
+    .action-bar { justify-content: flex-end; }
+    .action-bar .bar-publish { flex: 0 0 auto; }
+}
+
+// ── Mobile row stacking for ingredients & steps ──
+@media (max-width: 560px) {
+    .ingredient-row {
+        flex-wrap: wrap;
+        padding-bottom: var(--space-2);
+        border-bottom: 1px solid var(--color-border-light);
+    }
+    .ingredient-row .grow { flex: 1 1 100%; }
+    .ingredient-row .sm { flex: 1 1 0; width: auto; }
+    .ingredient-row .row-del { order: 2; }
+
+    .step-row { flex-wrap: wrap; align-items: stretch; }
+    .step-row .step-num { height: auto; width: 100%; justify-content: flex-start; }
+    .step-row .grow { flex: 1 1 100%; }
+    .step-row .sm { flex: 1 1 auto; width: auto; }
+}

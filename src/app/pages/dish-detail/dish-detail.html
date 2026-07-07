@@ -208,6 +208,22 @@
         <div class="detail-content">
             <!-- Header -->
             <header class="detail-header">
+                <!-- Privacy (editable in edit mode) -->
+                @if (canEdit()) {
+                    <div class="visibility-toggle" role="group" aria-label="Приватність рецепта">
+                        <button type="button" class="vis-btn" [class.active]="dish()!.visibility === 'family'"
+                            (click)="setVisibility('family')">
+                            <span class="material-symbols-outlined">lock</span> Тільки родина
+                        </button>
+                        <button type="button" class="vis-btn" [class.active]="dish()!.visibility === 'public'"
+                            [disabled]="!canMakePublic()" (click)="setVisibility('public')">
+                            <span class="material-symbols-outlined">public</span> Публічно
+                        </button>
+                    </div>
+                } @else if (dish()!.visibility === 'family') {
+                    <span class="visibility-chip"><span class="material-symbols-outlined">lock</span> Тільки для родини</span>
+                }
+
                 <!-- Categories (editable) -->
                 @if (isEditing('categories')) {
                     <div class="edit-block">
@@ -333,13 +349,9 @@
                         </label>
                         <label class="edit-stat-field">
                             <span>Складність</span>
-                            <select class="edit-input-sm"
-                                [ngModel]="editDraft().difficulty"
-                                (ngModelChange)="updateDraft('difficulty', $event)">
-                                <option value="easy">Легко</option>
-                                <option value="medium">Середнє</option>
-                                <option value="hard">Складно</option>
-                            </select>
+                            <app-select [options]="difficultyOptions" sheetTitle="Складність" ariaLabel="Складність"
+                                [ngModel]="editDraft().difficulty" (ngModelChange)="updateDraft('difficulty', $event)"
+                                [ngModelOptions]="{ standalone: true }" />
                         </label>
                     </div>
                     <div class="edit-actions">

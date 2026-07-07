@@ -1,8 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map } from 'rxjs';
+import { debounceTime, map } from 'rxjs';
 import {
     ALL_CATEGORIES,
     ALL_TASTE_KEYS,
@@ -18,6 +18,9 @@ import { FamilyService } from '../../core/services/family.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UploadService } from '../../core/services/upload.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { EditorDraftService } from '../../core/services/editor-draft.service';
+import { SelectComponent, SelectOption } from '../../shared/components/select.component';
 
 const CYRILLIC: Record<string, string> = {
     а: 'a', б: 'b', в: 'v', г: 'h', ґ: 'g', д: 'd', е: 'e', є: 'ie', ж: 'zh', з: 'z', и: 'y',
@@ -29,7 +32,7 @@ const slugify = (v: string) => v.toLowerCase().split('').map(c => CYRILLIC[c] ??
 
 @Component({
     selector: 'app-recipe-editor',
-    imports: [ReactiveFormsModule, FormsModule],
+    imports: [ReactiveFormsModule, FormsModule, SelectComponent],
     templateUrl: './recipe-editor.html',
     styleUrl: './recipe-editor.scss',
 })
@@ -42,6 +45,9 @@ export class RecipeEditorPage {
     private readonly auth = inject(AuthService);
     private readonly uploadService = inject(UploadService);
     private readonly toast = inject(ToastService);
+    private readonly confirm = inject(ConfirmService);
+    private readonly drafts = inject(EditorDraftService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly categoryLabels = CATEGORY_LABELS;
@@ -49,10 +55,21 @@ export class RecipeEditorPage {
     protected readonly tasteLabels = TASTE_LABELS;
     protected readonly difficultyLabels = DIFFICULTY_LABELS;
     protected readonly difficulties: DishDifficulty[] = ['easy', 'medium', 'hard'];
+    protected readonly difficultyOptions: SelectOption[] =
+        this.difficulties.map(d => ({ value: d, label: DIFFICULTY_LABELS[d] }));
+    protected readonly familyOptions = computed<SelectOption[]>(() =>
+        this.familyService.editableFamilies().map(f => ({ value: f.id, label: f.name })));
 
     protected readonly saving = signal(false);
     protected readonly uploading = signal(false);
+    protected readonly deleting = signal(false);
     protected saved = false;
+
+    /** Timestamp of the last local autosave; drives the "draft saved" indicator. */
+    protected readonly draftSavedAt = signal<number | null>(null);
+    /** True only when a draft from a previous session was restored on load. */
+    protected readonly restoredDraft = signal(false);
+    private hydrating = false;
 
     private readonly editId = toSignal(this.route.paramMap.pipe(map(p => p.get('dishId'))));
     protected readonly isEdit = computed(() => !!this.editId());
@@ -92,18 +109,99 @@ export class RecipeEditorPage {
     get tags(): FormArray { return this.form.controls.tags; }
 
     constructor() {
-        // Default family = first editable one.
         queueMicrotask(() => {
             const id = this.editId();
             if (id) {
                 this.loadDish(id);
             } else {
-                const first = this.familyService.editableFamilies()[0];
-                if (first) this.form.controls.familyId.setValue(first.id);
-                this.addIngredient();
-                this.addStep();
+                this.initNewRecipe();
             }
         });
+    }
+
+    /** Seed a fresh recipe, restoring any locally-autosaved draft first. */
+    private initNewRecipe(): void {
+        const draft = this.drafts.load(null);
+        if (draft) {
+            this.hydrate(draft.value);
+            this.draftSavedAt.set(draft.savedAt);
+            this.restoredDraft.set(true);
+            this.toast.show('Чернетку відновлено ✨', 'info');
+        } else {
+            const first = this.familyService.editableFamilies()[0];
+            if (first) this.form.controls.familyId.setValue(first.id);
+            this.addIngredient();
+            this.addStep();
+        }
+        // Autosave locally on every change so a reload never loses work.
+        this.form.valueChanges
+            .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                if (this.hydrating || this.saved) return;
+                const savedAt = this.drafts.save(null, this.form.getRawValue());
+                this.draftSavedAt.set(savedAt);
+            });
+    }
+
+    /**
+     * Rebuild the whole form (scalars + arrays) from a stored raw value.
+     * All mutations use { emitEvent: false } so hydration never triggers the
+     * debounced autosave (which would otherwise resurrect a cleared draft).
+     */
+    private hydrate(value: any): void {
+        this.hydrating = true;
+        this.slugTouched = !!value?.slug;
+        const silent = { emitEvent: false };
+        this.form.patchValue({
+            familyId: value?.familyId ?? '',
+            title: value?.title ?? '',
+            slug: value?.slug ?? '',
+            description: value?.description ?? '',
+            visibility: value?.visibility ?? 'family',
+            status: value?.status ?? 'draft',
+            prepTime: value?.prepTime ?? 0,
+            cookTime: value?.cookTime ?? 0,
+            totalTime: value?.totalTime ?? 0,
+            calories: value?.calories ?? 0,
+            servings: value?.servings ?? 1,
+            difficulty: value?.difficulty ?? 'easy',
+            priceAmount: value?.priceAmount ?? 0,
+            priceCurrency: value?.priceCurrency ?? 'UAH',
+            categories: Array.isArray(value?.categories) ? [...value.categories] : [],
+            notes: value?.notes ?? '',
+            sourceUrl: value?.sourceUrl ?? '',
+            taste: value?.taste ?? { sweet: 0, salty: 0, sour: 0, bitter: 0, spicy: 0, umami: 0 },
+        }, silent);
+        this.images.clear(silent);
+        (value?.images ?? []).forEach((img: unknown) => this.images.push(this.fb.control(img), silent));
+        this.ingredients.clear(silent);
+        (value?.ingredients ?? []).forEach((ing: any) => this.ingredients.push(this.newIngredient(ing), silent));
+        this.steps.clear(silent);
+        (value?.steps ?? []).forEach((s: any) => this.steps.push(this.newStep({ description: s?.description ?? '', duration: s?.duration ?? null }), silent));
+        this.tags.clear(silent);
+        (value?.tags ?? []).forEach((tag: string) => this.tags.push(this.fb.control(tag, { nonNullable: true }), silent));
+        if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient(), silent);
+        if (this.steps.length === 0) this.steps.push(this.newStep(), silent);
+        this.hydrating = false;
+    }
+
+    /** Discard the restored local draft and start from a clean slate. */
+    protected async startFresh(): Promise<void> {
+        const ok = await this.confirm.ask({
+            title: 'Почати заново?',
+            message: 'Відновлену чернетку буде видалено, а форму очищено.',
+            confirmLabel: 'Очистити',
+            danger: true,
+            icon: 'restart_alt',
+        });
+        if (!ok) return;
+        this.drafts.clear(null);
+        this.draftSavedAt.set(null);
+        this.restoredDraft.set(false);
+        this.hydrate({});
+        const first = this.familyService.editableFamilies()[0];
+        if (first) this.form.controls.familyId.setValue(first.id, { emitEvent: false });
+        this.form.markAsPristine();
     }
 
     private newIngredient(value?: { name: string; amount: string; unit: string; optional: boolean }) {
@@ -269,6 +367,7 @@ export class RecipeEditorPage {
                 dish = await this.dishService.createDish(payload);
             }
             this.saved = true;
+            this.drafts.clear(null);
             this.toast.show(status === 'published' ? 'Опубліковано ✨' : 'Чернетку збережено', 'success');
             void this.router.navigate(['/dish', dish.slug]);
         } catch (error: any) {
@@ -282,7 +381,35 @@ export class RecipeEditorPage {
         void this.router.navigate(this.isEdit() ? ['/dish', this.form.controls.slug.value] : ['/']);
     }
 
+    /** Delete the current recipe (edit mode) after a confirmation dialog. */
+    protected async remove(): Promise<void> {
+        const id = this.editId();
+        if (!id || this.deleting()) return;
+        const ok = await this.confirm.ask({
+            title: 'Видалити рецепт?',
+            message: `«${this.form.controls.title.value || 'Цей рецепт'}» буде видалено назавжди разом із фото, інгредієнтами та кроками. Цю дію не можна скасувати.`,
+            confirmLabel: 'Видалити',
+            danger: true,
+            icon: 'delete',
+        });
+        if (!ok) return;
+        this.deleting.set(true);
+        try {
+            await this.dishService.deleteDish(id);
+            this.saved = true;
+            this.drafts.clear(id);
+            this.toast.show('Рецепт видалено', 'success');
+            void this.router.navigate(['/']);
+        } catch (error: any) {
+            this.toast.show(`Не вдалося видалити: ${error?.message ?? 'помилка'}`, 'error');
+        } finally {
+            this.deleting.set(false);
+        }
+    }
+
     canDeactivate(): boolean {
-        return this.saved || !this.form.dirty || confirm('Залишити редактор? Незбережені зміни буде втрачено.');
+        // New-recipe work is autosaved locally, so leaving never loses it.
+        if (this.saved || !this.form.dirty || !this.isEdit()) return true;
+        return confirm('Залишити редактор? Незбережені зміни цього рецепта буде втрачено.');
     }
 }

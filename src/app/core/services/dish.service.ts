@@ -340,9 +340,30 @@ export class DishService {
     }
 
     async deleteDish(id: string): Promise<void> {
-        const { error } = await this.supabase.client.from('dishes').delete().eq('id', id);
+        // RLS filters out rows the user may not delete WITHOUT raising an error,
+        // so a denied delete returns error:null and count:0. Treat 0 rows as a failure.
+        const { error, count } = await this.supabase.client
+            .from('dishes')
+            .delete({ count: 'exact' })
+            .eq('id', id);
         if (error) throw error;
+        if (!count) throw new Error('Недостатньо прав для видалення цього рецепта');
         this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
+    }
+
+    /**
+     * Publish every recipe the current user may edit (super admin: all) publicly.
+     * Returns the number of dishes updated. RLS scopes which rows are affected.
+     */
+    async makeAllPublic(): Promise<number> {
+        const { data, error } = await this.supabase.client
+            .from('dishes')
+            .update({ visibility: 'public', status: 'published' })
+            .not('id', 'is', null)
+            .select('id');
+        if (error) throw error;
+        await this.reload();
+        return data?.length ?? 0;
     }
 
     /** Optimistically adjust a dish's like counter (used by FavoritesService). */

@@ -1,6 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AdminDataService } from '../../core/services/admin-data.service';
+import { DishService } from '../../core/services/dish.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
     selector: 'app-admin-dashboard',
@@ -47,6 +50,21 @@ import { AdminDataService } from '../../core/services/admin-data.service';
                     }
                 </ul>
             }
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Інструменти</h2>
+            </div>
+            <div class="tool-row">
+                <div class="tool-copy">
+                    <span class="tool-title">Зробити всі рецепти публічними</span>
+                    <span class="tool-sub">Усі наявні рецепти стануть публічними та опублікованими для всіх схвалених користувачів.</span>
+                </div>
+                <button class="tool-btn" (click)="makeAllPublic()" [disabled]="busy()">
+                    {{ busy() ? 'Оновлюю…' : 'Виконати' }}
+                </button>
+            </div>
         </div>
     `,
     styles: [`
@@ -109,10 +127,43 @@ import { AdminDataService } from '../../core/services/admin-data.service';
             background: var(--color-success-light); color: var(--color-success);
         }
         .family-status.archived { background: var(--color-surface-active); color: var(--color-text-tertiary); }
+        .panel + .panel { margin-top: var(--space-5); }
+        .tool-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+        .tool-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .tool-title { font-weight: var(--weight-medium); color: var(--color-text-primary); font-size: var(--text-sm); }
+        .tool-sub { font-size: var(--text-xs); color: var(--color-text-tertiary); line-height: var(--leading-relaxed); }
+        .tool-btn {
+            flex: none; padding: 10px 18px; border: none; border-radius: var(--radius-full); cursor: pointer;
+            background: var(--color-accent); color: var(--color-text-inverse); font-weight: var(--weight-semibold); font-size: var(--text-sm);
+        }
+        .tool-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     `],
 })
 export class AdminDashboardPage {
     protected readonly data = inject(AdminDataService);
+    private readonly dishService = inject(DishService);
+    private readonly confirm = inject(ConfirmService);
+    private readonly toast = inject(ToastService);
+    protected readonly busy = signal(false);
+
+    protected async makeAllPublic(): Promise<void> {
+        const ok = await this.confirm.ask({
+            title: 'Зробити всі рецепти публічними?',
+            message: 'Усі наявні рецепти стануть видимими для всіх схвалених користувачів.',
+            confirmLabel: 'Так, усі публічні',
+            icon: 'public',
+        });
+        if (!ok) return;
+        this.busy.set(true);
+        try {
+            const count = await this.dishService.makeAllPublic();
+            this.toast.show(`Готово — оновлено рецептів: ${count}`, 'success');
+        } catch (error: any) {
+            this.toast.show(`Помилка: ${error?.message ?? 'не вдалося'}`, 'error');
+        } finally {
+            this.busy.set(false);
+        }
+    }
 
     protected readonly cards = computed(() => {
         const stats = this.data.stats();

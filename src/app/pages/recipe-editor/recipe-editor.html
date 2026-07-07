@@ -3,13 +3,17 @@
         <button type="button" class="icon-btn" (click)="cancel()" aria-label="Назад">
             <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 class="editor-title">{{ isEdit() ? 'Редагувати рецепт' : 'Новий рецепт' }}</h1>
-        <div class="header-actions">
-            <button type="button" class="btn ghost" (click)="save('draft')" [disabled]="saving()">Чернетка</button>
-            <button type="submit" class="btn primary" [disabled]="saving()">
-                {{ saving() ? 'Зберігаю…' : 'Опублікувати' }}
-            </button>
+        <div class="header-titles">
+            <h1 class="editor-title">{{ isEdit() ? 'Редагувати рецепт' : 'Новий рецепт' }}</h1>
+            @if (!isEdit() && draftSavedAt()) {
+                <span class="autosave"><span class="material-symbols-outlined">cloud_done</span> Чернетку збережено автоматично</span>
+            }
         </div>
+        @if (restoredDraft()) {
+            <button type="button" class="icon-btn subtle" (click)="startFresh()" aria-label="Почати заново" title="Почати заново">
+                <span class="material-symbols-outlined">restart_alt</span>
+            </button>
+        }
     </header>
 
     <div class="editor-body">
@@ -35,12 +39,12 @@
             <h2 class="card-title">Родина та доступ</h2>
             <div class="field">
                 <label>Родина *</label>
-                <select formControlName="familyId">
-                    <option value="">— Оберіть родину —</option>
-                    @for (family of familyService.editableFamilies(); track family.id) {
-                        <option [value]="family.id">{{ family.name }}</option>
-                    }
-                </select>
+                <app-select
+                    formControlName="familyId"
+                    [options]="familyOptions()"
+                    placeholder="— Оберіть родину —"
+                    sheetTitle="Оберіть родину"
+                    ariaLabel="Родина" />
             </div>
             <div class="field">
                 <label>Видимість</label>
@@ -132,11 +136,11 @@
                 <div class="field"><label>Порцій</label><input type="number" formControlName="servings"></div>
                 <div class="field">
                     <label>Складність</label>
-                    <select formControlName="difficulty">
-                        @for (key of difficulties; track key) {
-                            <option [value]="key">{{ difficultyLabels[key] }}</option>
-                        }
-                    </select>
+                    <app-select
+                        formControlName="difficulty"
+                        [options]="difficultyOptions"
+                        sheetTitle="Складність"
+                        ariaLabel="Складність" />
                 </div>
                 <div class="field"><label>Ціна</label><input type="number" formControlName="priceAmount"></div>
                 <div class="field"><label>Валюта</label><input type="text" formControlName="priceCurrency"></div>
@@ -185,10 +189,28 @@
             <div class="field"><label>Джерело (URL)</label><input type="text" formControlName="sourceUrl" placeholder="https://…"></div>
         </section>
 
-        <div class="footer-actions">
-            <button type="button" class="btn ghost" (click)="cancel()">Скасувати</button>
-            <button type="button" class="btn ghost" (click)="save('draft')" [disabled]="saving()">Зберегти чернетку</button>
-            <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Зберігаю…' : 'Опублікувати' }}</button>
-        </div>
+        @if (isEdit()) {
+            <section class="card danger-card">
+                <div class="danger-copy">
+                    <h2 class="card-title">Видалити рецепт</h2>
+                    <p class="danger-hint">Рецепт зникне для всієї родини. Дію не можна скасувати.</p>
+                </div>
+                <button type="button" class="btn danger-outline" (click)="remove()" [disabled]="deleting()">
+                    <span class="material-symbols-outlined">delete</span>
+                    {{ deleting() ? 'Видаляю…' : 'Видалити' }}
+                </button>
+            </section>
+        }
+    </div>
+
+    <div class="action-bar">
+        <button type="button" class="btn ghost bar-draft" (click)="save('draft')" [disabled]="saving()">
+            <span class="material-symbols-outlined">bookmark</span>
+            <span class="bar-label">Чернетка</span>
+        </button>
+        <button type="submit" class="btn primary bar-publish" [disabled]="saving()">
+            <span class="material-symbols-outlined">check_circle</span>
+            {{ saving() ? 'Зберігаю…' : 'Опублікувати' }}
+        </button>
     </div>
 </form>

@@ -258,6 +258,7 @@ import { RatingStarsComponent } from './rating-stars.component';
 
         .family-badge {
             display: inline-flex;
+            align-self: flex-start;
             align-items: center;
             gap: 5px;
             margin-bottom: var(--space-2);
@@ -268,6 +269,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             font-size: var(--text-xs);
             font-weight: var(--weight-medium);
             max-width: 100%;
+            width: fit-content;
         }
         .family-badge-dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex: none; }
         .family-badge .lock-ic { font-size: 13px; color: var(--color-text-tertiary); }

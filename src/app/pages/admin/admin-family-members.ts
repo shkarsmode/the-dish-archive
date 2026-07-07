@@ -5,11 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { AdminDataService } from '../../core/services/admin-data.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { ADMIN_ROLES, FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/family-member.model';
+import { SelectComponent, SelectOption } from '../../shared/components/select.component';
 
 @Component({
     selector: 'app-admin-family-members',
-    imports: [FormsModule, RouterLink],
+    imports: [FormsModule, RouterLink, SelectComponent],
     template: `
         <a routerLink="/admin/families" class="back">
             <span class="material-symbols-outlined">arrow_back</span> Родини
@@ -20,15 +22,11 @@ import { ADMIN_ROLES, FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/f
         </div>
 
         <div class="add-box">
-            <select class="control grow" [(ngModel)]="newUserId">
-                <option value="">— Оберіть користувача —</option>
-                @for (user of addableUsers(); track user.id) {
-                    <option [value]="user.id">{{ user.displayName || user.email }}</option>
-                }
-            </select>
-            <select class="control" [(ngModel)]="newRole">
-                @for (role of roles; track role) { <option [value]="role">{{ roleLabels[role] }}</option> }
-            </select>
+            <app-select class="grow" [options]="userOptions()" placeholder="— Оберіть користувача —"
+                sheetTitle="Додати користувача" ariaLabel="Користувач" [(ngModel)]="newUserId"
+                [ngModelOptions]="{ standalone: true }" />
+            <app-select variant="inline" [options]="roleOptions" sheetTitle="Роль" ariaLabel="Роль"
+                [(ngModel)]="newRole" [ngModelOptions]="{ standalone: true }" />
             <button class="btn primary" (click)="add()" [disabled]="!newUserId || busy()">Додати</button>
         </div>
 
@@ -47,9 +45,9 @@ import { ADMIN_ROLES, FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/f
                             <span class="member-name">{{ member.displayName || member.email }}</span>
                             <span class="member-email">{{ member.email }}</span>
                         </div>
-                        <select class="control role-select" [ngModel]="member.role" (ngModelChange)="changeRole(member.id, $event)">
-                            @for (role of roles; track role) { <option [value]="role">{{ roleLabels[role] }}</option> }
-                        </select>
+                        <app-select variant="inline" class="role-select" [options]="roleOptions"
+                            sheetTitle="Роль учасника" ariaLabel="Роль" [ngModel]="member.role"
+                            (ngModelChange)="changeRole(member.id, $event)" [ngModelOptions]="{ standalone: true }" />
                         <button class="icon-danger" (click)="remove(member.id)" title="Видалити з родини">
                             <span class="material-symbols-outlined">person_remove</span>
                         </button>
@@ -88,9 +86,12 @@ export class AdminFamilyMembersPage {
     protected readonly data = inject(AdminDataService);
     private readonly route = inject(ActivatedRoute);
     private readonly toast = inject(ToastService);
+    private readonly confirm = inject(ConfirmService);
 
     protected readonly roles: FamilyRole[] = [...ADMIN_ROLES, 'editor', 'viewer'];
     protected readonly roleLabels = FAMILY_ROLE_LABELS;
+    protected readonly roleOptions: SelectOption[] =
+        this.roles.map(r => ({ value: r, label: FAMILY_ROLE_LABELS[r] }));
     protected readonly busy = signal(false);
 
     protected newUserId = '';
@@ -103,6 +104,9 @@ export class AdminFamilyMembersPage {
         const memberIds = new Set(this.data.members().map(m => m.userId));
         return this.data.users().filter(u => !memberIds.has(u.id));
     });
+
+    protected readonly userOptions = computed<SelectOption[]>(() =>
+        this.addableUsers().map(u => ({ value: u.id, label: u.displayName || u.email })));
 
     constructor() {
         void this.data.loadFamilies();
@@ -129,7 +133,13 @@ export class AdminFamilyMembersPage {
     }
 
     protected async remove(memberId: string): Promise<void> {
-        if (!confirm('Видалити учасника з родини?')) return;
+        const ok = await this.confirm.ask({
+            title: 'Видалити учасника з родини?',
+            confirmLabel: 'Видалити',
+            danger: true,
+            icon: 'person_remove',
+        });
+        if (!ok) return;
         const { error } = await this.data.removeMember(this.familyId()!, memberId);
         this.toast.show(error ? `Помилка: ${error.message}` : 'Учасника видалено', error ? 'error' : 'info');
     }

@@ -10,10 +10,12 @@ import { UploadService } from '../../core/services/upload.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ADMIN_ROLES, FAMILY_ROLE_LABELS, FamilyRole } from '../../core/models/family-member.model';
 import { HintComponent } from '../../shared/components/hint.component';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { SelectComponent, SelectOption } from '../../shared/components/select.component';
 
 @Component({
     selector: 'app-family-admin',
-    imports: [FormsModule, RouterLink, HintComponent],
+    imports: [FormsModule, RouterLink, HintComponent, SelectComponent],
     template: `
         @if (family(); as fam) {
             <header class="fa-header" [style.--tint]="fam.themeColor || 'var(--color-accent)'">
@@ -30,18 +32,24 @@ import { HintComponent } from '../../shared/components/hint.component';
                     <h2 class="card-title">Налаштування родини</h2>
                     <div class="field"><label>Назва</label><input type="text" [(ngModel)]="name"></div>
                     <div class="field"><label>Опис</label><textarea [(ngModel)]="description" rows="2"></textarea></div>
-                    <div class="field field-row">
-                        <div class="color-field">
-                            <label>Колір теми
-                                <app-hint title="Колір теми" text="Використовується для акцентів родини — крапка у перемикачі, лінія над панеллю та бейджі страв." />
-                            </label>
-                            <input type="color" [(ngModel)]="themeColor">
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" [(ngModel)]="isPublic">
-                            <span>Показувати у спільному списку родин</span>
-                            <app-hint title="Публічна видимість" text="Якщо увімкнено — родина та її не приватні страви зʼявляються у спільному каталозі для всіх схвалених користувачів. Вимкніть, щоб залишити родину приватною." />
+                    <div class="field">
+                        <label>Колір теми
+                            <app-hint title="Колір теми" text="Використовується для акцентів родини — крапка у перемикачі, лінія над панеллю та бейджі страв." />
                         </label>
+                        <div class="color-row">
+                            <input type="color" [(ngModel)]="themeColor">
+                            <span class="color-value">{{ themeColor }}</span>
+                        </div>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-copy">
+                            <span class="toggle-label">Показувати у спільному списку родин</span>
+                            <span class="toggle-sub">Родину та її публічні страви бачитимуть усі схвалені користувачі. Вимкніть, щоб залишити приватною.</span>
+                        </div>
+                        <button type="button" class="switch" role="switch" [class.on]="isPublic"
+                            [attr.aria-checked]="isPublic" (click)="isPublic = !isPublic" aria-label="Публічна видимість">
+                            <span class="knob"></span>
+                        </button>
                     </div>
                     <div class="field field-row">
                         <label class="img-field">
@@ -68,9 +76,9 @@ import { HintComponent } from '../../shared/components/hint.component';
                                     <span class="req-name">{{ req.displayName || req.email }}</span>
                                     <span class="req-email">{{ req.email }}</span>
                                 </div>
-                                <select class="control" [ngModel]="reqRole(req.id)" (ngModelChange)="setReqRole(req.id, $event)">
-                                    @for (role of roles; track role) { <option [value]="role">{{ roleLabels[role] }}</option> }
-                                </select>
+                                <app-select variant="inline" [options]="roleOptions" sheetTitle="Роль учасника"
+                                    ariaLabel="Роль" [ngModel]="reqRole(req.id)" (ngModelChange)="setReqRole(req.id, $event)"
+                                    [ngModelOptions]="{ standalone: true }" />
                                 <button class="btn approve" (click)="approve(req.id)">Схвалити</button>
                                 <button class="btn reject" (click)="reject(req.id)">✕</button>
                             </div>
@@ -95,9 +103,9 @@ import { HintComponent } from '../../shared/components/hint.component';
                                 <span class="m-name">{{ member.displayName || member.email }}</span>
                                 <span class="m-email">{{ member.email }}</span>
                             </div>
-                            <select class="control" [ngModel]="member.role" (ngModelChange)="changeRole(member.id, $event)">
-                                @for (role of roles; track role) { <option [value]="role">{{ roleLabels[role] }}</option> }
-                            </select>
+                            <app-select variant="inline" [options]="roleOptions" sheetTitle="Роль учасника"
+                                ariaLabel="Роль" [ngModel]="member.role" (ngModelChange)="changeRole(member.id, $event)"
+                                [ngModelOptions]="{ standalone: true }" />
                             <button class="icon-danger" (click)="remove(member.id)"><span class="material-symbols-outlined">person_remove</span></button>
                         </div>
                     }
@@ -126,10 +134,24 @@ import { HintComponent } from '../../shared/components/hint.component';
         input[type=text], textarea, .control { width: 100%; padding: 11px 13px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-body); font-size: var(--text-base); }
         input:focus, textarea:focus, .control:focus { outline: 2px solid var(--color-accent); border-color: transparent; }
         .control { min-height: 42px; width: auto; }
-        .color-field { display: flex; flex-direction: column; gap: var(--space-2); }
-        .color-field input { width: 52px; height: 42px; padding: 2px; border-radius: var(--radius-md); border: 1px solid var(--color-border); cursor: pointer; }
-        .switch { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; }
-        .switch input { width: auto; }
+        .color-row { display: flex; align-items: center; gap: var(--space-3); }
+        .color-row input { width: 52px; height: 42px; padding: 2px; border-radius: var(--radius-md); border: 1px solid var(--color-border); cursor: pointer; }
+        .color-value { font-size: var(--text-sm); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; text-transform: uppercase; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+        .toggle-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .toggle-label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+        .toggle-sub { font-size: var(--text-xs); color: var(--color-text-tertiary); line-height: var(--leading-relaxed); }
+        .switch {
+            flex: none; width: 48px; height: 28px; padding: 0; border: none; cursor: pointer;
+            border-radius: var(--radius-full); background: var(--color-border); position: relative;
+            transition: background var(--transition-base);
+        }
+        .switch.on { background: var(--color-accent); }
+        .switch .knob {
+            position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+            background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform var(--transition-base);
+        }
+        .switch.on .knob { transform: translateX(20px); }
         .img-field { display: flex; flex-direction: column; gap: var(--space-2); cursor: pointer; }
         .img-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: var(--radius-md); border: 1px dashed var(--color-border); color: var(--color-text-secondary); font-size: var(--text-sm); }
         .img-btn .material-symbols-outlined { font-size: 18px; }
@@ -158,9 +180,12 @@ export class FamilyAdminPage {
     private readonly upload_ = inject(UploadService);
     private readonly toast = inject(ToastService);
     private readonly route = inject(ActivatedRoute);
+    private readonly confirm = inject(ConfirmService);
 
     protected readonly roles: FamilyRole[] = [...ADMIN_ROLES, 'editor', 'viewer'];
     protected readonly roleLabels = FAMILY_ROLE_LABELS;
+    protected readonly roleOptions: SelectOption[] =
+        this.roles.map(r => ({ value: r, label: FAMILY_ROLE_LABELS[r] }));
     protected readonly saving = signal(false);
 
     private readonly slug = toSignal(this.route.paramMap.pipe(map(p => p.get('familySlug') ?? '')));
@@ -252,7 +277,15 @@ export class FamilyAdminPage {
 
     protected async remove(memberId: string): Promise<void> {
         const fam = this.family();
-        if (!fam || !confirm('Видалити учасника?')) return;
+        if (!fam) return;
+        const ok = await this.confirm.ask({
+            title: 'Видалити учасника?',
+            message: 'Він втратить доступ до рецептів цієї родини.',
+            confirmLabel: 'Видалити',
+            danger: true,
+            icon: 'person_remove',
+        });
+        if (!ok) return;
         const { error } = await this.data.removeMember(fam.id, memberId);
         this.toast.show(error ? `Помилка: ${error.message}` : 'Видалено', error ? 'error' : 'info');
     }

@@ -28,10 +28,11 @@ import { RatingStarsComponent } from '../../shared/components/rating-stars.compo
 import { DishRatingsComponent } from '../../shared/components/dish-ratings.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
 import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
+import { SelectComponent, SelectOption } from '../../shared/components/select.component';
 
 @Component({
     selector: 'app-dish-detail',
-    imports: [RouterLink, RatingStarsComponent, DishRatingsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule, ImageEditorComponent],
+    imports: [RouterLink, RatingStarsComponent, DishRatingsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule, ImageEditorComponent, SelectComponent],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
     host: {
@@ -56,6 +57,8 @@ export class DishDetailPage {
     protected readonly newTag = signal('');
     protected readonly allCategories = ALL_CATEGORIES;
     protected readonly categoryLabels = CATEGORY_LABELS;
+    protected readonly difficultyOptions: SelectOption[] =
+        (['easy', 'medium', 'hard'] as DishDifficulty[]).map(d => ({ value: d, label: DIFFICULTY_LABELS[d] }));
 
     // Image manager state
     protected readonly isImageManagerOpen = signal(false);
@@ -87,6 +90,32 @@ export class DishDetailPage {
             && this.authService.editMode()
             && this.authService.canEditFamily(currentDish.familyId);
     });
+
+    /** Only a family owner/admin (or super admin) may publish a dish publicly. */
+    protected readonly canMakePublic = computed(() => {
+        const currentDish = this.dish();
+        return !!currentDish
+            && this.authService.editMode()
+            && this.authService.canAdminFamily(currentDish.familyId);
+    });
+
+    protected async setVisibility(visibility: 'family' | 'public'): Promise<void> {
+        const d = this.dish();
+        if (!d || d.visibility === visibility) return;
+        if (visibility === 'public' && !this.canMakePublic()) {
+            this.toastService.show('Публічним може робити лише власник або адмін родини', 'error');
+            return;
+        }
+        try {
+            await this.dishService.updateDish(d.id, { visibility });
+            this.toastService.show(
+                visibility === 'public' ? 'Рецепт тепер публічний 🌍' : 'Рецепт лише для родини 🔒',
+                'success',
+            );
+        } catch (error: any) {
+            this.toastService.show(`Помилка: ${error?.message ?? 'не вдалося змінити'}`, 'error');
+        }
+    }
 
     protected readonly isNew = computed(() => {
         const d = this.dish();
