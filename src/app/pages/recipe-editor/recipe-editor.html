@@ -49,11 +49,11 @@
             <div class="field">
                 <label>Видимість</label>
                 <div class="segmented">
-                    <button type="button" [class.active]="form.controls.visibility.value === 'family'" (click)="form.controls.visibility.setValue('family')">
-                        <span class="material-symbols-outlined">lock</span> Тільки родина
-                    </button>
                     <button type="button" [class.active]="form.controls.visibility.value === 'public'" (click)="form.controls.visibility.setValue('public')" [disabled]="!canMakePublic()">
                         <span class="material-symbols-outlined">public</span> Публічно
+                    </button>
+                    <button type="button" [class.active]="form.controls.visibility.value === 'family'" (click)="form.controls.visibility.setValue('family')">
+                        <span class="material-symbols-outlined">lock</span> Тільки родина
                     </button>
                 </div>
                 @if (!canMakePublic()) {

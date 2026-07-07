@@ -211,13 +211,13 @@
                 <!-- Privacy (editable in edit mode) -->
                 @if (canEdit()) {
                     <div class="visibility-toggle" role="group" aria-label="Приватність рецепта">
-                        <button type="button" class="vis-btn" [class.active]="dish()!.visibility === 'family'"
-                            (click)="setVisibility('family')">
-                            <span class="material-symbols-outlined">lock</span> Тільки родина
-                        </button>
                         <button type="button" class="vis-btn" [class.active]="dish()!.visibility === 'public'"
                             [disabled]="!canMakePublic()" (click)="setVisibility('public')">
                             <span class="material-symbols-outlined">public</span> Публічно
+                        </button>
+                        <button type="button" class="vis-btn" [class.active]="dish()!.visibility === 'family'"
+                            (click)="setVisibility('family')">
+                            <span class="material-symbols-outlined">lock</span> Тільки родина
                         </button>
                     </div>
                 } @else if (dish()!.visibility === 'family') {
