@@ -1,6 +1,14 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, CanDeactivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+
+interface CanDeactivateComponent {
+    canDeactivate?: () => boolean;
+}
+
+/** Warns before leaving a form with unsaved changes. */
+export const unsavedChangesGuard: CanDeactivateFn<CanDeactivateComponent> = component =>
+    component?.canDeactivate ? component.canDeactivate() : true;
 
 /** Requires an authenticated session; otherwise sends the user to /login. */
 export const authGuard: CanActivateFn = async () => {

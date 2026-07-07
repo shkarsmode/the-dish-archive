@@ -26,6 +26,7 @@
                 @if (isSaving()) {
                     <span class="admin-bar-saving">зберігаю...</span>
                 }
+                <a class="admin-bar-editor" [routerLink]="['/recipes', dish()!.id, 'edit']">Повний редактор →</a>
             </div>
         }
 

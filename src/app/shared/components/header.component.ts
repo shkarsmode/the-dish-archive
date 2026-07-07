@@ -41,6 +41,15 @@ import { RankBadgeComponent } from './rank-badge.component';
                         }
                     </button>
                     @if (authService.canEditAnything()) {
+                        <a
+                            class="icon-button"
+                            routerLink="/recipes/new"
+                            title="Додати рецепт"
+                            aria-label="Додати рецепт">
+                            <span class="material-symbols-outlined">add</span>
+                        </a>
+                    }
+                    @if (authService.canEditAnything()) {
                         <button
                             class="icon-button admin-toggle"
                             [class.active]="authService.editMode()"

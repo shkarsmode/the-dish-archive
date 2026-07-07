@@ -1,0 +1,194 @@
+<form class="editor" [formGroup]="form" (ngSubmit)="save('published')">
+    <header class="editor-header">
+        <button type="button" class="icon-btn" (click)="cancel()" aria-label="Назад">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 class="editor-title">{{ isEdit() ? 'Редагувати рецепт' : 'Новий рецепт' }}</h1>
+        <div class="header-actions">
+            <button type="button" class="btn ghost" (click)="save('draft')" [disabled]="saving()">Чернетка</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">
+                {{ saving() ? 'Зберігаю…' : 'Опублікувати' }}
+            </button>
+        </div>
+    </header>
+
+    <div class="editor-body">
+        <!-- Basic -->
+        <section class="card">
+            <h2 class="card-title">Основне</h2>
+            <div class="field">
+                <label>Назва *</label>
+                <input type="text" formControlName="title" (input)="onTitleInput($any($event.target).value)" placeholder="Напр. Сирники з ягодами">
+            </div>
+            <div class="field">
+                <label>Посилання (slug)</label>
+                <input type="text" formControlName="slug" (input)="markSlugTouched()" placeholder="syrnyky">
+            </div>
+            <div class="field">
+                <label>Опис</label>
+                <textarea formControlName="description" rows="3" placeholder="Короткий апетитний опис"></textarea>
+            </div>
+        </section>
+
+        <!-- Family / visibility / status -->
+        <section class="card">
+            <h2 class="card-title">Родина та доступ</h2>
+            <div class="field">
+                <label>Родина *</label>
+                <select formControlName="familyId">
+                    <option value="">— Оберіть родину —</option>
+                    @for (family of familyService.editableFamilies(); track family.id) {
+                        <option [value]="family.id">{{ family.name }}</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Видимість</label>
+                <div class="segmented">
+                    <button type="button" [class.active]="form.controls.visibility.value === 'family'" (click)="form.controls.visibility.setValue('family')">
+                        <span class="material-symbols-outlined">lock</span> Тільки родина
+                    </button>
+                    <button type="button" [class.active]="form.controls.visibility.value === 'public'" (click)="form.controls.visibility.setValue('public')" [disabled]="!canMakePublic()">
+                        <span class="material-symbols-outlined">public</span> Публічно
+                    </button>
+                </div>
+                @if (!canMakePublic()) {
+                    <span class="field-hint">Публічними може робити лише власник або адмін родини.</span>
+                } @else if (form.controls.visibility.value === 'family') {
+                    <span class="field-hint">Приватний рецепт бачать лише члени родини та головний адмін.</span>
+                }
+            </div>
+        </section>
+
+        <!-- Images -->
+        <section class="card">
+            <h2 class="card-title">Фото</h2>
+            <div class="image-grid">
+                @for (control of images.controls; track $index) {
+                    <div class="image-tile" [class.primary]="imageIsPrimary($index)">
+                        <img [src]="imageUrl($index)" alt="">
+                        <div class="image-actions">
+                            <button type="button" title="Головне" (click)="setPrimary($index)" [class.on]="imageIsPrimary($index)">
+                                <span class="material-symbols-outlined">star</span>
+                            </button>
+                            <button type="button" title="Видалити" (click)="removeImage($index)">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                }
+                <label class="image-upload" [class.busy]="uploading()">
+                    <input type="file" accept="image/*" multiple (change)="onImageSelected($event)" hidden>
+                    <span class="material-symbols-outlined">{{ uploading() ? 'hourglass_top' : 'add_photo_alternate' }}</span>
+                    <span>{{ uploading() ? 'Завантаження…' : 'Додати фото' }}</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Ingredients -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">Інгредієнти</h2>
+                <button type="button" class="add-row" (click)="addIngredient()"><span class="material-symbols-outlined">add</span></button>
+            </div>
+            <div class="rows" formArrayName="ingredients">
+                @for (row of ingredients.controls; track $index) {
+                    <div class="ingredient-row" [formGroupName]="$index">
+                        <input class="grow" type="text" formControlName="name" placeholder="Інгредієнт">
+                        <input class="sm" type="text" formControlName="amount" placeholder="К-сть">
+                        <input class="sm" type="text" formControlName="unit" placeholder="од.">
+                        <button type="button" class="row-del" (click)="removeIngredient($index)"><span class="material-symbols-outlined">close</span></button>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- Steps -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">Кроки приготування</h2>
+                <button type="button" class="add-row" (click)="addStep()"><span class="material-symbols-outlined">add</span></button>
+            </div>
+            <div class="rows" formArrayName="steps">
+                @for (row of steps.controls; track $index) {
+                    <div class="step-row" [formGroupName]="$index">
+                        <span class="step-num">{{ $index + 1 }}</span>
+                        <textarea class="grow" formControlName="description" rows="2" placeholder="Опис кроку"></textarea>
+                        <input class="sm" type="number" formControlName="duration" placeholder="хв">
+                        <button type="button" class="row-del" (click)="removeStep($index)"><span class="material-symbols-outlined">close</span></button>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- Timings & nutrition -->
+        <section class="card">
+            <h2 class="card-title">Час, поживність, ціна</h2>
+            <div class="grid-fields">
+                <div class="field"><label>Підготовка, хв</label><input type="number" formControlName="prepTime"></div>
+                <div class="field"><label>Готування, хв</label><input type="number" formControlName="cookTime"></div>
+                <div class="field"><label>Разом, хв</label><input type="number" formControlName="totalTime"></div>
+                <div class="field"><label>Калорії</label><input type="number" formControlName="calories"></div>
+                <div class="field"><label>Порцій</label><input type="number" formControlName="servings"></div>
+                <div class="field">
+                    <label>Складність</label>
+                    <select formControlName="difficulty">
+                        @for (key of difficulties; track key) {
+                            <option [value]="key">{{ difficultyLabels[key] }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="field"><label>Ціна</label><input type="number" formControlName="priceAmount"></div>
+                <div class="field"><label>Валюта</label><input type="text" formControlName="priceCurrency"></div>
+            </div>
+        </section>
+
+        <!-- Categories, taste, tags -->
+        <section class="card">
+            <h2 class="card-title">Категорії, смак, теги</h2>
+            <label class="sub-label">Категорії</label>
+            <div class="chips">
+                @for (category of allCategories; track category) {
+                    <button type="button" class="chip" [class.active]="isCategoryActive(category)" (click)="toggleCategory(category)">
+                        {{ categoryLabels[category] }}
+                    </button>
+                }
+            </div>
+
+            <label class="sub-label">Смаковий профіль</label>
+            <div class="taste-grid" formGroupName="taste">
+                @for (key of tasteKeys; track key) {
+                    <div class="taste-row">
+                        <span class="taste-name">{{ tasteLabels[key] }}</span>
+                        <input type="range" min="0" max="5" [formControlName]="key">
+                        <span class="taste-value">{{ form.controls.taste.get(key)?.value }}</span>
+                    </div>
+                }
+            </div>
+
+            <label class="sub-label">Теги</label>
+            <div class="tag-input">
+                <input type="text" [(ngModel)]="newTag" [ngModelOptions]="{standalone:true}" (keydown.enter)="$event.preventDefault(); addTag()" placeholder="Додати тег і Enter">
+                <button type="button" (click)="addTag()"><span class="material-symbols-outlined">add</span></button>
+            </div>
+            <div class="chips">
+                @for (tag of tags.controls; track $index) {
+                    <span class="tag-chip">{{ tag.value }}<button type="button" (click)="removeTag($index)">×</button></span>
+                }
+            </div>
+        </section>
+
+        <!-- Notes -->
+        <section class="card">
+            <h2 class="card-title">Нотатки та джерело</h2>
+            <div class="field"><label>Нотатки</label><textarea formControlName="notes" rows="3" placeholder="Поради, історія страви"></textarea></div>
+            <div class="field"><label>Джерело (URL)</label><input type="text" formControlName="sourceUrl" placeholder="https://…"></div>
+        </section>
+
+        <div class="footer-actions">
+            <button type="button" class="btn ghost" (click)="cancel()">Скасувати</button>
+            <button type="button" class="btn ghost" (click)="save('draft')" [disabled]="saving()">Зберегти чернетку</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Зберігаю…' : 'Опублікувати' }}</button>
+        </div>
+    </div>
+</form>

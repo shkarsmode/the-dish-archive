@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { approvedUserGuard, authGuard, superAdminGuard } from './core/guards/auth.guards';
+import { approvedUserGuard, authGuard, superAdminGuard, unsavedChangesGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
     {
@@ -25,6 +25,18 @@ export const routes: Routes = [
         path: 'changelog',
         canActivate: [approvedUserGuard],
         loadComponent: () => import('./pages/changelog/changelog').then(m => m.ChangelogPage),
+    },
+    {
+        path: 'recipes/new',
+        canActivate: [approvedUserGuard],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/recipe-editor/recipe-editor').then(m => m.RecipeEditorPage),
+    },
+    {
+        path: 'recipes/:dishId/edit',
+        canActivate: [approvedUserGuard],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/recipe-editor/recipe-editor').then(m => m.RecipeEditorPage),
     },
     {
         path: 'admin',

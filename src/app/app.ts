@@ -8,7 +8,7 @@ import { HeaderComponent } from './shared/components/header.component';
 import { ToastContainerComponent } from './shared/components/toast-container.component';
 import { PullToRefreshDirective } from './shared/directives/pull-to-refresh.directive';
 
-const CHROMELESS_PREFIXES = ['/login', '/access-pending', '/admin', '/family'];
+const CHROMELESS_PREFIXES = ['/login', '/access-pending', '/admin', '/family', '/recipes'];
 
 @Component({
     selector: 'app-root',
