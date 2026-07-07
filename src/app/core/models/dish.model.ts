@@ -17,8 +17,21 @@ export interface Dish {
     steps: CookingStep[];
     notes: string;
     sourceUrl: string;
+    familyId: string;
+    createdByUserId: string | null;
+    updatedByUserId: string | null;
+    visibility: DishVisibility;
+    status: DishStatus;
+    ratingCount: number;
+    ratingAverage: number;
+    viewCount: number;
+    cookedCount: number;
     createdAt: string;
     updatedAt: string;
+    // Denormalized family info for global / all-families catalog rendering.
+    familyName?: string;
+    familySlug?: string;
+    familyThemeColor?: string | null;
 }
 
 export interface ImageItem {
@@ -63,6 +76,10 @@ export interface CookingStep {
 
 export type DishDifficulty = 'easy' | 'medium' | 'hard';
 
+export type DishStatus = 'draft' | 'published' | 'archived';
+
+export type DishVisibility = 'family' | 'public';
+
 export type DishCategory =
     | 'quick'
     | 'healthy'
@@ -92,6 +109,7 @@ export type SortOption =
 
 export interface FilterState {
     searchQuery: string;
+    selectedFamilyIds: string[];
     categories: DishCategory[];
     tags: string[];
     priceRange: [number, number] | null;
@@ -160,6 +178,7 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 export const DEFAULT_FILTER_STATE: FilterState = {
     searchQuery: '',
+    selectedFamilyIds: [],
     categories: [],
     tags: [],
     priceRange: null,
@@ -167,6 +186,17 @@ export const DEFAULT_FILTER_STATE: FilterState = {
     timeRange: null,
     tasteFilters: [],
     favoritesOnly: false,
+};
+
+export const DISH_STATUS_LABELS: Record<DishStatus, string> = {
+    draft: 'Чернетка',
+    published: 'Опубліковано',
+    archived: 'В архіві',
+};
+
+export const DISH_VISIBILITY_LABELS: Record<DishVisibility, string> = {
+    family: 'Тільки родина',
+    public: 'Публічно',
 };
 
 export const ALL_CATEGORIES: DishCategory[] = [

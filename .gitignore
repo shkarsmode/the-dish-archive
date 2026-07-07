@@ -39,6 +39,14 @@ testem.log
 /typings
 __screenshots__/
 
+# Environment secrets (never commit real secrets; anon key lives in src/environments)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
 # System files
 .DS_Store
 Thumbs.db
