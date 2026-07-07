@@ -1,6 +1,10 @@
 <div appPullToRefresh>
-<app-header />
+@if (showChrome()) {
+    <app-header />
+}
 <router-outlet />
-<app-compare-bar />
+@if (showChrome()) {
+    <app-compare-bar />
+}
 <app-toast-container />
 </div>
