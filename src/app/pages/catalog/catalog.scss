@@ -5,6 +5,45 @@
     overflow-x: hidden;
 }
 
+// ── Family switcher ─────────────────────────────────────────
+.family-switcher {
+    padding: var(--space-2) 0 var(--space-1);
+}
+.family-switcher-inner {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 var(--space-4);
+    max-width: var(--container-max);
+    margin: 0 auto;
+}
+.family-switcher-inner::-webkit-scrollbar { display: none; }
+.family-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+}
+.family-chip .material-symbols-outlined { font-size: 18px; }
+.family-chip .family-dot { width: 9px; height: 9px; border-radius: var(--radius-full); }
+.family-chip:hover { border-color: var(--color-accent); color: var(--color-text-primary); }
+.family-chip.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-inverse);
+}
+.family-chip.active .family-dot { background: var(--color-text-inverse) !important; }
+
 // ── Hero ────────────────────────────────────────────────────
 .hero {
     padding: var(--space-6) var(--space-2) var(--space-5);

@@ -47,6 +47,15 @@ import { RatingStarsComponent } from './rating-stars.component';
                 }
             </div>
             <div class="card-body">
+                @if (dish().familyName) {
+                    <span class="family-badge">
+                        <span class="family-badge-dot" [style.background]="dish().familyThemeColor || 'var(--color-accent)'"></span>
+                        {{ dish().familyName }}
+                        @if (dish().visibility === 'family') {
+                            <span class="material-symbols-outlined lock-ic" title="Приватний рецепт">lock</span>
+                        }
+                    </span>
+                }
                 <div class="card-categories">
                     @for (category of dish().categories.slice(0, 2); track category) {
                         <span class="category-label">{{ getCategoryLabel(category) }}</span>
@@ -246,6 +255,22 @@ import { RatingStarsComponent } from './rating-stars.component';
                 }
             }
         }
+
+        .family-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: var(--space-2);
+            padding: 3px 9px;
+            border-radius: var(--radius-full);
+            background: var(--color-surface-active);
+            color: var(--color-text-secondary);
+            font-size: var(--text-xs);
+            font-weight: var(--weight-medium);
+            max-width: 100%;
+        }
+        .family-badge-dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex: none; }
+        .family-badge .lock-ic { font-size: 13px; color: var(--color-text-tertiary); }
 
         .card-categories {
             display: flex;

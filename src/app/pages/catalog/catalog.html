@@ -24,6 +24,24 @@
         </div>
     </section>
 
+    <!-- Family Switcher -->
+    @if (familyService.families().length > 1) {
+        <section class="family-switcher" aria-label="Родини">
+            <div class="family-switcher-inner">
+                <button class="family-chip" [class.active]="isFamilySelected(null)" (click)="selectFamily(null)">
+                    <span class="material-symbols-outlined">groups</span>
+                    Всі родини
+                </button>
+                @for (family of familyService.families(); track family.id) {
+                    <button class="family-chip" [class.active]="isFamilySelected(family.id)" (click)="selectFamily(family.id)">
+                        <span class="family-dot" [style.background]="family.themeColor || 'var(--color-accent)'"></span>
+                        {{ family.name }}
+                    </button>
+                }
+            </div>
+        </section>
+    }
+
     <!-- Quick Category Chips -->
     <section class="quick-filters" aria-label="Швидкі фільтри">
         <div class="quick-filters-inner">

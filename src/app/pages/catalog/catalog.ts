@@ -2,6 +2,7 @@ import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDes
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { AuthService } from '../../core/services/auth.service';
+import { FamilyService } from '../../core/services/family.service';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
@@ -36,6 +37,7 @@ export class CatalogPage implements OnDestroy {
     private readonly router = inject(Router);
     protected readonly settingsService = inject(SettingsService);
     protected readonly authService = inject(AuthService);
+    protected readonly familyService = inject(FamilyService);
     private readonly scrollRestoration = inject(ScrollRestorationService);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
     protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
@@ -149,6 +151,15 @@ export class CatalogPage implements OnDestroy {
 
     protected openFilters(): void {
         this.filterDrawer()?.open();
+    }
+
+    protected selectFamily(familyId: string | null): void {
+        this.dishService.updateFilters({ selectedFamilyIds: familyId ? [familyId] : [] });
+    }
+
+    protected isFamilySelected(familyId: string | null): boolean {
+        const selected = this.dishService.filters().selectedFamilyIds;
+        return familyId === null ? selected.length === 0 : selected.length === 1 && selected[0] === familyId;
     }
 
     protected onSlotResult(dish: Dish): void {
