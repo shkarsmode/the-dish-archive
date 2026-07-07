@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { approvedUserGuard, authGuard, superAdminGuard, unsavedChangesGuard } from './core/guards/auth.guards';
+import { approvedUserGuard, authGuard, familyAdminGuard, superAdminGuard, unsavedChangesGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
     {
@@ -37,6 +37,11 @@ export const routes: Routes = [
         canActivate: [approvedUserGuard],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./pages/recipe-editor/recipe-editor').then(m => m.RecipeEditorPage),
+    },
+    {
+        path: 'family/:familySlug/admin',
+        canActivate: [familyAdminGuard],
+        loadComponent: () => import('./pages/family/family-admin').then(m => m.FamilyAdminPage),
     },
     {
         path: 'admin',

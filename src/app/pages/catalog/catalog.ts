@@ -1,5 +1,5 @@
 import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { AuthService } from '../../core/services/auth.service';
 import { FamilyService } from '../../core/services/family.service';
@@ -27,6 +27,7 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
         EmptyStateComponent,
         TagChipComponent,
         SlotMachineComponent,
+        RouterLink,
     ],
     templateUrl: './catalog.html',
     styleUrl: './catalog.scss',

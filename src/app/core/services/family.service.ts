@@ -31,6 +31,26 @@ export class FamilyService {
         this.familiesSignal.set((data ?? []).map(mapFamily));
     }
 
+    async updateFamily(id: string, patch: {
+        name?: string;
+        description?: string | null;
+        themeColor?: string | null;
+        coverImageUrl?: string | null;
+        avatarImageUrl?: string | null;
+        isPublicVisible?: boolean;
+    }) {
+        const row: Record<string, any> = {};
+        if (patch.name !== undefined) row['name'] = patch.name;
+        if (patch.description !== undefined) row['description'] = patch.description;
+        if (patch.themeColor !== undefined) row['theme_color'] = patch.themeColor;
+        if (patch.coverImageUrl !== undefined) row['cover_image_url'] = patch.coverImageUrl;
+        if (patch.avatarImageUrl !== undefined) row['avatar_image_url'] = patch.avatarImageUrl;
+        if (patch.isPublicVisible !== undefined) row['is_public_visible'] = patch.isPublicVisible;
+        const result = await this.supabase.client.from('families').update(row).eq('id', id);
+        await this.load();
+        return result;
+    }
+
     bySlug(slug: string): Family | undefined {
         return this.familiesSignal().find(family => family.slug === slug);
     }

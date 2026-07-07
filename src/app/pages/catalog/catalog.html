@@ -33,10 +33,17 @@
                     Всі родини
                 </button>
                 @for (family of familyService.families(); track family.id) {
-                    <button class="family-chip" [class.active]="isFamilySelected(family.id)" (click)="selectFamily(family.id)">
-                        <span class="family-dot" [style.background]="family.themeColor || 'var(--color-accent)'"></span>
-                        {{ family.name }}
-                    </button>
+                    <span class="family-chip-wrap">
+                        <button class="family-chip" [class.active]="isFamilySelected(family.id)" (click)="selectFamily(family.id)">
+                            <span class="family-dot" [style.background]="family.themeColor || 'var(--color-accent)'"></span>
+                            {{ family.name }}
+                        </button>
+                        @if (authService.canAdminFamily(family.id)) {
+                            <a class="family-manage" [routerLink]="['/family', family.slug, 'admin']" title="Керувати родиною" aria-label="Керувати родиною">
+                                <span class="material-symbols-outlined">settings</span>
+                            </a>
+                        }
+                    </span>
                 }
             </div>
         </section>
