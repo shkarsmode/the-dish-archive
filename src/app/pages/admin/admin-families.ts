@@ -33,7 +33,7 @@ function slugify(value: string): string {
         </div>
 
         @if (showForm()) {
-            <form class="create-form reveal" (submit)="create($event)">
+            <form class="create-form" (submit)="create($event)">
                 <div class="field">
                     <label>Назва</label>
                     <input type="text" [(ngModel)]="name" name="name" (ngModelChange)="onNameChange($event)" placeholder="Напр. Родина Булкіних" required>

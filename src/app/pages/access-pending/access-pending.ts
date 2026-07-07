@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
     imports: [],
     template: `
         <main class="pending">
-            <section class="card reveal">
+            <section class="card">
                 <span class="icon">⏳</span>
                 <h1 class="title">Очікуємо підтвердження</h1>
 
@@ -53,6 +53,11 @@ import { AuthService } from '../../core/services/auth.service';
             box-shadow: var(--shadow-lg);
             padding: var(--space-10) var(--space-8);
             text-align: center;
+            animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.98); }
+            to { opacity: 1; transform: none; }
         }
         .icon { font-size: 2.75rem; line-height: 1; }
         .title {

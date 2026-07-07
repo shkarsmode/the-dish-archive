@@ -17,7 +17,7 @@ import { AdminDataService } from '../../core/services/admin-data.service';
         </section>
 
         @if ((data.stats()?.pendingRequests ?? 0) > 0) {
-            <a routerLink="/admin/access-requests" class="pending-banner reveal">
+            <a routerLink="/admin/access-requests" class="pending-banner">
                 <span class="material-symbols-outlined">notifications_active</span>
                 <span class="pending-text">
                     {{ data.stats()?.pendingRequests }} нових {{ pluralRequests(data.stats()!.pendingRequests) }} на розгляд
