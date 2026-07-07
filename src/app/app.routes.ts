@@ -56,6 +56,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/admin/admin-families').then(m => m.AdminFamiliesPage),
             },
             {
+                path: 'families/:familyId',
+                loadComponent: () => import('./pages/admin/admin-family-members').then(m => m.AdminFamilyMembersPage),
+            },
+            {
                 path: 'users',
                 loadComponent: () => import('./pages/admin/admin-users').then(m => m.AdminUsersPage),
             },

@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminDataService } from '../../core/services/admin-data.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -22,7 +23,7 @@ function slugify(value: string): string {
 
 @Component({
     selector: 'app-admin-families',
-    imports: [FormsModule],
+    imports: [FormsModule, RouterLink],
     template: `
         <div class="page-head">
             <h2 class="page-title">Родини</h2>
@@ -84,6 +85,9 @@ function slugify(value: string): string {
                                 <span class="material-symbols-outlined">{{ family.isPublicVisible ? 'public' : 'lock' }}</span>
                                 {{ family.isPublicVisible ? 'Публічна' : 'Приватна' }}
                             </span>
+                            <a class="members-link" [routerLink]="['/admin/families', family.id]">
+                                <span class="material-symbols-outlined">group</span> Учасники
+                            </a>
                         </div>
                     </article>
                 }
@@ -136,7 +140,9 @@ function slugify(value: string): string {
         .family-card-status { margin-left: auto; font-size: var(--text-xs); font-weight: var(--weight-semibold); padding: 3px 10px; border-radius: var(--radius-full); background: var(--color-success-light); color: var(--color-success); }
         .family-card-status.archived { background: var(--color-surface-active); color: var(--color-text-tertiary); }
         .family-card-desc { color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-normal); margin: var(--space-3) 0 0; }
-        .family-card-foot { margin-top: var(--space-4); }
+        .family-card-foot { margin-top: var(--space-4); display: flex; align-items: center; justify-content: space-between; }
+        .members-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-accent); }
+        .members-link .material-symbols-outlined { font-size: 17px; }
         .vis { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-tertiary); }
         .vis .material-symbols-outlined { font-size: 15px; }
         .vis.public { color: var(--color-secondary); }

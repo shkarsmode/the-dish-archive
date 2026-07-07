@@ -4,9 +4,10 @@ import { Family } from '../models/family.model';
 import { UserProfile } from '../models/user-profile.model';
 import { AccessRequestWithContext } from '../models/access-request.model';
 import { ActivityLogEntryWithContext } from '../models/activity-log.model';
-import { FamilyRole } from '../models/family-member.model';
+import { FamilyMemberWithProfile, FamilyRole } from '../models/family-member.model';
 import {
     mapFamily,
+    mapFamilyMember,
     mapProfile,
     mapAccessRequest,
     mapActivityLogEntry,
@@ -29,6 +30,7 @@ export class AdminDataService {
     readonly users = signal<UserProfile[]>([]);
     readonly accessRequests = signal<AccessRequestWithContext[]>([]);
     readonly activity = signal<ActivityLogEntryWithContext[]>([]);
+    readonly members = signal<FamilyMemberWithProfile[]>([]);
 
     private async count(table: string, filter?: (query: any) => any): Promise<number> {
         let query = this.supabase.client.from(table).select('*', { count: 'exact', head: true });
@@ -130,11 +132,43 @@ export class AdminDataService {
         return result;
     }
 
+    async loadMembers(familyId: string): Promise<void> {
+        const { data } = await this.supabase.client
+            .from('family_members')
+            .select('*, profiles:user_id(display_name,email,avatar_url)')
+            .eq('family_id', familyId)
+            .neq('status', 'removed')
+            .order('created_at', { ascending: true });
+        this.members.set((data ?? []).map((row: Record<string, any>) => ({
+            ...mapFamilyMember(row),
+            email: row['profiles']?.email ?? '',
+            displayName: row['profiles']?.display_name ?? null,
+            avatarUrl: row['profiles']?.avatar_url ?? null,
+        })));
+    }
+
     async addMember(familyId: string, userId: string, role: FamilyRole) {
-        return this.supabase.client.rpc('add_family_member', {
+        const result = await this.supabase.client.rpc('add_family_member', {
             p_family: familyId,
             p_user_id: userId,
             p_role: role,
         });
+        await this.loadMembers(familyId);
+        return result;
+    }
+
+    async setMemberRole(familyId: string, memberId: string, role: FamilyRole) {
+        const result = await this.supabase.client.rpc('set_member_role', {
+            p_member_id: memberId,
+            p_role: role,
+        });
+        await this.loadMembers(familyId);
+        return result;
+    }
+
+    async removeMember(familyId: string, memberId: string) {
+        const result = await this.supabase.client.rpc('remove_member', { p_member_id: memberId });
+        await this.loadMembers(familyId);
+        return result;
     }
 }
