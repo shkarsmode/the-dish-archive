@@ -1,6 +1,4 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import {
     DEFAULT_FILTER_STATE,
     Dish,
@@ -9,14 +7,16 @@ import {
     SortOption,
     TasteProfile,
 } from '../models/dish.model';
-import { AdminService } from './admin.service';
+import { SupabaseService } from './supabase.service';
+import { AuthService } from './auth.service';
 import { FavoritesService } from './favorites.service';
+import { DISH_SELECT, dishScalarsToRow, mapDish } from './supabase-mappers';
 
 @Injectable({ providedIn: 'root' })
 export class DishService {
-    private readonly httpClient = inject(HttpClient);
+    private readonly supabase = inject(SupabaseService);
+    private readonly authService = inject(AuthService);
     private readonly favoritesService = inject(FavoritesService);
-    private readonly adminService = inject(AdminService);
 
     private readonly allDishesSignal = signal<Dish[]>([]);
     readonly allDishes = this.allDishesSignal.asReadonly();
@@ -65,7 +65,6 @@ export class DishService {
         const filterState = this.filters();
         const query = this.searchQuery().toLowerCase().trim();
 
-        // Search
         if (query) {
             dishes = dishes.filter(dish =>
                 dish.title.toLowerCase().includes(query) ||
@@ -77,7 +76,13 @@ export class DishService {
             );
         }
 
-        // Category filter
+        // Family filter (all-families vs a selected subset)
+        if (filterState.selectedFamilyIds.length > 0) {
+            dishes = dishes.filter(dish =>
+                filterState.selectedFamilyIds.includes(dish.familyId)
+            );
+        }
+
         if (filterState.categories.length > 0) {
             dishes = dishes.filter(dish =>
                 filterState.categories.some(category =>
@@ -86,14 +91,12 @@ export class DishService {
             );
         }
 
-        // Tag filter
         if (filterState.tags.length > 0) {
             dishes = dishes.filter(dish =>
                 filterState.tags.some(tag => dish.tags.includes(tag))
             );
         }
 
-        // Price range
         if (filterState.priceRange) {
             const [minPrice, maxPrice] = filterState.priceRange;
             dishes = dishes.filter(dish =>
@@ -101,7 +104,6 @@ export class DishService {
             );
         }
 
-        // Calorie range
         if (filterState.calorieRange) {
             const [minCalories, maxCalories] = filterState.calorieRange;
             dishes = dishes.filter(dish =>
@@ -109,7 +111,6 @@ export class DishService {
             );
         }
 
-        // Time range
         if (filterState.timeRange) {
             const [minTime, maxTime] = filterState.timeRange;
             dishes = dishes.filter(dish =>
@@ -117,7 +118,6 @@ export class DishService {
             );
         }
 
-        // Taste filters
         if (filterState.tasteFilters.length > 0) {
             dishes = dishes.filter(dish =>
                 filterState.tasteFilters.every(
@@ -126,14 +126,12 @@ export class DishService {
             );
         }
 
-        // Favorites only
         if (filterState.favoritesOnly) {
             dishes = dishes.filter(dish =>
                 this.favoritesService.favoriteIds().has(dish.id)
             );
         }
 
-        // Sorting
         const sortOption = this.sortOption();
         dishes.sort((a, b) => {
             switch (sortOption) {
@@ -167,6 +165,7 @@ export class DishService {
     readonly hasActiveFilters = computed(() => {
         const filterState = this.filters();
         return (
+            filterState.selectedFamilyIds.length > 0 ||
             filterState.categories.length > 0 ||
             filterState.tags.length > 0 ||
             filterState.priceRange !== null ||
@@ -178,33 +177,41 @@ export class DishService {
     });
 
     constructor() {
-        this.loadDishes();
+        // Load (and reload) dishes whenever the auth session resolves or changes,
+        // so RLS returns the right set for the current user.
+        effect(() => {
+            if (!this.authService.isReady()) {
+                return;
+            }
+            this.authService.user();
+            void this.reload();
+        });
     }
 
-    private loadDishes(): void {
-        const backendUrl = `${this.adminService.apiUrl()}/api/dishes`;
+    async reload(): Promise<void> {
+        this.isLoading.set(true);
+        this.loadError.set(null);
+        const { data, error } = await this.supabase.client
+            .from('dishes')
+            .select(DISH_SELECT)
+            .order('created_at', { ascending: false });
+        if (error) {
+            console.error('Failed to load dishes from Supabase:', error);
+            this.loadError.set('Не вдалося завантажити дані');
+            this.isLoading.set(false);
+            return;
+        }
+        this.allDishesSignal.set((data ?? []).map(mapDish));
+        this.isLoading.set(false);
+    }
 
-        this.httpClient.get<DishData>(backendUrl).subscribe({
-            next: (data) => {
-                this.allDishesSignal.set(data.dishes);
-                this.isLoading.set(false);
-            },
-            error: (backendError) => {
-                console.error('Failed to load dishes from backend:', backendError);
-
-                this.httpClient.get<DishData>('data/dishes.json').subscribe({
-                    next: (data) => {
-                        this.allDishesSignal.set(data.dishes);
-                        this.isLoading.set(false);
-                    },
-                    error: (localError) => {
-                        console.error('Failed to load local dishes fallback:', localError);
-                        this.loadError.set('Не вдалося завантажити дані');
-                        this.isLoading.set(false);
-                    },
-                });
-            },
-        });
+    private async fetchDishById(id: string): Promise<Dish | null> {
+        const { data } = await this.supabase.client
+            .from('dishes')
+            .select(DISH_SELECT)
+            .eq('id', id)
+            .maybeSingle();
+        return data ? mapDish(data) : null;
     }
 
     getDishBySlug(slug: string) {
@@ -249,45 +256,92 @@ export class DishService {
         };
     }
 
-    /** Update a dish via the backend API and refresh local state */
+    private async replaceChildren(dishId: string, dish: Partial<Dish>): Promise<void> {
+        const client = this.supabase.client;
+        if (dish.images !== undefined) {
+            await client.from('dish_images').delete().eq('dish_id', dishId);
+            if (dish.images.length) {
+                await client.from('dish_images').insert(
+                    dish.images.map((image, index) => ({
+                        dish_id: dishId,
+                        url: image.url,
+                        alt: image.alt,
+                        is_primary: image.isPrimary,
+                        sort_order: index,
+                    }))
+                );
+            }
+        }
+        if (dish.ingredients !== undefined) {
+            await client.from('ingredients').delete().eq('dish_id', dishId);
+            if (dish.ingredients.length) {
+                await client.from('ingredients').insert(
+                    dish.ingredients.map((ingredient, index) => ({
+                        dish_id: dishId,
+                        name: ingredient.name,
+                        amount: ingredient.amount,
+                        unit: ingredient.unit,
+                        optional: ingredient.optional,
+                        sort_order: index,
+                    }))
+                );
+            }
+        }
+        if (dish.steps !== undefined) {
+            await client.from('cooking_steps').delete().eq('dish_id', dishId);
+            if (dish.steps.length) {
+                await client.from('cooking_steps').insert(
+                    dish.steps.map((step, index) => ({
+                        dish_id: dishId,
+                        step_order: step.order ?? index + 1,
+                        description: step.description,
+                        duration: step.duration ?? null,
+                        image_url: step.imageUrl ?? null,
+                    }))
+                );
+            }
+        }
+    }
+
     async updateDish(id: string, updates: Partial<Dish>): Promise<Dish> {
-        const url = `${this.adminService.apiUrl()}/api/dishes/${id}`;
-        const updatedDish = await firstValueFrom(
-            this.httpClient.put<Dish>(url, updates, {
-                headers: this.adminService.authHeaders,
-            })
-        );
-
-        // Update local signal immediately
-        this.allDishesSignal.update(dishes =>
-            dishes.map(d => (d.id === id ? { ...d, ...updatedDish } : d))
-        );
-
-        return updatedDish;
+        const row = dishScalarsToRow(updates);
+        if (Object.keys(row).length > 0) {
+            const { error } = await this.supabase.client.from('dishes').update(row).eq('id', id);
+            if (error) throw error;
+        }
+        await this.replaceChildren(id, updates);
+        const dish = await this.fetchDishById(id);
+        if (dish) {
+            this.allDishesSignal.update(dishes => dishes.map(d => (d.id === id ? dish : d)));
+        }
+        return dish as Dish;
     }
 
-    /** Create a dish via the backend API */
     async createDish(dish: Partial<Dish>): Promise<Dish> {
-        const url = `${this.adminService.apiUrl()}/api/dishes`;
-        const created = await firstValueFrom(
-            this.httpClient.post<Dish>(url, dish, {
-                headers: this.adminService.authHeaders,
-            })
-        );
-
-        this.allDishesSignal.update(dishes => [...dishes, created]);
-        return created;
+        const row = {
+            ...dishScalarsToRow(dish),
+            family_id: dish.familyId,
+            created_by_user_id: this.authService.user()?.id ?? null,
+            ...(dish.id ? { id: dish.id } : {}),
+        };
+        const { data, error } = await this.supabase.client
+            .from('dishes')
+            .insert(row)
+            .select('id')
+            .single();
+        if (error) throw error;
+        const newId = data.id as string;
+        await this.replaceChildren(newId, dish);
+        const created = await this.fetchDishById(newId);
+        if (created) {
+            this.allDishesSignal.update(dishes => [...dishes, created]);
+        }
+        return created as Dish;
     }
 
-    /** Delete a dish via the backend API */
     async deleteDish(id: string): Promise<void> {
-        const url = `${this.adminService.apiUrl()}/api/dishes/${id}`;
-        await firstValueFrom(
-            this.httpClient.delete(url, {
-                headers: this.adminService.authHeaders,
-            })
-        );
-
+        const { error } = await this.supabase.client.from('dishes').delete().eq('id', id);
+        if (error) throw error;
         this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
     }
 }

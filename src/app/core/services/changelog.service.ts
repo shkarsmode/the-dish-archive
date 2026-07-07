@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { AdminService } from './admin.service';
+import { environment } from '../../../environments/environment';
 
 export interface ChangelogEntryItem {
     id: number;
@@ -22,7 +22,6 @@ export interface ChangelogGroup {
 @Injectable({ providedIn: 'root' })
 export class ChangelogService {
     private readonly http = inject(HttpClient);
-    private readonly adminService = inject(AdminService);
 
     readonly groups = signal<ChangelogGroup[]>([]);
     readonly isLoading = signal(false);
@@ -32,7 +31,7 @@ export class ChangelogService {
         this.isLoading.set(true);
         this.loadError.set(null);
 
-        const url = `${this.adminService.apiUrl()}/api/changelog`;
+        const url = `${environment.legacyApiUrl}/api/changelog`;
 
         this.http.get<ChangelogGroup[]>(url).subscribe({
             next: (data) => {

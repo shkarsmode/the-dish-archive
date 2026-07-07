@@ -16,7 +16,8 @@ import {
     TASTE_LABELS,
     TasteProfile,
 } from '../../core/models/dish.model';
-import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UploadService } from '../../core/services/upload.service';
 import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
 import { PaletteService } from '../../core/services/palette.service';
@@ -44,7 +45,8 @@ export class DishDetailPage {
     private readonly paletteService = inject(PaletteService);
     private readonly toastService = inject(ToastService);
     private readonly el = inject(ElementRef<HTMLElement>);
-    protected readonly adminService = inject(AdminService);
+    protected readonly authService = inject(AuthService);
+    private readonly uploadService = inject(UploadService);
 
     // Inline editing state
     protected readonly editingField = signal<string | null>(null);
@@ -76,6 +78,14 @@ export class DishDetailPage {
     });
 
     readonly isLoading = this.dishService.isLoading;
+
+    /** The user may edit this dish only in edit mode and with rights in its family. */
+    protected readonly canEdit = computed(() => {
+        const currentDish = this.dish();
+        return !!currentDish
+            && this.authService.editMode()
+            && this.authService.canEditFamily(currentDish.familyId);
+    });
 
     protected readonly isNew = computed(() => {
         const d = this.dish();
@@ -314,7 +324,7 @@ export class DishDetailPage {
     // ── Inline editing ──
 
     protected startEditing(field: string): void {
-        if (!this.adminService.isAdminMode()) return;
+        if (!this.canEdit()) return;
         const d = this.dish();
         if (!d) return;
 
@@ -324,7 +334,7 @@ export class DishDetailPage {
     }
 
     protected isEditing(field: string): boolean {
-        return this.adminService.isAdminMode() && this.editingField() === field;
+        return this.canEdit() && this.editingField() === field;
     }
 
     protected cancelEditing(): void {
@@ -493,7 +503,7 @@ export class DishDetailPage {
             this.isUploadingImage.set(true);
             try {
                 for (const file of Array.from(files)) {
-                    const result = await this.adminService.uploadImage(file);
+                    const result = await this.uploadService.uploadImage(file);
                     const newImage: ImageItem = {
                         url: result.url,
                         alt: this.dish()?.title ?? 'Фото страви',
@@ -531,7 +541,7 @@ export class DishDetailPage {
         this.isUploadingImage.set(true);
         try {
             const file = new File([result.blob], 'edited.jpg', { type: 'image/jpeg' });
-            const uploaded = await this.adminService.uploadImage(file);
+            const uploaded = await this.uploadService.uploadImage(file);
 
             if (this.editorEditIndex !== null) {
                 // Replace existing image

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ExportImportService } from '../../core/services/export-import.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { CookRank, RANKS, RankService } from '../../core/services/rank.service';
@@ -125,74 +125,59 @@ import { RankBadgeComponent } from './rank-badge.component';
             <div class="settings-section admin-section">
                 <h3 class="section-label">
                     <span class="material-symbols-outlined" style="font-size:18px;color:var(--color-accent)">shield_person</span>
-                    Адмін панель
+                    Обліковий запис
                 </h3>
 
-                @if (!adminService.isAuthenticated()) {
-                    <!-- Login form -->
+                @if (!authService.isAuthenticated()) {
                     <div class="admin-login">
-                        <p class="admin-hint">Увійдіть для редагування рецептів</p>
-                        <div class="admin-form">
-                            <input
-                                type="text"
-                                class="admin-input"
-                                placeholder="Нікнейм"
-                                [(ngModel)]="loginNickname"
-                                (keydown.enter)="handleLogin()" />
-                            <input
-                                type="password"
-                                class="admin-input"
-                                placeholder="Пароль"
-                                [(ngModel)]="loginPassword"
-                                (keydown.enter)="handleLogin()" />
-                            @if (adminService.loginError()) {
-                                <span class="admin-error">{{ adminService.loginError() }}</span>
-                            }
-                            <button
-                                class="admin-login-btn"
-                                (click)="handleLogin()"
-                                [disabled]="adminService.loginLoading()">
-                                @if (adminService.loginLoading()) {
-                                    <span class="admin-spinner"></span>
-                                } @else {
-                                    <span class="material-symbols-outlined" style="font-size:18px">login</span>
-                                }
-                                Увійти
-                            </button>
-                        </div>
+                        <p class="admin-hint">Увійдіть, щоб переглядати й редагувати рецепти родини</p>
+                        <button class="admin-login-btn" (click)="signIn()" [disabled]="authService.isSigningIn()">
+                            <svg viewBox="0 0 18 18" aria-hidden="true" style="width:18px;height:18px;flex:none">
+                                <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+                                <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+                                <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+                                <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+                            </svg>
+                            {{ authService.isSigningIn() ? 'Заходимо…' : 'Увійти через Google' }}
+                        </button>
                     </div>
                 } @else {
-                    <!-- Authenticated -->
                     <div class="admin-authenticated">
                         <div class="admin-user-row">
                             <div class="admin-avatar">
-                                <img src="/images/Screenshot_1.png" alt="">
+                                @if (authService.avatarUrl()) {
+                                    <img [src]="authService.avatarUrl()" alt="" referrerpolicy="no-referrer">
+                                } @else {
+                                    <span class="material-symbols-outlined" style="font-size:28px;color:var(--color-text-tertiary)">account_circle</span>
+                                }
                             </div>
                             <div class="admin-user-info">
-                                <span class="admin-username">{{ adminService.nickname() }}</span>
-                                <span class="admin-role">Адміністратор</span>
+                                <span class="admin-username">{{ authService.displayName() }}</span>
+                                <span class="admin-role">{{ authService.isSuperAdmin() ? 'Головний адміністратор' : 'Учасник родини' }}</span>
                             </div>
                         </div>
 
-                        <button
-                            class="admin-mode-toggle"
-                            [class.active]="adminService.isAdminMode()"
-                            (click)="adminService.toggleAdminMode()">
-                            <span class="material-symbols-outlined" style="font-size:20px">edit</span>
-                            <span class="admin-mode-text">
-                                {{ adminService.isAdminMode() ? 'Режим редагування увімкнено' : 'Увімкнути редагування' }}
-                            </span>
-                            <span class="admin-mode-indicator" [class.on]="adminService.isAdminMode()"></span>
-                        </button>
+                        @if (authService.canEditAnything()) {
+                            <button
+                                class="admin-mode-toggle"
+                                [class.active]="authService.editMode()"
+                                (click)="authService.toggleEditMode()">
+                                <span class="material-symbols-outlined" style="font-size:20px">edit</span>
+                                <span class="admin-mode-text">
+                                    {{ authService.editMode() ? 'Режим редагування увімкнено' : 'Увімкнути редагування' }}
+                                </span>
+                                <span class="admin-mode-indicator" [class.on]="authService.editMode()"></span>
+                            </button>
 
-                        @if (adminService.isAdminMode()) {
-                            <p class="admin-tip">
-                                <span class="material-symbols-outlined" style="font-size:16px">lightbulb</span>
-                                Тепер відкрийте будь-яку страву і тапніть на текст, щоб редагувати
-                            </p>
+                            @if (authService.editMode()) {
+                                <p class="admin-tip">
+                                    <span class="material-symbols-outlined" style="font-size:16px">lightbulb</span>
+                                    Відкрийте будь-яку страву і тапніть на текст, щоб редагувати
+                                </p>
+                            }
                         }
 
-                        <button class="admin-logout-btn" (click)="adminService.logout()">
+                        <button class="admin-logout-btn" (click)="signOut()">
                             <span class="material-symbols-outlined" style="font-size:18px">logout</span>
                             Вийти
                         </button>
@@ -881,12 +866,9 @@ export class ProfileDrawerComponent {
     protected readonly themeService = inject(ThemeService);
     protected readonly favoritesService = inject(FavoritesService);
     protected readonly settingsService = inject(SettingsService);
-    protected readonly adminService = inject(AdminService);
+    protected readonly authService = inject(AuthService);
     private readonly exportImportService = inject(ExportImportService);
     readonly closed = output<void>();
-
-    protected loginNickname = '';
-    protected loginPassword = '';
 
     readonly allRanks = RANKS;
     readonly totalRanks = RANKS.length;
@@ -909,9 +891,13 @@ export class ProfileDrawerComponent {
         this.exportImportService.exportToJson();
     }
 
-    handleLogin(): void {
-        if (!this.loginNickname || !this.loginPassword) return;
-        this.adminService.login(this.loginNickname, this.loginPassword);
+    signIn(): void {
+        void this.authService.signInWithGoogle('/');
+    }
+
+    signOut(): void {
+        this.closed.emit();
+        void this.authService.signOut();
     }
 
     setDisplayMode(mode: DisplayMode): void {

@@ -14,12 +14,12 @@
     </div>
 } @else {
     <article class="dish-detail"
-        [class.admin-editing]="adminService.isAdminMode()"
+        [class.admin-editing]="canEdit()"
         (touchstart)="onTouchStart($event)"
         (touchend)="onTouchEnd($event)">
 
         <!-- Admin Mode Bar -->
-        @if (adminService.isAdminMode()) {
+        @if (canEdit()) {
             <div class="admin-bar">
                 <span class="material-symbols-outlined">edit</span>
                 Режим редагування — тапніть на текст щоб змінити
@@ -64,7 +64,7 @@
                 (error)="onImageError($event)" />
 
             <!-- Admin: Edit images button -->
-            @if (adminService.isAdminMode()) {
+            @if (canEdit()) {
                 <button class="hero-edit-images-btn" (click)="openImageManager()">
                     <span class="material-symbols-outlined">photo_library</span>
                     Редагувати фото
@@ -226,14 +226,14 @@
                         </div>
                     </div>
                 } @else {
-                    <div class="detail-categories" [class.editable]="adminService.isAdminMode()" (click)="startEditing('categories')">
+                    <div class="detail-categories" [class.editable]="canEdit()" (click)="startEditing('categories')">
                         @for (category of dish()!.categories; track category) {
                             <span class="category-label">{{ getCategoryLabel(category) }}</span>
                         }
                         @if (isNew()) {
                             <span class="new-badge">НОВЕ</span>
                         }
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </div>
@@ -253,9 +253,9 @@
                         </div>
                     </div>
                 } @else {
-                    <h1 class="detail-title" [class.editable]="adminService.isAdminMode()" (click)="startEditing('title')">
+                    <h1 class="detail-title" [class.editable]="canEdit()" (click)="startEditing('title')">
                         {{ dish()!.title }}
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </h1>
@@ -275,9 +275,9 @@
                         </div>
                     </div>
                 } @else {
-                    <p class="detail-description" [class.editable]="adminService.isAdminMode()" (click)="startEditing('description')">
+                    <p class="detail-description" [class.editable]="canEdit()" (click)="startEditing('description')">
                         {{ dish()!.description }}
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </p>
@@ -347,7 +347,7 @@
                     </div>
                 </div>
             } @else {
-                <div class="stats-bar" [class.editable]="adminService.isAdminMode()" (click)="startEditing('stats')">
+                <div class="stats-bar" [class.editable]="canEdit()" (click)="startEditing('stats')">
                     <div class="stats-row stats-row--top">
                         <div class="stat">
                             <app-rating-stars [rating]="dish()!.rating" />
@@ -379,7 +379,7 @@
                             <span class="stat-value">{{ getDifficultyLabel(dish()!.difficulty) }}</span>
                         </div>
                     </div>
-                    @if (adminService.isAdminMode()) {
+                    @if (canEdit()) {
                         <span class="edit-hint-icon edit-hint-corner material-symbols-outlined">edit</span>
                     }
                 </div>
@@ -411,13 +411,13 @@
                         </div>
                     </div>
                 </div>
-            } @else if (dish()!.tags.length > 0 || adminService.isAdminMode()) {
-                <div class="detail-section tags-section" [class.editable]="adminService.isAdminMode()" (click)="startEditing('tags')">
+            } @else if (dish()!.tags.length > 0 || canEdit()) {
+                <div class="detail-section tags-section" [class.editable]="canEdit()" (click)="startEditing('tags')">
                     <div class="tags-list">
                         @for (tag of dish()!.tags; track tag) {
                             <app-tag-chip [label]="tag" [clickable]="false" />
                         }
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </div>
@@ -469,7 +469,7 @@
                     </div>
                 </div>
             } @else {
-                <div class="detail-section" [class.editable-section]="adminService.isAdminMode()">
+                <div class="detail-section" [class.editable-section]="canEdit()">
                     <h2 class="section-title">
                         <span class="material-symbols-outlined section-icon">grocery</span>
                         Інгредієнти
@@ -479,7 +479,7 @@
                                 Скинути
                             </button>
                         }
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <button class="edit-section-btn" (click)="startEditing('ingredients')">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
@@ -561,11 +561,11 @@
                     </div>
                 </div>
             } @else {
-                <div class="detail-section" [class.editable-section]="adminService.isAdminMode()">
+                <div class="detail-section" [class.editable-section]="canEdit()">
                     <h2 class="section-title">
                         <span class="material-symbols-outlined section-icon">format_list_numbered</span>
                         Приготування
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <button class="edit-section-btn" (click)="startEditing('steps')">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
@@ -616,12 +616,12 @@
                         </div>
                     </div>
                 </div>
-            } @else if (dish()!.notes || adminService.isAdminMode()) {
-                <div class="detail-section" [class.editable]="adminService.isAdminMode()" (click)="startEditing('notes')">
+            } @else if (dish()!.notes || canEdit()) {
+                <div class="detail-section" [class.editable]="canEdit()" (click)="startEditing('notes')">
                     <h2 class="section-title">
                         <span class="material-symbols-outlined section-icon">sticky_note_2</span>
                         Нотатки
-                        @if (adminService.isAdminMode()) {
+                        @if (canEdit()) {
                             <span class="edit-hint-icon material-symbols-outlined">edit</span>
                         }
                     </h2>
@@ -648,7 +648,7 @@
                     </div>
                 </footer>
             } @else {
-                <footer class="detail-footer" [class.editable]="adminService.isAdminMode()" (click)="adminService.isAdminMode() ? startEditing('source') : null">
+                <footer class="detail-footer" [class.editable]="canEdit()" (click)="canEdit() ? startEditing('source') : null">
                     @if (dish()!.sourceUrl) {
                         <a [href]="dish()!.sourceUrl" target="_blank" rel="noopener noreferrer" class="source-link"
                            (click)="$event.stopPropagation()">
@@ -662,7 +662,7 @@
                             <span>Оновлено: {{ formatDate(dish()!.updatedAt) }}</span>
                         }
                     </div>
-                    @if (adminService.isAdminMode()) {
+                    @if (canEdit()) {
                         <span class="edit-hint-icon material-symbols-outlined">edit</span>
                     }
                 </footer>

@@ -4,7 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { UserProfile } from '../models/user-profile.model';
 import { Family } from '../models/family.model';
-import { FamilyMember, FamilyRole } from '../models/family-member.model';
+import { EDITOR_ROLES, FamilyMember, FamilyRole } from '../models/family-member.model';
 import { mapProfile, mapFamily, mapFamilyMember } from './supabase-mappers';
 
 export interface MembershipWithFamily extends FamilyMember {
@@ -26,6 +26,7 @@ export class AuthService {
     private readonly membershipsSignal = signal<MembershipWithFamily[]>([]);
     private readonly readySignal = signal<boolean>(false);
     private readonly signingInSignal = signal<boolean>(false);
+    private readonly editModeSignal = signal<boolean>(false);
 
     private readyResolvers: Array<() => void> = [];
 
@@ -44,6 +45,15 @@ export class AuthService {
     readonly displayName = computed(
         () => this.profileSignal()?.displayName ?? this.profileSignal()?.email ?? null,
     );
+    readonly avatarUrl = computed(() => this.profileSignal()?.avatarUrl ?? null);
+
+    /** True when the user can create/edit recipes in at least one family. */
+    readonly canEditAnything = computed(
+        () => this.isSuperAdmin() || this.approvedMemberships().some(m => EDITOR_ROLES.includes(m.role)),
+    );
+
+    /** Inline "edit mode" toggle (replaces the old global admin-mode boolean). */
+    readonly editMode = this.editModeSignal.asReadonly();
 
     constructor() {
         this.initialize();
@@ -66,6 +76,7 @@ export class AuthService {
         } else {
             this.profileSignal.set(null);
             this.membershipsSignal.set([]);
+            this.editModeSignal.set(false);
         }
         this.markReady();
     }
@@ -115,8 +126,17 @@ export class AuthService {
     }
 
     async signOut(): Promise<void> {
+        this.editModeSignal.set(false);
         await this.supabase.client.auth.signOut();
         await this.router.navigate(['/login']);
+    }
+
+    toggleEditMode(): void {
+        this.editModeSignal.update(value => !value);
+    }
+
+    setEditMode(value: boolean): void {
+        this.editModeSignal.set(value);
     }
 
     async refresh(): Promise<void> {

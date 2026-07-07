@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { RankService } from '../../core/services/rank.service';
@@ -40,15 +40,15 @@ import { RankBadgeComponent } from './rank-badge.component';
                             <span class="badge">{{ favoritesService.count() }}</span>
                         }
                     </button>
-                    @if (adminService.isAuthenticated()) {
+                    @if (authService.canEditAnything()) {
                         <button
                             class="icon-button admin-toggle"
-                            [class.active]="adminService.isAdminMode()"
-                            (click)="adminService.toggleAdminMode()"
+                            [class.active]="authService.editMode()"
+                            (click)="authService.toggleEditMode()"
                             title="Увімкнути редагування"
                             aria-label="Увімкнути редагування">
                             <span class="material-symbols-outlined">edit</span>
-                            @if (adminService.isAdminMode()) {
+                            @if (authService.editMode()) {
                                 <span class="admin-dot"></span>
                             }
                         </button>
@@ -325,7 +325,7 @@ export class HeaderComponent {
     protected readonly dishService = inject(DishService);
     protected readonly favoritesService = inject(FavoritesService);
     protected readonly rankService = inject(RankService);
-    protected readonly adminService = inject(AdminService);
+    protected readonly authService = inject(AuthService);
 
     protected readonly showEasterEgg = signal(false);
     protected readonly showProfile = signal(false);

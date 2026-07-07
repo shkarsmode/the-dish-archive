@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guards';
+import { approvedUserGuard, authGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
     {
@@ -13,14 +13,17 @@ export const routes: Routes = [
     },
     {
         path: '',
+        canActivate: [approvedUserGuard],
         loadComponent: () => import('./pages/catalog/catalog').then(m => m.CatalogPage),
     },
     {
         path: 'dish/:slug',
+        canActivate: [approvedUserGuard],
         loadComponent: () => import('./pages/dish-detail/dish-detail').then(m => m.DishDetailPage),
     },
     {
         path: 'changelog',
+        canActivate: [approvedUserGuard],
         loadComponent: () => import('./pages/changelog/changelog').then(m => m.ChangelogPage),
     },
     {

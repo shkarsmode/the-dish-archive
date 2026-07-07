@@ -1,7 +1,7 @@
 import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
-import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DishService } from '../../core/services/dish.service';
 import { FavoritesService } from '../../core/services/favorites.service';
 import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
@@ -35,7 +35,7 @@ export class CatalogPage implements OnDestroy {
     private readonly favoritesService = inject(FavoritesService);
     private readonly router = inject(Router);
     protected readonly settingsService = inject(SettingsService);
-    protected readonly adminService = inject(AdminService);
+    protected readonly authService = inject(AuthService);
     private readonly scrollRestoration = inject(ScrollRestorationService);
     protected readonly filterDrawer = viewChild<FilterDrawerComponent>('filterDrawer');
     protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
