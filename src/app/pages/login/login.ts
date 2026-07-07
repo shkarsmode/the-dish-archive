@@ -60,11 +60,12 @@ import { AuthService } from '../../core/services/auth.service';
             box-shadow: var(--shadow-lg);
             padding: var(--space-10) var(--space-8);
             text-align: center;
+            opacity: 1;
             animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes cardIn {
-            from { opacity: 0; transform: translateY(14px) scale(0.98); }
-            to { opacity: 1; transform: none; }
+            from { transform: translateY(14px) scale(0.98); }
+            to { transform: none; }
         }
         .brand-mark { font-size: 2.75rem; line-height: 1; }
         .brand-title {
