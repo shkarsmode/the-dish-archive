@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { approvedUserGuard, authGuard } from './core/guards/auth.guards';
+import { approvedUserGuard, authGuard, superAdminGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
     {
@@ -25,6 +25,33 @@ export const routes: Routes = [
         path: 'changelog',
         canActivate: [approvedUserGuard],
         loadComponent: () => import('./pages/changelog/changelog').then(m => m.ChangelogPage),
+    },
+    {
+        path: 'admin',
+        canActivate: [superAdminGuard],
+        loadComponent: () => import('./pages/admin/admin-layout').then(m => m.AdminLayoutPage),
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./pages/admin/admin-dashboard').then(m => m.AdminDashboardPage),
+            },
+            {
+                path: 'access-requests',
+                loadComponent: () => import('./pages/admin/admin-access-requests').then(m => m.AdminAccessRequestsPage),
+            },
+            {
+                path: 'families',
+                loadComponent: () => import('./pages/admin/admin-families').then(m => m.AdminFamiliesPage),
+            },
+            {
+                path: 'users',
+                loadComponent: () => import('./pages/admin/admin-users').then(m => m.AdminUsersPage),
+            },
+            {
+                path: 'activity',
+                loadComponent: () => import('./pages/admin/admin-activity').then(m => m.AdminActivityPage),
+            },
+        ],
     },
     {
         path: '**',

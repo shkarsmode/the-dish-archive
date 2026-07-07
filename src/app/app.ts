@@ -8,7 +8,7 @@ import { HeaderComponent } from './shared/components/header.component';
 import { ToastContainerComponent } from './shared/components/toast-container.component';
 import { PullToRefreshDirective } from './shared/directives/pull-to-refresh.directive';
 
-const CHROMELESS_ROUTES = new Set(['/login', '/access-pending']);
+const CHROMELESS_PREFIXES = ['/login', '/access-pending', '/admin', '/family'];
 
 @Component({
     selector: 'app-root',
@@ -24,8 +24,11 @@ export class App {
 
     private readonly currentUrl = signal(this.router.url);
 
-    /** Hide the header/compare bar on standalone auth screens. */
-    readonly showChrome = computed(() => !CHROMELESS_ROUTES.has(this.currentUrl().split('?')[0]));
+    /** Hide the header/compare bar on standalone auth + admin screens. */
+    readonly showChrome = computed(() => {
+        const path = this.currentUrl().split('?')[0];
+        return !CHROMELESS_PREFIXES.some(prefix => path === prefix || path.startsWith(prefix + '/'));
+    });
 
     constructor() {
         this.router.events

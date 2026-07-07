@@ -157,6 +157,14 @@ import { RankBadgeComponent } from './rank-badge.component';
                             </div>
                         </div>
 
+                        @if (authService.isSuperAdmin()) {
+                            <a class="admin-mode-toggle" routerLink="/admin" (click)="closed.emit()">
+                                <span class="material-symbols-outlined" style="font-size:20px">admin_panel_settings</span>
+                                <span class="admin-mode-text">Панель адміністратора</span>
+                                <span class="material-symbols-outlined" style="font-size:18px;margin-left:auto;color:var(--color-text-tertiary)">chevron_right</span>
+                            </a>
+                        }
+
                         @if (authService.canEditAnything()) {
                             <button
                                 class="admin-mode-toggle"
