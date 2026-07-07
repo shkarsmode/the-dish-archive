@@ -25,12 +25,13 @@ import { ToastService } from '../../core/services/toast.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { ImageEditorComponent, ImageEditorResult } from '../../shared/components/image-editor.component';
 import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
+import { DishRatingsComponent } from '../../shared/components/dish-ratings.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
 import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
 
 @Component({
     selector: 'app-dish-detail',
-    imports: [RouterLink, RatingStarsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule, ImageEditorComponent],
+    imports: [RouterLink, RatingStarsComponent, DishRatingsComponent, FavoritesButtonComponent, TagChipComponent, TasteRadarComponent, FormsModule, ImageEditorComponent],
     templateUrl: './dish-detail.html',
     styleUrl: './dish-detail.scss',
     host: {

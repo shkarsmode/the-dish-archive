@@ -344,4 +344,12 @@ export class DishService {
         if (error) throw error;
         this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
     }
+
+    /** Optimistically adjust a dish's like counter (used by FavoritesService). */
+    applyLikeDelta(id: string, delta: number): void {
+        this.allDishesSignal.update(dishes =>
+            dishes.map(d => (d.id === id ? { ...d, likeCount: Math.max(0, d.likeCount + delta) } : d)),
+        );
+    }
 }
+

@@ -47,7 +47,7 @@
                         <span class="material-symbols-outlined">chevron_right</span>
                     </a>
                 }
-                <app-favorites-button [dishId]="dish()!.id" />
+                <app-favorites-button [dishId]="dish()!.id" [count]="dish()!.likeCount" />
                 <button class="nav-action-btn share-btn" (click)="shareDish()" aria-label="Поділитися рецептом">
                     <span class="material-symbols-outlined">share</span>
                 </button>
@@ -668,6 +668,8 @@
                     }
                 </footer>
             }
+
+            <app-dish-ratings [dishId]="dish()!.id" [familyId]="dish()!.familyId" />
         </div>
     </article>
 }

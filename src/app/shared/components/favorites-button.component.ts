@@ -5,15 +5,20 @@ import { FavoritesService } from '../../core/services/favorites.service';
     selector: 'app-favorites-button',
     template: `
         @let isFavorite_ = isFavorite();
+        @let likes = count();
         <button
             class="favorites-button"
             [class.active]="isFavorite_"
+            [class.with-count]="likes > 0"
             (click)="handleClick($event)"
-            [attr.aria-label]="isFavorite_ ? 'Прибрати з обраного' : 'Додати до обраного'"
+            [attr.aria-label]="isFavorite_ ? 'Прибрати вподобайку' : 'Вподобати'"
             [attr.aria-pressed]="isFavorite_">
             <span class="material-symbols-outlined heart-icon">
                 {{ isFavorite_ ? 'favorite' : 'favorite_border' }}
             </span>
+            @if (likes > 0) {
+                <span class="like-count">{{ likes }}</span>
+            }
         </button>
     `,
     styles: `
@@ -48,6 +53,22 @@ import { FavoritesService } from '../../core/services/favorites.service';
             }
         }
 
+        .favorites-button.with-count {
+            width: auto;
+            gap: 5px;
+            padding: 0 12px 0 10px;
+        }
+
+        .like-count {
+            font-size: 13px;
+            font-weight: var(--weight-semibold);
+            color: var(--color-text-secondary);
+        }
+
+        .favorites-button.active .like-count {
+            color: var(--color-favorite);
+        }
+
         .heart-icon {
             font-size: 20px;
         }
@@ -55,6 +76,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
 })
 export class FavoritesButtonComponent {
     readonly dishId = input.required<string>();
+    readonly count = input<number>(0);
     protected readonly favoritesService = inject(FavoritesService);
     private readonly elRef = inject(ElementRef);
 

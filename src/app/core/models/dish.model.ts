@@ -24,6 +24,7 @@ export interface Dish {
     status: DishStatus;
     ratingCount: number;
     ratingAverage: number;
+    likeCount: number;
     viewCount: number;
     cookedCount: number;
     createdAt: string;

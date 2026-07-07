@@ -28,7 +28,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                     [style.viewTransitionName]="'dish-image-' + dish().id"
                     (error)="onImageError($event)" />
                 <div class="card-image-overlay">
-                    <app-favorites-button [dishId]="dish().id" />
+                    <app-favorites-button [dishId]="dish().id" [count]="dish().likeCount" />
                     @let isDishSelected = compareService.isSelected(dish().id);
                     <button
                         class="compare-toggle"

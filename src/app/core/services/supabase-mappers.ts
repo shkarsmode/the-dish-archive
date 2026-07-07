@@ -157,6 +157,7 @@ export function mapDish(row: Row): Dish {
         status: row.status ?? 'draft',
         ratingCount: row.rating_count ?? 0,
         ratingAverage: Number(row.rating_average ?? 0),
+        likeCount: row.like_count ?? 0,
         viewCount: row.view_count ?? 0,
         cookedCount: row.cooked_count ?? 0,
         createdAt: row.created_at,

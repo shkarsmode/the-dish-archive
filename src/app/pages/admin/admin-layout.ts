@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminDataService } from '../../core/services/admin-data.service';
 
 @Component({
     selector: 'app-admin-layout',
@@ -32,6 +33,9 @@ import { AuthService } from '../../core/services/auth.service';
                             class="admin-nav-link">
                             <span class="material-symbols-outlined">{{ item.icon }}</span>
                             <span>{{ item.label }}</span>
+                            @if (item.path === '/admin/access-requests' && pendingCount() > 0) {
+                                <span class="nav-badge">{{ pendingCount() }}</span>
+                            }
                         </a>
                     }
                 </nav>
@@ -93,6 +97,11 @@ import { AuthService } from '../../core/services/auth.service';
         .admin-nav-link .material-symbols-outlined { font-size: 20px; }
         .admin-nav-link:hover { color: var(--color-text-primary); }
         .admin-nav-link.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+        .nav-badge {
+            display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px;
+            border-radius: var(--radius-full); background: var(--color-error); color: #fff;
+            font-size: 11px; font-weight: var(--weight-bold); line-height: 1;
+        }
         .admin-content {
             max-width: var(--container-max); margin: 0 auto;
             padding: var(--space-6) var(--space-5) var(--space-16);
@@ -101,6 +110,13 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AdminLayoutPage {
     protected readonly auth = inject(AuthService);
+    private readonly data = inject(AdminDataService);
+
+    protected readonly pendingCount = () => this.data.stats()?.pendingRequests ?? 0;
+
+    constructor() {
+        void this.data.loadStats();
+    }
 
     protected readonly navItems = [
         { path: '/admin', label: 'Огляд', icon: 'dashboard', exact: true },
