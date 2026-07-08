@@ -4,11 +4,12 @@
 .catalog-page {
     overflow-x: hidden;
 
-    // While restoring scroll after back-navigation, keep the grid hidden (layout
-    // preserved) until we've scrolled to the origin card — then reveal it already
-    // positioned, so there's no flash-to-top → jump.
+    // While restoring scroll after back-navigation, keep the grid invisible (layout
+    // preserved, still scrollable + focusable) until we've scrolled to the origin
+    // card — then reveal it already positioned, so there's no flash-to-top → jump.
     &.restoring {
-        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
     }
 }
 

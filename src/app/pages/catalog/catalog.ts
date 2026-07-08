@@ -77,32 +77,47 @@ export class CatalogPage implements OnDestroy {
         // the user came from, then reveal it already-positioned — no flash-to-top.
         afterNextRender(() => {
             const slug = this.scrollRestoration.consume();
-            if (!slug) {
-                this.restoring.set(false);
-                this.scrollRestoration.doneRestoring();
-                return;
-            }
-
+            let done = false;
             const reveal = () => {
+                if (done) return;
+                done = true;
                 this.restoring.set(false);
                 this.scrollRestoration.doneRestoring();
             };
+            if (!slug) { reveal(); return; }
+
+            // Safety net: never keep the grid hidden longer than 1s.
+            setTimeout(reveal, 1000);
+
+            const scrollToCard = (card: HTMLElement) => {
+                card.scrollIntoView({ block: 'center', behavior: 'instant' });
+                (card.querySelector<HTMLElement>('.dish-card') ?? card).focus({ preventScroll: true });
+            };
 
             const tryScroll = (attempts = 0) => {
+                if (done) return;
                 const card = document.querySelector<HTMLElement>(`app-dish-card[data-slug="${slug}"]`);
                 if (card) {
-                    // Scroll synchronously while the grid is still hidden, then reveal
-                    // on the next frame so the browser paints the correct position first.
-                    card.scrollIntoView({ block: 'center', behavior: 'instant' });
-                    (card.querySelector<HTMLElement>('.dish-card') ?? card).focus({ preventScroll: true });
-                    requestAnimationFrame(reveal);
-                } else if (attempts < 20) {
+                    scrollToCard(card);
+                    // Re-assert over a few frames to beat Angular's own scroll restoration
+                    // (which otherwise resets us to the top), then reveal the positioned grid.
+                    let reasserts = 0;
+                    const hold = () => {
+                        if (done) return;
+                        scrollToCard(card);
+                        if (++reasserts < 4) requestAnimationFrame(hold);
+                        else reveal();
+                    };
+                    requestAnimationFrame(hold);
+                } else if (attempts < 40) {
                     requestAnimationFrame(() => tryScroll(attempts + 1));
                 } else {
                     reveal();
                 }
             };
-            tryScroll();
+
+            // Defer past Angular's in-memory scroll restoration so our card scroll wins.
+            setTimeout(() => tryScroll(), 60);
         });
     }
 
