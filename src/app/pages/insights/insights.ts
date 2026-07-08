@@ -13,14 +13,13 @@ import {
 import { DishService } from '../../core/services/dish.service';
 import { FamilyService } from '../../core/services/family.service';
 import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
-import { RatingStarsComponent } from '../../shared/components/rating-stars.component';
 
 interface Bar { key: string; label: string; value: number; pct: number; color?: string; }
 
 /** "Смачна аналітика" — a beautiful insights dashboard over the visible recipe collection. */
 @Component({
     selector: 'app-insights',
-    imports: [RouterLink, TasteRadarComponent, RatingStarsComponent],
+    imports: [RouterLink, TasteRadarComponent],
     template: `
         <header class="ins-header">
             <a routerLink="/" class="icon-btn" aria-label="До каталогу"><span class="material-symbols-outlined">arrow_back</span></a>
@@ -112,8 +111,8 @@ interface Bar { key: string; label: string; value: number; pct: number; color?: 
                                     <a [routerLink]="['/dish', d.slug]" class="top-row">
                                         <span class="top-thumb" [style.background-image]="thumb(d)"></span>
                                         <span class="top-name">{{ d.title }}</span>
-                                        <span class="top-metric">
-                                            <app-rating-stars [rating]="ratingOf(d)" [compact]="true" />
+                                        <span class="top-metric rated">
+                                            <span class="material-symbols-outlined">star</span>
                                             <span class="top-num">{{ ratingOf(d).toFixed(1) }}</span>
                                         </span>
                                     </a>
@@ -142,7 +141,7 @@ interface Bar { key: string; label: string; value: number; pct: number; color?: 
         }
     `,
     styles: [`
-        :host { display: block; min-height: 100dvh; background: var(--color-bg); }
+        :host { display: block; min-height: 100dvh; background: var(--color-bg); overflow-x: hidden; }
         .ins-header {
             display: flex; align-items: center; gap: var(--space-3);
             max-width: 960px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-4);
@@ -170,7 +169,8 @@ interface Bar { key: string; label: string; value: number; pct: number; color?: 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--space-5); }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
 
-        .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-card); }
+        /* min-width:0 lets grid tracks shrink instead of blowing out on wide content */
+        .card { min-width: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-card); }
         .card-title { font-family: var(--font-display); font-size: var(--text-md); font-weight: var(--weight-semibold); margin: 0 0 var(--space-4); color: var(--color-text-primary); }
 
         .bars { display: flex; flex-direction: column; gap: var(--space-3); }
@@ -188,7 +188,7 @@ interface Bar { key: string; label: string; value: number; pct: number; color?: 
         .hist-label { font-size: 10px; color: var(--color-text-tertiary); text-align: center; }
 
         .top-list { list-style: none; margin: 0; padding: 0; counter-reset: rank; display: flex; flex-direction: column; }
-        .top-list li { counter-increment: rank; border-bottom: 1px solid var(--color-border-light); }
+        .top-list li { counter-increment: rank; min-width: 0; border-bottom: 1px solid var(--color-border-light); }
         .top-list li:last-child { border-bottom: none; }
         .top-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; color: inherit; }
         .top-row::before { content: counter(rank); width: 20px; flex: none; text-align: center; font-family: var(--font-display); font-weight: var(--weight-bold); color: var(--color-text-tertiary); }
@@ -197,6 +197,7 @@ interface Bar { key: string; label: string; value: number; pct: number; color?: 
         .top-metric { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: var(--text-sm); color: var(--color-text-secondary); }
         .top-num { font-weight: var(--weight-semibold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
         .top-metric.like .material-symbols-outlined { font-size: 17px; color: var(--color-favorite, #E25555); font-variation-settings: 'FILL' 1; }
+        .top-metric.rated .material-symbols-outlined { font-size: 17px; color: var(--color-warning); font-variation-settings: 'FILL' 1; }
     `],
 })
 export class InsightsPage {
