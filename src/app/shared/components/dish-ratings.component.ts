@@ -134,7 +134,8 @@ import { RatingStarsComponent } from './rating-stars.component';
         .star-btn { border: none; background: none; cursor: pointer; padding: 2px; color: var(--color-border); transition: color var(--transition-fast), transform var(--transition-spring); }
         .star-btn .material-symbols-outlined { font-size: 30px; }
         .star-btn.on { color: var(--color-warning); font-variation-settings: 'FILL' 1; }
-        .star-btn:hover { transform: scale(1.15); }
+        @media (hover: hover) and (pointer: fine) { .star-btn:hover { transform: scale(1.15); } }
+        .star-btn:active { transform: scale(1.1); }
         .comment-input {
             width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
             background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-body); font-size: var(--text-base); resize: vertical;

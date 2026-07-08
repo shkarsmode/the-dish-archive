@@ -101,13 +101,17 @@ import { DishService } from '../../core/services/dish.service';
 export class SearchBarComponent {
     protected readonly dishService = inject(DishService);
     protected readonly isFocused = signal(false);
+    private debounceId: ReturnType<typeof setTimeout> | null = null;
 
     protected onInput(event: Event): void {
         const value = (event.target as HTMLInputElement).value;
-        this.dishService.updateSearch(value);
+        // Debounce so fast typing doesn't re-filter/re-sort + re-render on every keystroke.
+        if (this.debounceId) clearTimeout(this.debounceId);
+        this.debounceId = setTimeout(() => this.dishService.updateSearch(value), 180);
     }
 
     protected clearSearch(): void {
+        if (this.debounceId) clearTimeout(this.debounceId);
         this.dishService.updateSearch('');
     }
 }

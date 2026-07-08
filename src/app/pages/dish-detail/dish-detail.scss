@@ -68,6 +68,11 @@
     max-width: 800px;
     margin: 0 auto;
     padding-bottom: var(--space-20);
+    animation: detailEnter 0.32s var(--ease-out-expo) both;
+}
+@keyframes detailEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
 }
 
 // ── Navigation ──────────────────────────────────────────────
@@ -642,7 +647,10 @@ button.eng-item:hover { background: var(--color-surface-hover); color: var(--col
     box-shadow: var(--shadow-md, 0 4px 14px rgba(0,0,0,0.14));
     transition: transform var(--transition-spring), background var(--transition-base);
 }
-.cook-cta:hover { transform: translateY(-2px); background: var(--color-accent-dark); }
+@media (hover: hover) and (pointer: fine) {
+    .cook-cta:hover { transform: translateY(-2px); background: var(--color-accent-dark); }
+}
+.cook-cta:active { transform: scale(0.97); background: var(--color-accent-dark); }
 .cook-cta .material-symbols-outlined { font-size: 20px; }
 
 .steps-list {

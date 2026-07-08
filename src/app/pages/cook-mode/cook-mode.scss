@@ -73,7 +73,10 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     min-height: 54px; padding: 0 var(--space-5); border: none; cursor: pointer; text-decoration: none;
     border-radius: var(--radius-full); font-weight: var(--weight-semibold); font-size: var(--text-md);
+    transition: transform var(--transition-fast), filter var(--transition-base);
 }
+.nav-btn:active:not(:disabled) { transform: scale(0.97); }
+.timer-actions button:active { transform: scale(0.94); }
 .nav-btn.primary { flex: 1; background: var(--accent); color: #fff; }
 .nav-btn.ghost { background: var(--color-surface); color: var(--color-text-primary); box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.1)); }
 .nav-btn:disabled { opacity: 0.45; cursor: not-allowed; }

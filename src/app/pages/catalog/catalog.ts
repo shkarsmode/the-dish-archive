@@ -64,7 +64,7 @@ export class CatalogPage implements OnDestroy {
                             setTimeout(() => {
                                 this.dishService.loadMore();
                                 this.loadingMore = false;
-                            }, 400);
+                            }, 120);
                         }
                     },
                     { rootMargin: '200px' }

@@ -60,7 +60,7 @@
                 [src]="currentImage"
                 [alt]="currentImageAlt"
                 class="hero-image"
-                [style.viewTransitionName]="'dish-image-' + dish()!.id"
+                decoding="async"
                 (load)="onHeroLoad($event)"
                 (error)="onImageError($event)" />
 

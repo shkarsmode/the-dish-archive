@@ -31,8 +31,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
             width: 36px;
             height: 36px;
             border-radius: var(--radius-full);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.96);
             color: var(--color-text-tertiary);
             transition: color var(--transition-base),
                         transform var(--transition-spring),
@@ -42,6 +41,8 @@ import { FavoritesService } from '../../core/services/favorites.service';
                 background: rgba(255, 255, 255, 1);
                 color: var(--color-favorite);
             }
+
+            &:active { transform: scale(0.9); }
 
             &.active {
                 color: var(--color-favorite);

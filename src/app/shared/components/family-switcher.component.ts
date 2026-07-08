@@ -90,7 +90,8 @@ const CYR_LAT_INITIAL = (name: string): string => {
             box-shadow: 0 0 0 2px var(--color-border) inset;
             transition: box-shadow var(--transition-base), transform var(--transition-spring);
         }
-        .fs-item:hover .fs-ring { transform: translateY(-2px); }
+        @media (hover: hover) and (pointer: fine) { .fs-item:hover .fs-ring { transform: translateY(-2px); } }
+        .fs-item:active .fs-ring { transform: scale(0.95); }
         .fs-item.active .fs-ring {
             box-shadow: 0 0 0 2.5px var(--ring, var(--color-accent)),
                         0 0 0 5px color-mix(in srgb, var(--ring, var(--color-accent)) 22%, transparent);

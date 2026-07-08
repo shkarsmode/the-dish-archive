@@ -35,15 +35,15 @@
             align-items: center;
             justify-content: center;
             background: #FAFAF7;
-            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        visibility 0.5s;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                        visibility 0.35s;
         }
         .preloader.fade-out {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
         }
-        /* Hide app content behind preloader to prevent view-transition layers from leaking */
+        /* Keep the app hidden behind the preloader until it's ready (avoids FOUC) */
         .preloader ~ app-root {
             visibility: hidden;
         }
@@ -105,19 +105,19 @@
     </style>
     <app-root></app-root>
     <script>
-        // Remove preloader once Angular app renders (hold for at least 1.2s)
+        // Remove preloader as soon as the app renders (brief floor to avoid a flash)
         var preloaderStart = Date.now();
         var observer = new MutationObserver(function () {
             var root = document.querySelector('app-root');
             if (root && root.children.length > 0) {
                 observer.disconnect();
                 var elapsed = Date.now() - preloaderStart;
-                var minDelay = Math.max(0, 1200 - elapsed);
+                var minDelay = Math.max(0, 300 - elapsed);
                 setTimeout(function () {
                     var preloader = document.getElementById('app-preloader');
                     if (preloader) {
                         preloader.classList.add('fade-out');
-                        setTimeout(function () { preloader.remove(); }, 600);
+                        setTimeout(function () { preloader.remove(); }, 350);
                     }
                 }, minDelay);
             }

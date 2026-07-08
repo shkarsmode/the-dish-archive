@@ -35,7 +35,8 @@ import { Component, input, output } from '@angular/core';
             border-radius: var(--radius-full);
             white-space: nowrap;
             transition: background-color var(--transition-fast),
-                        color var(--transition-fast);
+                        color var(--transition-fast),
+                        transform var(--transition-fast);
             user-select: none;
 
             &[tabindex="0"] {
@@ -45,6 +46,8 @@ import { Component, input, output } from '@angular/core';
                     background: var(--color-accent-light);
                     color: var(--color-accent-dark);
                 }
+
+                &:active { transform: scale(0.94); }
             }
 
             &.active {

@@ -25,7 +25,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                     [src]="primaryImage()"
                     [alt]="dish().images[0]?.alt || dish().title"
                     loading="lazy"
-                    [style.viewTransitionName]="'dish-image-' + dish().id"
+                    decoding="async"
                     (error)="onImageError($event)" />
                 <div class="card-image-overlay">
                     <app-favorites-button [dishId]="dish().id" [count]="dish().likeCount" />
@@ -67,7 +67,9 @@ import { RatingStarsComponent } from './rating-stars.component';
                     <span class="rating-wrap">
                         <app-rating-stars [rating]="displayRating()" [compact]="true" />
                         @if (dish().ratingCount > 0) {
-                            <span class="rating-count">{{ dish().ratingCount }}</span>
+                            <span class="rating-count" title="Відгуки">
+                                <span class="material-symbols-outlined">chat_bubble</span>{{ dish().ratingCount }}
+                            </span>
                         }
                     </span>
                     <div class="meta-items">
@@ -104,6 +106,7 @@ import { RatingStarsComponent } from './rating-stars.component';
             cursor: pointer;
             min-width: 0;
             box-shadow: var(--shadow-card);
+            touch-action: manipulation;
             transition: transform var(--transition-base),
                         box-shadow var(--transition-base);
 
@@ -114,6 +117,12 @@ import { RatingStarsComponent } from './rating-stars.component';
                 .card-image img {
                     transform: scale(1.03);
                 }
+            }
+
+            // Tactile press feedback (native-app feel)
+            &:active {
+                transform: scale(0.985);
+                transition-duration: var(--transition-fast);
             }
 
             &:focus-visible {
@@ -173,16 +182,18 @@ import { RatingStarsComponent } from './rating-stars.component';
             width: 36px;
             height: 36px;
             border-radius: var(--radius-full);
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.96);
             color: var(--color-text-tertiary);
             transition: color var(--transition-fast),
-                        background-color var(--transition-fast);
+                        background-color var(--transition-fast),
+                        transform var(--transition-fast);
 
             @include m.hover {
                 background: rgba(255, 255, 255, 1);
                 color: var(--color-accent);
             }
+
+            &:active { transform: scale(0.9); }
 
             &.active {
                 background: var(--color-accent);
@@ -202,7 +213,6 @@ import { RatingStarsComponent } from './rating-stars.component';
             font-size: var(--text-xs);
             font-weight: var(--weight-medium);
             border-radius: var(--radius-full);
-            backdrop-filter: blur(8px);
 
             &.easy {
                 background: rgba(238, 242, 235, 0.92);
@@ -339,8 +349,9 @@ import { RatingStarsComponent } from './rating-stars.component';
             padding-top: var(--space-3);
             border-top: 1px solid var(--color-border-light);
 
-            .rating-wrap { display: inline-flex; align-items: center; gap: 5px; }
-            .rating-count { font-size: var(--text-xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+            .rating-wrap { display: inline-flex; align-items: center; gap: 6px; }
+            .rating-count { display: inline-flex; align-items: center; gap: 3px; font-size: var(--text-xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+            .rating-count .material-symbols-outlined { font-size: 13px; }
 
             :host(.mode-compact) & {
                 padding-top: var(--space-2);
@@ -416,11 +427,11 @@ export class DishCardComponent {
         return d.ratingCount > 0 ? d.ratingAverage : d.rating;
     });
 
-    protected readonly primaryImage = () => {
+    protected readonly primaryImage = computed(() => {
         const images = this.dish().images;
         const primary = images.find(img => img.isPrimary);
         return primary?.url ?? images[0]?.url ?? '';
-    };
+    });
 
     protected getCategoryLabel(category: DishCategory): string {
         return CATEGORY_LABELS[category] ?? category;
