@@ -299,6 +299,15 @@
                         }
                     </p>
                 }
+
+                <div class="engagement">
+                    <span class="eng-item likes">
+                        <span class="material-symbols-outlined">favorite</span>{{ dish()!.likeCount }}
+                    </span>
+                    <button type="button" class="eng-item" (click)="scrollToReviews()" aria-label="До відгуків">
+                        <span class="material-symbols-outlined">chat_bubble</span>{{ dish()!.ratingCount }}
+                    </button>
+                </div>
             </header>
 
             <!-- Stats Bar (editable) -->
@@ -363,7 +372,10 @@
                 <div class="stats-bar" [class.editable]="canEdit()" (click)="startEditing('stats')">
                     <div class="stats-row stats-row--top">
                         <div class="stat">
-                            <app-rating-stars [rating]="dish()!.rating" />
+                            <app-rating-stars [rating]="dish()!.ratingCount > 0 ? dish()!.ratingAverage : dish()!.rating" />
+                            @if (dish()!.ratingCount > 0) {
+                                <span class="stat-label">{{ dish()!.ratingAverage.toFixed(1) }} · {{ dish()!.ratingCount }}</span>
+                            }
                         </div>
                         <div class="stat">
                             <span class="material-symbols-outlined stat-icon">schedule</span>
@@ -584,6 +596,12 @@
                             </button>
                         }
                     </h2>
+                    @if (dish()!.steps.length > 0) {
+                        <a [routerLink]="['/cook', dish()!.slug]" class="cook-cta">
+                            <span class="material-symbols-outlined">skillet</span>
+                            Готувати покроково
+                        </a>
+                    }
                     <ol class="steps-list">
                         @for (step of dish()!.steps; track step.order) {
                             <li class="step"

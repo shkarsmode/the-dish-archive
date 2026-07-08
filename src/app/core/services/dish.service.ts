@@ -133,12 +133,13 @@ export class DishService {
         }
 
         const sortOption = this.sortOption();
+        const effRating = (d: Dish) => (d.ratingCount > 0 ? d.ratingAverage : d.rating);
         dishes.sort((a, b) => {
             switch (sortOption) {
                 case 'date-desc': return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 case 'date-asc': return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                case 'rating-desc': return b.rating - a.rating;
-                case 'rating-asc': return a.rating - b.rating;
+                case 'rating-desc': return effRating(b) - effRating(a) || b.ratingCount - a.ratingCount;
+                case 'rating-asc': return effRating(a) - effRating(b);
                 case 'price-asc': return a.price.amount - b.price.amount;
                 case 'price-desc': return b.price.amount - a.price.amount;
                 case 'time-asc': return a.cookingTime.total - b.cookingTime.total;
@@ -370,6 +371,13 @@ export class DishService {
     applyLikeDelta(id: string, delta: number): void {
         this.allDishesSignal.update(dishes =>
             dishes.map(d => (d.id === id ? { ...d, likeCount: Math.max(0, d.likeCount + delta) } : d)),
+        );
+    }
+
+    /** Refresh a dish's denormalized rating aggregate in the cache (used by RatingService). */
+    applyRatingAggregate(id: string, average: number, count: number): void {
+        this.allDishesSignal.update(dishes =>
+            dishes.map(d => (d.id === id ? { ...d, ratingAverage: average, ratingCount: count } : d)),
         );
     }
 }

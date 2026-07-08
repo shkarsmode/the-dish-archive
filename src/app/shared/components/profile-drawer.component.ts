@@ -7,6 +7,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
 import { CookRank, RANKS, RankService } from '../../core/services/rank.service';
 import { DisplayMode, SettingsService } from '../../core/services/settings.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { WhatsNewService } from '../../core/services/whats-new.service';
 import { RankBadgeComponent } from './rank-badge.component';
 
 @Component({
@@ -96,6 +97,12 @@ import { RankBadgeComponent } from './rank-badge.component';
                         <span class="setting-text">Експорт даних</span>
                         <span class="material-symbols-outlined setting-arrow">chevron_right</span>
                     </button>
+                    <a class="setting-row" routerLink="/whats-new" title="Що нового" (click)="closed.emit()">
+                        <span class="material-symbols-outlined setting-icon">celebration</span>
+                        <span class="setting-text">Що нового</span>
+                        @if (whatsNew.hasUnseen()) { <span class="whats-new-dot"></span> }
+                        <span class="material-symbols-outlined setting-arrow">chevron_right</span>
+                    </a>
                     <a class="setting-row" routerLink="/changelog" title="Історія змін" (click)="closed.emit()">
                         <span class="material-symbols-outlined setting-icon">history</span>
                         <span class="setting-text">Історія змін</span>
@@ -506,6 +513,15 @@ import { RankBadgeComponent } from './rank-badge.component';
             color: var(--color-text-tertiary);
         }
 
+        .whats-new-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-full);
+            background: var(--color-accent);
+            box-shadow: 0 0 0 3px var(--color-accent-light);
+            flex: none;
+        }
+
         // ── Display Mode ───
         .display-mode-control {
             display: grid;
@@ -875,6 +891,7 @@ export class ProfileDrawerComponent {
     protected readonly favoritesService = inject(FavoritesService);
     protected readonly settingsService = inject(SettingsService);
     protected readonly authService = inject(AuthService);
+    protected readonly whatsNew = inject(WhatsNewService);
     private readonly exportImportService = inject(ExportImportService);
     readonly closed = output<void>();
 

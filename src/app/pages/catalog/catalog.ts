@@ -15,6 +15,7 @@ import { SkeletonCardComponent } from '../../shared/components/skeleton-card.com
 import { SlotMachineComponent } from '../../shared/components/slot-machine.component';
 import { SortDropdownComponent } from '../../shared/components/sort-dropdown.component';
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
+import { FamilySwitcherComponent } from '../../shared/components/family-switcher.component';
 
 @Component({
     selector: 'app-catalog',
@@ -27,6 +28,7 @@ import { TagChipComponent } from '../../shared/components/tag-chip.component';
         EmptyStateComponent,
         TagChipComponent,
         SlotMachineComponent,
+        FamilySwitcherComponent,
         RouterLink,
     ],
     templateUrl: './catalog.html',
@@ -152,15 +154,6 @@ export class CatalogPage implements OnDestroy {
 
     protected openFilters(): void {
         this.filterDrawer()?.open();
-    }
-
-    protected selectFamily(familyId: string | null): void {
-        this.dishService.updateFilters({ selectedFamilyIds: familyId ? [familyId] : [] });
-    }
-
-    protected isFamilySelected(familyId: string | null): boolean {
-        const selected = this.dishService.filters().selectedFamilyIds;
-        return familyId === null ? selected.length === 0 : selected.length === 1 && selected[0] === familyId;
     }
 
     protected onSlotResult(dish: Dish): void {

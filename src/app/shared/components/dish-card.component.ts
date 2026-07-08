@@ -64,7 +64,12 @@ import { RatingStarsComponent } from './rating-stars.component';
                 <h3 class="card-title">{{ dish().title }}</h3>
                 <p class="card-description">{{ dish().description }}</p>
                 <div class="card-meta">
-                    <app-rating-stars [rating]="dish().rating" [compact]="true" />
+                    <span class="rating-wrap">
+                        <app-rating-stars [rating]="displayRating()" [compact]="true" />
+                        @if (dish().ratingCount > 0) {
+                            <span class="rating-count">{{ dish().ratingCount }}</span>
+                        }
+                    </span>
                     <div class="meta-items">
                         <span class="meta-item">
                             <span class="material-symbols-outlined">schedule</span>
@@ -334,12 +339,15 @@ import { RatingStarsComponent } from './rating-stars.component';
             padding-top: var(--space-3);
             border-top: 1px solid var(--color-border-light);
 
+            .rating-wrap { display: inline-flex; align-items: center; gap: 5px; }
+            .rating-count { font-size: var(--text-xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+
             :host(.mode-compact) & {
                 padding-top: var(--space-2);
                 gap: var(--space-1);
             }
 
-            :host(.mode-compact) & app-rating-stars {
+            :host(.mode-compact) & .rating-wrap {
                 display: none;
             }
 
@@ -400,6 +408,12 @@ export class DishCardComponent {
         const createdAt = this.dish().createdAt;
         if (!createdAt) return false;
         return Date.now() - new Date(createdAt).getTime() < DishCardComponent.ONE_WEEK_MS;
+    });
+
+    /** Prefer the real review average; fall back to the seeded scalar when unrated. */
+    protected readonly displayRating = computed(() => {
+        const d = this.dish();
+        return d.ratingCount > 0 ? d.ratingAverage : d.rating;
     });
 
     protected readonly primaryImage = () => {

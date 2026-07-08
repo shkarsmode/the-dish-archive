@@ -99,6 +99,10 @@ export class DishDetailPage {
             && this.authService.canAdminFamily(currentDish.familyId);
     });
 
+    protected scrollToReviews(): void {
+        document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     protected async setVisibility(visibility: 'family' | 'public'): Promise<void> {
         const d = this.dish();
         if (!d || d.visibility === visibility) return;

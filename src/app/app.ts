@@ -7,13 +7,12 @@ import { CompareBarComponent } from './shared/components/compare-bar.component';
 import { HeaderComponent } from './shared/components/header.component';
 import { ToastContainerComponent } from './shared/components/toast-container.component';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog.component';
-import { PullToRefreshDirective } from './shared/directives/pull-to-refresh.directive';
 
-const CHROMELESS_PREFIXES = ['/login', '/access-pending', '/admin', '/family', '/recipes'];
+const CHROMELESS_PREFIXES = ['/login', '/access-pending', '/admin', '/family', '/recipes', '/insights', '/cook', '/whats-new'];
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, HeaderComponent, CompareBarComponent, ToastContainerComponent, ConfirmDialogComponent, PullToRefreshDirective],
+    imports: [RouterOutlet, HeaderComponent, CompareBarComponent, ToastContainerComponent, ConfirmDialogComponent],
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })

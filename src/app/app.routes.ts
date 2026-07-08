@@ -27,6 +27,21 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/changelog/changelog').then(m => m.ChangelogPage),
     },
     {
+        path: 'insights',
+        canActivate: [approvedUserGuard],
+        loadComponent: () => import('./pages/insights/insights').then(m => m.InsightsPage),
+    },
+    {
+        path: 'whats-new',
+        canActivate: [approvedUserGuard],
+        loadComponent: () => import('./pages/whats-new/whats-new').then(m => m.WhatsNewPage),
+    },
+    {
+        path: 'cook/:slug',
+        canActivate: [approvedUserGuard],
+        loadComponent: () => import('./pages/cook-mode/cook-mode').then(m => m.CookModePage),
+    },
+    {
         path: 'recipes/new',
         canActivate: [approvedUserGuard],
         canDeactivate: [unsavedChangesGuard],
