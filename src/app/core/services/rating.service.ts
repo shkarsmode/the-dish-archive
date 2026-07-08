@@ -68,6 +68,9 @@ export class RatingService {
             p_rating: rating,
             p_comment: comment && comment.trim() ? comment.trim() : null,
         });
+        // If the user has since navigated to another dish, don't reload/apply for
+        // this one — that would move the shared state back to the old dish.
+        if (this.loadedDishId() !== dishId) return result;
         await this.load(dishId);
         // Keep the denormalized aggregate on the dish cache fresh so cards/hero
         // update immediately (the RPC updates it server-side, but we don't refetch).

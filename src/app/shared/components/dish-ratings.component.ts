@@ -93,7 +93,7 @@ import { RatingStarsComponent } from './rating-stars.component';
                         </li>
                     }
                 </ul>
-            } @else if (!canRate() && comments().length === 0) {
+            } @else if (!canRate() && count() === 0) {
                 <p class="no-reviews">Ще немає відгуків.</p>
             }
         </section>

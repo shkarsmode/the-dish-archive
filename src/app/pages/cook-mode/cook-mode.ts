@@ -136,6 +136,9 @@ export class CookModePage implements OnInit, OnDestroy {
 
     protected readonly currentStep = computed(() => this.steps()[this.stepIndex()]);
     protected readonly isLastStep = computed(() => this.stepIndex() >= this.steps().length - 1);
+    /** Current step's duration in minutes — a primitive, so a background reload()
+     *  that rebuilds equal step objects doesn't retrigger the timer reset effect. */
+    private readonly currentDurationMin = computed(() => this.currentStep()?.duration ?? 0);
 
     // ── Timer ──
     protected readonly timerTotal = signal(0);   // seconds for current step
@@ -146,6 +149,7 @@ export class CookModePage implements OnInit, OnDestroy {
     );
     private intervalId: ReturnType<typeof setInterval> | null = null;
     private wakeLock: any = null;
+    private destroyed = false;
 
     protected readonly confetti = Array.from({ length: 14 }, (_, i) => ({
         x: (i * 37) % 100,
@@ -164,18 +168,19 @@ export class CookModePage implements OnInit, OnDestroy {
                 this.finished.set(false);
             }
         });
-        // Reset the timer whenever the active step changes.
+        // Reset the timer whenever the active step changes — keyed on stepIndex +
+        // the duration value (primitives), not the step object reference.
         effect(() => {
-            const step = this.currentStep();
+            this.stepIndex();
+            const seconds = this.currentDurationMin() * 60;
             this.stopTimer();
-            const seconds = (step?.duration ?? 0) * 60;
             this.timerTotal.set(seconds);
             this.timerSeconds.set(seconds);
         });
     }
 
     ngOnInit(): void { void this.requestWakeLock(); }
-    ngOnDestroy(): void { this.stopTimer(); this.releaseWakeLock(); }
+    ngOnDestroy(): void { this.destroyed = true; this.stopTimer(); this.releaseWakeLock(); }
 
     // ── Navigation ──
     protected next(): void {
@@ -253,7 +258,9 @@ export class CookModePage implements OnInit, OnDestroy {
     private async requestWakeLock(): Promise<void> {
         try {
             if ('wakeLock' in navigator) {
-                this.wakeLock = await (navigator as any).wakeLock.request('screen');
+                const sentinel = await (navigator as any).wakeLock.request('screen');
+                if (this.destroyed) { sentinel?.release?.(); return; }
+                this.wakeLock = sentinel;
                 this.wakeLock?.addEventListener?.('release', () => { this.wakeLock = null; });
             }
         } catch { /* unsupported or denied */ }
