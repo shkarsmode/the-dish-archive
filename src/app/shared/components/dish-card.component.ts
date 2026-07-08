@@ -426,20 +426,13 @@ export class DishCardComponent {
         return CATEGORY_LABELS[category] ?? category;
     }
 
-    private runWithViewTransition(navigate: () => Promise<boolean> | void): void {
-        const documentAny = document as unknown as { startViewTransition?: (cb: () => Promise<unknown> | void) => void };
-
-        if (typeof documentAny.startViewTransition !== 'function') {
-            void navigate();
-            return;
-        }
-
-        documentAny.startViewTransition(() => navigate());
-    }
-
     protected openDish(): void {
+        // Navigate directly. The router's withViewTransitions() already animates
+        // the transition — wrapping it in a second manual startViewTransition here
+        // raced two overlapping transitions and could leave a stuck overlay that
+        // swallowed subsequent taps (especially on mobile), so the dish never opened.
         this.scrollRestorationService.saveDishSlug(this.dish().slug);
-        this.runWithViewTransition(() => this.router.navigate(['/dish', this.dish().slug]));
+        void this.router.navigate(['/dish', this.dish().slug]);
     }
 
     protected toggleCompare(event: Event): void {
