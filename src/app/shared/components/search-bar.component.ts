@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { DishService } from '../../core/services/dish.service';
 
 @Component({
@@ -98,10 +98,14 @@ import { DishService } from '../../core/services/dish.service';
         }
     `,
 })
-export class SearchBarComponent {
+export class SearchBarComponent implements OnDestroy {
     protected readonly dishService = inject(DishService);
     protected readonly isFocused = signal(false);
     private debounceId: ReturnType<typeof setTimeout> | null = null;
+
+    ngOnDestroy(): void {
+        if (this.debounceId) clearTimeout(this.debounceId);
+    }
 
     protected onInput(event: Event): void {
         const value = (event.target as HTMLInputElement).value;

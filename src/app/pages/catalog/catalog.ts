@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDestroy, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, effect, ElementRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -73,34 +73,41 @@ export class CatalogPage implements OnDestroy {
             }
         });
 
-        // Scroll restoration: scroll to & focus the card the user came from
+        // Scroll restoration: keep the grid hidden until we've scrolled to the card
+        // the user came from, then reveal it already-positioned — no flash-to-top.
         afterNextRender(() => {
             const slug = this.scrollRestoration.consume();
             if (!slug) {
+                this.restoring.set(false);
                 this.scrollRestoration.doneRestoring();
                 return;
             }
 
-            // Wait for cards to render, then scroll & focus
+            const reveal = () => {
+                this.restoring.set(false);
+                this.scrollRestoration.doneRestoring();
+            };
+
             const tryScroll = (attempts = 0) => {
                 const card = document.querySelector<HTMLElement>(`app-dish-card[data-slug="${slug}"]`);
                 if (card) {
-                    // Small delay to let Angular's scroll restoration settle
-                    setTimeout(() => {
-                        card.scrollIntoView({ block: 'center', behavior: 'instant' });
-                        const focusable = card.querySelector<HTMLElement>('.dish-card') ?? card;
-                        focusable.focus({ preventScroll: true });
-                        this.scrollRestoration.doneRestoring();
-                    }, 50);
+                    // Scroll synchronously while the grid is still hidden, then reveal
+                    // on the next frame so the browser paints the correct position first.
+                    card.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    (card.querySelector<HTMLElement>('.dish-card') ?? card).focus({ preventScroll: true });
+                    requestAnimationFrame(reveal);
                 } else if (attempts < 20) {
                     requestAnimationFrame(() => tryScroll(attempts + 1));
                 } else {
-                    this.scrollRestoration.doneRestoring();
+                    reveal();
                 }
             };
             tryScroll();
         });
     }
+
+    /** Hold the grid hidden during back-navigation scroll restore (avoids a top→card flash). */
+    protected readonly restoring = signal(this.scrollRestoration.isRestoring);
 
     ngOnDestroy(): void {
         this.observer?.disconnect();
