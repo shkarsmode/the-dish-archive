@@ -1,0 +1,17 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": null,
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist/the-dish-archive/browser",
+    "functions": {
+        "api/render.js": {
+            "includeFiles": "dist/the-dish-archive/browser/index.html"
+        }
+    },
+    "rewrites": [
+        { "source": "/dish/:slug", "destination": "/api/render?slug=:slug" },
+        { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+        { "source": "/robots.txt", "destination": "/api/robots" },
+        { "source": "/((?!api/).*)", "destination": "/index.html" }
+    ]
+}
