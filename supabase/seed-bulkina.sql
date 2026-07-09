@@ -5,6 +5,7 @@ values ('bulkina-family', 'Булкіна Family',
 on conflict (slug) do nothing;
 
 insert into public.dishes (id, family_id, title, slug, description, rating, price_amount, price_currency, prep_time, cook_time, total_time, calories, servings, difficulty, tags, categories, taste_sweet, taste_salty, taste_sour, taste_bitter, taste_spicy, taste_umami, notes, source_url, visibility, status, created_at, updated_at) values
+('dish-034', (select id from public.families where slug='bulkina-family'), 'Трикутнички', 'trykutnychky', 'Хрусткі трикутнички з тонкого лаваша з начинкою зі смаженого рибного філе, тертого сиру та соусу тартар, обсмажені в яйці до золотистої скоринки. Швидка та ситна закуска або гаряче.', 5, 220, 'UAH', 15, 20, 35, 440, 6, 'easy', ARRAY['лаваш','риба','рибне філе','сир','тартар','смажене','закуска','трикутнички']::text[], ARRAY['snack','quick','everyday']::text[], 0, 3, 2, 0, 0, 4, 'Орієнтовне КБЖВ на 1 трикутник (~130 г): ~440 ккал, білки ~22 г, жири ~28 г, вуглеводи ~25 г. На 100 г — приблизно 340 ккал, білки ~17 г, жири ~21 г, вуглеводи ~19 г. Значення приблизні та залежать від виду риби, кількості сиру й тартару. Сир і тартар додавайте на око — стільки, щоб начинка вийшла соковитою, а не сухою.', '', 'family', 'published', '2026-07-09T12:00:00.000Z', '2026-07-09T12:00:00.000Z'),
 ('dish-033', (select id from public.families where slug='bulkina-family'), 'ПП курячі оладки / котлети на сковороді', 'pp-kuriachi-oladky-kotlety-na-skovorodi', 'Соковиті білкові курячі оладки з філе, яєць, сиру, йогурту або сметани та мінімальної кількості вівсянки. Щось між сирними курячими драниками, рубленими котлетами і легкою KFC-style стравою без великої кількості олії.', 5, 300, 'UAH', 15, 18, 35, 390, 4, 'easy', ARRAY['пп','курка','куряче філе','білкове','на сковороді','котлети','оладки','healthy']::text[], ARRAY['lunch','dinner','healthy','everyday']::text[], 0, 3, 0, 0, 1, 4, 'Орієнтовне КБЖВ всього рецепта: білки ~155–170 г, жири ~45–55 г, вуглеводи ~15–25 г, калорії ~1400–1700 ккал. На 4 порції виходить приблизно 350–425 ккал на порцію. Якщо маса занадто рідка — додайте ще 1 ложку вівсянки. Якщо занадто щільна — додайте ще 1 ложку йогурту або сметани.', '', 'family', 'published', '2026-05-22T08:03:40.924Z', '2026-05-22T08:03:40.924Z'),
 ('dish-032', (select id from public.families where slug='bulkina-family'), 'Курка в кисло-солодкому соусі', 'kurka-kyslo-solodkyi-sous', 'Швидка і соковита курка в кисло-солодкому соусі — чудовий вибір для обіду, перекусу або вечері. Подавайте з рисом або як самостійну страву.', 5, 220, 'UAH', 10, 10, 20, 720, 2, 'easy', ARRAY['курка','кисло-солодке','швидко','марафон']::text[], ARRAY['dinner','lunch','snack']::text[], 3, 3, 2, 0, 1, 4, 'Вага порції ≈ 550 г. Для подачі — зелена цибуля і кунжут. Ідеально для марафону схуднення при контрольованих порціях.', 'https://www.instagram.com/reels/DT0vSfwjDEc/', 'family', 'published', '2026-02-28T11:40:00.000Z', '2026-02-28T11:40:00.000Z'),
 ('dish-031', (select id from public.families where slug='bulkina-family'), 'Шоколадний Брауні 🍫', 'shokoladnyi-brauni', 'Щільний шоколадний брауні з вологою серединкою — ідеальний десерт для поділу або з шаріком ванільного морозива.', 5, 0, 'UAH', 15, 25, 40, 420, 9, 'easy', ARRAY['брауні','шоколад','десерт','випічка']::text[], ARRAY['dessert','baking']::text[], 5, 0, 0, 2, 0, 0, 'Не пересушуйте — середина повинна лишатися трохи вологою. Охолоджуйте повністю перед нарізанням.', 'https://www.instagram.com/reels/DT7r6aiDBei/', 'family', 'published', '2026-02-28T11:20:00.000Z', '2026-02-28T11:20:00.000Z'),
@@ -41,6 +42,7 @@ insert into public.dishes (id, family_id, title, slug, description, rating, pric
 on conflict (id) do nothing;
 
 insert into public.dish_images (dish_id, url, alt, is_primary, sort_order) values
+('dish-034', '/images/trykutnychky.jpg', 'Трикутнички з лаваша з рибною начинкою, обсмажені до золотистої скоринки', true, 0),
 ('dish-033', 'https://res.cloudinary.com/dwlt7yjwg/image/upload/v1779437197/dish-archive/yidb5zxe8axollfqamxr.jpg', 'ПП курячі оладки / тісто', false, 0),
 ('dish-033', 'https://res.cloudinary.com/dwlt7yjwg/image/upload/v1779437194/dish-archive/jbaauzncqw80thylql37.jpg', 'ПП курячі оладки / котлети на сковороді', true, 1),
 ('dish-032', 'https://res.cloudinary.com/dwlt7yjwg/image/upload/v1772277945/dish-archive/gczrqljevv7gsq4hkt6t.jpg', 'Курка в кисло-солодкому соусі', true, 0),
@@ -80,6 +82,13 @@ insert into public.dish_images (dish_id, url, alt, is_primary, sort_order) value
 ('dish-001', 'https://res.cloudinary.com/dwlt7yjwg/image/upload/v1772277064/dish-archive/vf6uk3eim795shyxrfqz.jpg', 'Ліниві хачапурі', true, 0);
 
 insert into public.ingredients (dish_id, name, amount, unit, optional, sort_order) values
+('dish-034', 'Рибне філе', '2', 'шт', false, 0),
+('dish-034', 'Сир твердий', '150', 'г', false, 1),
+('dish-034', 'Соус тартар', '3-4', 'ст.л.', false, 2),
+('dish-034', 'Тонкий лаваш', '2', 'шт', false, 3),
+('dish-034', 'Яйця', '2', 'шт', false, 4),
+('dish-034', 'Олія для смаження', 'трохи', '', false, 5),
+('dish-034', 'Сіль, перець', 'за смаком', '', true, 6),
 ('dish-033', 'Куряче філе', '650', 'г', false, 0),
 ('dish-033', 'Яйця', '3', 'шт', false, 1),
 ('dish-033', 'Сир твердий або напівтвердий', '100', 'г', false, 2),
@@ -360,6 +369,10 @@ insert into public.ingredients (dish_id, name, amount, unit, optional, sort_orde
 ('dish-001', 'Вершкове масло', '30', 'г', false, 7);
 
 insert into public.cooking_steps (dish_id, step_order, description, duration, image_url) values
+('dish-034', 1, 'Обсмажити два рибних філе на сковороді з невеликою кількістю олії до готовності. Трохи остудити та розібрати виделкою на невеликі шматочки.', 10, null),
+('dish-034', 2, 'Сир натерти на тертці. Змішати обсмажене філе з тертим сиром і соусом тартар. Сир і тартар додавайте на око, залежно від кількості риби — так, щоб начинка вийшла соковитою, а не сухою.', 5, null),
+('dish-034', 3, 'Лаваш нарізати трикутниками або смужками. На кожен шматок викласти начинку та завернути з одного боку на інший, формуючи трикутник.', 10, null),
+('dish-034', 4, 'Яйця (білок і жовток) злегка збити. Обмакнути кожен трикутник у яйце й обсмажити на розігрітій сковороді з олією до золотистої скоринки з обох боків.', 10, null),
 ('dish-033', 1, 'Куряче філе дуже дрібно нарубати ножем або коротко перебити блендером, щоб залишилась приємна текстура, а не повністю гладкий фарш.', 7, null),
 ('dish-033', 2, 'Цибулю дуже дрібно нарізати, часник подрібнити або пропустити через прес. Сир натерти.', 4, null),
 ('dish-033', 3, 'У великій мисці змішати філе, яйця, сир, йогурт або сметану, вівсянку, цибулю, часник, сіль, перець, паприку та італійські трави.', 3, null),
