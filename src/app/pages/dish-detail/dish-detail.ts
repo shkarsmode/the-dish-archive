@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -21,6 +21,7 @@ import { UploadService } from '../../core/services/upload.service';
 import { ChecklistService } from '../../core/services/checklist.service';
 import { DishService } from '../../core/services/dish.service';
 import { PaletteService } from '../../core/services/palette.service';
+import { SeoService } from '../../core/services/seo.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FavoritesButtonComponent } from '../../shared/components/favorites-button.component';
 import { ImageEditorComponent, ImageEditorResult } from '../../shared/components/image-editor.component';
@@ -45,6 +46,7 @@ export class DishDetailPage {
     private readonly router = inject(Router);
     protected readonly checklistService = inject(ChecklistService);
     private readonly paletteService = inject(PaletteService);
+    private readonly seo = inject(SeoService);
     private readonly toastService = inject(ToastService);
     private readonly el = inject(ElementRef<HTMLElement>);
     protected readonly authService = inject(AuthService);
@@ -145,7 +147,20 @@ export class DishDetailPage {
     private touchStartX = 0;
     private lastDishId: string | null = null;
 
+    private readonly destroyRef = inject(DestroyRef);
+
     constructor() {
+        // Keep the document's title + social/SEO metadata in sync with the open
+        // recipe (mirrors the server-rendered tags from api/render.js), and
+        // restore the site defaults when navigating away.
+        effect(() => {
+            const currentDish = this.dish();
+            if (currentDish) {
+                this.seo.setRecipe(currentDish);
+            }
+        });
+        this.destroyRef.onDestroy(() => this.seo.setDefault());
+
         effect(() => {
             const currentDish = this.dish();
 
