@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { approvedUserGuard, authGuard, familyAdminGuard, superAdminGuard, unsavedChangesGuard } from './core/guards/auth.guards';
+import { approvedUserGuard, authGuard, familyAdminGuard, publicDishGuard, superAdminGuard, unsavedChangesGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
     {
@@ -18,7 +18,7 @@ export const routes: Routes = [
     },
     {
         path: 'dish/:slug',
-        canActivate: [approvedUserGuard],
+        canActivate: [publicDishGuard],
         loadComponent: () => import('./pages/dish-detail/dish-detail').then(m => m.DishDetailPage),
     },
     {

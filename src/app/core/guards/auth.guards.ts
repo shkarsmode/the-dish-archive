@@ -18,6 +18,18 @@ export const authGuard: CanActivateFn = async () => {
     return auth.isAuthenticated() ? true : router.parseUrl('/login');
 };
 
+/**
+ * Recipe pages are shareable, so anyone may open one: RLS still limits an
+ * unauthenticated/pending visitor to published + public recipes (a private one
+ * simply renders as "not found"). We only wait for the session to resolve so the
+ * dish cache is populated before the page decides what to show.
+ */
+export const publicDishGuard: CanActivateFn = async () => {
+    const auth = inject(AuthService);
+    await auth.whenReady();
+    return true;
+};
+
 /** Requires the user to be approved in a family (or super admin). */
 export const approvedUserGuard: CanActivateFn = async () => {
     const auth = inject(AuthService);
