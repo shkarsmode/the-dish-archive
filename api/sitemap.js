@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
             { loc: `${siteUrl}/`, lastmod: null, priority: '1.0' },
             ...dishes.map((dish) => ({
                 loc: `${siteUrl}/dish/${dish.slug}`,
-                lastmod: dish.updated_at ? new Date(dish.updated_at).toISOString() : null,
+                lastmod: dish.updatedAt ? new Date(dish.updatedAt).toISOString() : null,
                 priority: '0.8',
             })),
         ];

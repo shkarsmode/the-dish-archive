@@ -3,7 +3,7 @@
 // The app itself is a client-rendered Angular SPA. Preview bots (Telegram,
 // Facebook, Messenger, Twitter/X, WhatsApp) and — reliably — search crawlers
 // do NOT run JS, so they'd otherwise see an empty shell. These helpers fetch a
-// recipe from Supabase server-side (anon key, so RLS only ever exposes
+// recipe from our NestJS backend's public endpoints (which only ever expose
 // published + public recipes) and inject real <head> meta + schema.org JSON-LD
 // (and a crawlable body) into the built index.html before it reaches the bot.
 //
@@ -15,27 +15,13 @@
 const fs = require('fs');
 const path = require('path');
 
-// ── Config (public values; the anon key is already shipped in the client
-// bundle, so this is not a secret). Overridable via Vercel env vars. ──────────
-const SUPABASE_URL =
-    process.env.SUPABASE_URL || 'https://nhlowpkthulxxkmxuomh.supabase.co';
-const SUPABASE_ANON_KEY =
-    process.env.SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5obG93cGt0aHVseHhrbXh1b21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjA3ODQsImV4cCI6MjA5ODk5Njc4NH0.ALXhA-OgAjC3KpdgKBMeJVVCtYYKNzk1E-94x7Ur7J4';
+// ── Config. The backend's public SEO endpoints only ever return published +
+// public recipes. Overridable via the API_URL env var (include the /api prefix).
+const API_URL = (process.env.API_URL || 'https://the-dish-archive-back.vercel.app/api').replace(/\/$/, '');
 
 const SITE_NAME = 'The Dish Archive';
 const DEFAULT_TITLE = 'The Dish Archive — Колекція рецептів';
 const DEFAULT_DESCRIPTION = 'Колекція улюблених рецептів та страв, зібрана з турботою.';
-
-// Only these columns/relations are needed to build meta + JSON-LD. RLS on the
-// anon role guarantees a row comes back only when it is published + public.
-const DISH_SELECT =
-    'id,title,slug,description,calories,servings,total_time,prep_time,cook_time,' +
-    'rating,rating_average,rating_count,tags,categories,created_at,updated_at,' +
-    'dish_images(url,alt,is_primary,sort_order),' +
-    'ingredients(name,amount,unit,optional,sort_order),' +
-    'cooking_steps(step_order,description,duration),' +
-    'families(name,slug)';
 
 // ── Small utilities ──────────────────────────────────────────────────────────
 
@@ -97,56 +83,39 @@ function getBaseHtml() {
     return baseHtmlCache;
 }
 
-// ── Supabase (PostgREST) reads via the anon role ─────────────────────────────
+// ── Backend public reads (published + public recipes only) ───────────────────
 
-async function supabaseGet(pathAndQuery) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathAndQuery}`, {
-        headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            Accept: 'application/json',
-        },
-    });
-    if (!res.ok) throw new Error(`Supabase ${res.status}`);
+async function apiGet(pathAndQuery) {
+    const res = await fetch(`${API_URL}${pathAndQuery}`, { headers: { Accept: 'application/json' } });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`API ${res.status}`);
     return res.json();
 }
 
-/** Fetches a single published + public dish by slug (or null). */
+/** Fetches a single published + public dish by slug (camelCase Dish, or null). */
 async function fetchDishBySlug(slug) {
-    const query =
-        `dishes?slug=eq.${encodeURIComponent(slug)}` +
-        `&status=eq.published&visibility=eq.public` +
-        `&select=${DISH_SELECT}&limit=1`;
-    const rows = await supabaseGet(query);
-    return Array.isArray(rows) && rows[0] ? rows[0] : null;
+    return apiGet(`/public/dishes/${encodeURIComponent(slug)}`);
 }
 
-/** Fetches all published + public dishes (slug + updated_at) for the sitemap. */
+/** Fetches all published + public dishes ([{ slug, updatedAt }]) for the sitemap. */
 async function fetchPublicDishes() {
-    const query =
-        'dishes?status=eq.published&visibility=eq.public' +
-        '&select=slug,updated_at&order=updated_at.desc';
-    const rows = await supabaseGet(query);
+    const rows = await apiGet('/public/dishes');
     return Array.isArray(rows) ? rows : [];
 }
 
-// ── Row → view-model helpers ─────────────────────────────────────────────────
+// ── View-model helpers (the API returns the camelCase Dish shape, already sorted) ──
 
 function sortedImages(dish) {
-    return (dish.dish_images || [])
-        .slice()
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    return dish.images || [];
 }
 
 function primaryImage(dish) {
     const images = sortedImages(dish);
-    return images.find((img) => img.is_primary) || images[0] || null;
+    return images.find((img) => img.isPrimary) || images[0] || null;
 }
 
 function ingredientLines(dish) {
     return (dish.ingredients || [])
-        .slice()
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
         .map((ing) => {
             const qty = [ing.amount, ing.unit].map((x) => (x || '').trim()).filter(Boolean).join(' ');
             return qty ? `${ing.name} — ${qty}` : ing.name;
@@ -155,9 +124,7 @@ function ingredientLines(dish) {
 }
 
 function stepTexts(dish) {
-    return (dish.cooking_steps || [])
-        .slice()
-        .sort((a, b) => (a.step_order || 0) - (b.step_order || 0))
+    return (dish.steps || [])
         .map((step) => (step.description || '').trim())
         .filter(Boolean);
 }
@@ -175,10 +142,10 @@ function recipeJsonLd(dish, canonical, imageAbs, allImagesAbs) {
         mainEntityOfPage: canonical,
         author: {
             '@type': 'Organization',
-            name: (dish.families && dish.families.name) || SITE_NAME,
+            name: dish.familyName || SITE_NAME,
         },
-        datePublished: dish.created_at || undefined,
-        dateModified: dish.updated_at || undefined,
+        datePublished: dish.createdAt || undefined,
+        dateModified: dish.updatedAt || undefined,
         keywords: (dish.tags || []).join(', ') || undefined,
         recipeCategory: (dish.categories || []).join(', ') || undefined,
         recipeYield: dish.servings ? String(dish.servings) : undefined,
@@ -187,17 +154,18 @@ function recipeJsonLd(dish, canonical, imageAbs, allImagesAbs) {
         inLanguage: 'uk',
     };
 
-    if (dish.total_time) data.totalTime = `PT${dish.total_time}M`;
-    if (dish.prep_time) data.prepTime = `PT${dish.prep_time}M`;
-    if (dish.cook_time) data.cookTime = `PT${dish.cook_time}M`;
+    const time = dish.cookingTime || {};
+    if (time.total) data.totalTime = `PT${time.total}M`;
+    if (time.preparation) data.prepTime = `PT${time.preparation}M`;
+    if (time.cooking) data.cookTime = `PT${time.cooking}M`;
     if (dish.calories) {
         data.nutrition = { '@type': 'NutritionInformation', calories: `${dish.calories} kcal` };
     }
-    if (dish.rating_count > 0) {
+    if (dish.ratingCount > 0) {
         data.aggregateRating = {
             '@type': 'AggregateRating',
-            ratingValue: Number(dish.rating_average).toFixed(1),
-            ratingCount: dish.rating_count,
+            ratingValue: Number(dish.ratingAverage).toFixed(1),
+            ratingCount: dish.ratingCount,
         };
     }
 
