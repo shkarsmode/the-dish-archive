@@ -31,7 +31,7 @@ export class ChangelogService {
         this.isLoading.set(true);
         this.loadError.set(null);
 
-        const url = `${environment.legacyApiUrl}/api/changelog`;
+        const url = `${environment.apiUrl}/changelog`;
 
         this.http.get<ChangelogGroup[]>(url).subscribe({
             next: (data) => {

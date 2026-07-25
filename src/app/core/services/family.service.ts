@@ -1,13 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { Family } from '../models/family.model';
-import { mapFamily } from './supabase-mappers';
 
 /** Loads the families the current user can see (RLS-scoped) for switcher + editor. */
 @Injectable({ providedIn: 'root' })
 export class FamilyService {
-    private readonly supabase = inject(SupabaseService);
+    private readonly api = inject(ApiService);
     private readonly auth = inject(AuthService);
 
     private readonly familiesSignal = signal<Family[]>([]);
@@ -23,12 +22,8 @@ export class FamilyService {
     }
 
     async load(): Promise<void> {
-        const { data } = await this.supabase.client
-            .from('families')
-            .select('*')
-            .eq('status', 'active')
-            .order('name', { ascending: true });
-        this.familiesSignal.set((data ?? []).map(mapFamily));
+        const data = await this.api.get<Family[]>('/families?status=active');
+        this.familiesSignal.set(data ?? []);
     }
 
     async updateFamily(id: string, patch: {
@@ -39,14 +34,7 @@ export class FamilyService {
         avatarImageUrl?: string | null;
         isPublicVisible?: boolean;
     }) {
-        const row: Record<string, any> = {};
-        if (patch.name !== undefined) row['name'] = patch.name;
-        if (patch.description !== undefined) row['description'] = patch.description;
-        if (patch.themeColor !== undefined) row['theme_color'] = patch.themeColor;
-        if (patch.coverImageUrl !== undefined) row['cover_image_url'] = patch.coverImageUrl;
-        if (patch.avatarImageUrl !== undefined) row['avatar_image_url'] = patch.avatarImageUrl;
-        if (patch.isPublicVisible !== undefined) row['is_public_visible'] = patch.isPublicVisible;
-        const result = await this.supabase.client.from('families').update(row).eq('id', id);
+        const result = await this.api.call(() => this.api.patch<Family>('/families/' + id, patch));
         await this.load();
         return result;
     }

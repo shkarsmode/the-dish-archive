@@ -7,14 +7,13 @@ import {
     SortOption,
     TasteProfile,
 } from '../models/dish.model';
-import { SupabaseService } from './supabase.service';
+import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { FavoritesService } from './favorites.service';
-import { DISH_SELECT, dishScalarsToRow, mapDish } from './supabase-mappers';
 
 @Injectable({ providedIn: 'root' })
 export class DishService {
-    private readonly supabase = inject(SupabaseService);
+    private readonly api = inject(ApiService);
     private readonly authService = inject(AuthService);
     private readonly favoritesService = inject(FavoritesService);
 
@@ -179,7 +178,7 @@ export class DishService {
 
     constructor() {
         // Load (and reload) dishes whenever the auth session resolves or changes,
-        // so RLS returns the right set for the current user.
+        // so the backend returns the right set for the current user.
         effect(() => {
             if (!this.authService.isReady()) {
                 return;
@@ -192,27 +191,19 @@ export class DishService {
     async reload(): Promise<void> {
         this.isLoading.set(true);
         this.loadError.set(null);
-        const { data, error } = await this.supabase.client
-            .from('dishes')
-            .select(DISH_SELECT)
-            .order('created_at', { ascending: false });
-        if (error) {
-            console.error('Failed to load dishes from Supabase:', error);
+        try {
+            const dishes = await this.api.get<Dish[]>('/dishes');
+            this.allDishesSignal.set(dishes ?? []);
+        } catch (error) {
+            console.error('Failed to load dishes from API:', error);
             this.loadError.set('Не вдалося завантажити дані');
+        } finally {
             this.isLoading.set(false);
-            return;
         }
-        this.allDishesSignal.set((data ?? []).map(mapDish));
-        this.isLoading.set(false);
     }
 
     private async fetchDishById(id: string): Promise<Dish | null> {
-        const { data } = await this.supabase.client
-            .from('dishes')
-            .select(DISH_SELECT)
-            .eq('id', id)
-            .maybeSingle();
-        return data ? mapDish(data) : null;
+        return this.api.get<Dish>('/dishes/' + id);
     }
 
     getDishBySlug(slug: string) {
@@ -257,114 +248,38 @@ export class DishService {
         };
     }
 
-    private async replaceChildren(dishId: string, dish: Partial<Dish>): Promise<void> {
-        const client = this.supabase.client;
-        if (dish.images !== undefined) {
-            await client.from('dish_images').delete().eq('dish_id', dishId);
-            if (dish.images.length) {
-                await client.from('dish_images').insert(
-                    dish.images.map((image, index) => ({
-                        dish_id: dishId,
-                        url: image.url,
-                        alt: image.alt,
-                        is_primary: image.isPrimary,
-                        sort_order: index,
-                    }))
-                );
-            }
-        }
-        if (dish.ingredients !== undefined) {
-            await client.from('ingredients').delete().eq('dish_id', dishId);
-            if (dish.ingredients.length) {
-                await client.from('ingredients').insert(
-                    dish.ingredients.map((ingredient, index) => ({
-                        dish_id: dishId,
-                        name: ingredient.name,
-                        amount: ingredient.amount,
-                        unit: ingredient.unit,
-                        optional: ingredient.optional,
-                        sort_order: index,
-                    }))
-                );
-            }
-        }
-        if (dish.steps !== undefined) {
-            await client.from('cooking_steps').delete().eq('dish_id', dishId);
-            if (dish.steps.length) {
-                await client.from('cooking_steps').insert(
-                    dish.steps.map((step, index) => ({
-                        dish_id: dishId,
-                        step_order: step.order ?? index + 1,
-                        description: step.description,
-                        duration: step.duration ?? null,
-                        image_url: step.imageUrl ?? null,
-                    }))
-                );
-            }
-        }
-    }
-
     async updateDish(id: string, updates: Partial<Dish>): Promise<Dish> {
-        const row = dishScalarsToRow(updates);
-        if (Object.keys(row).length > 0) {
-            const { error } = await this.supabase.client.from('dishes').update(row).eq('id', id);
-            if (error) throw error;
-        }
-        await this.replaceChildren(id, updates);
-        const dish = await this.fetchDishById(id);
-        if (dish) {
-            this.allDishesSignal.update(dishes => dishes.map(d => (d.id === id ? dish : d)));
-        }
-        return dish as Dish;
+        const dish = await this.api.patch<Dish>('/dishes/' + id, updates);
+        this.allDishesSignal.update(dishes => dishes.map(d => (d.id === id ? dish : d)));
+        return dish;
     }
 
     async createDish(dish: Partial<Dish>): Promise<Dish> {
-        const row = {
-            ...dishScalarsToRow(dish),
-            family_id: dish.familyId,
-            created_by_user_id: this.authService.user()?.id ?? null,
-            ...(dish.id ? { id: dish.id } : {}),
-        };
-        const { data, error } = await this.supabase.client
-            .from('dishes')
-            .insert(row)
-            .select('id')
-            .single();
-        if (error) throw error;
-        const newId = data.id as string;
-        await this.replaceChildren(newId, dish);
-        const created = await this.fetchDishById(newId);
-        if (created) {
-            this.allDishesSignal.update(dishes => [...dishes, created]);
-        }
-        return created as Dish;
+        const created = await this.api.post<Dish>('/dishes', dish);
+        this.allDishesSignal.update(dishes => [...dishes, created]);
+        return created;
     }
 
     async deleteDish(id: string): Promise<void> {
-        // RLS filters out rows the user may not delete WITHOUT raising an error,
-        // so a denied delete returns error:null and count:0. Treat 0 rows as a failure.
-        const { error, count } = await this.supabase.client
-            .from('dishes')
-            .delete({ count: 'exact' })
-            .eq('id', id);
-        if (error) throw error;
-        if (!count) throw new Error('Недостатньо прав для видалення цього рецепта');
+        try {
+            await this.api.delete('/dishes/' + id);
+        } catch (e: unknown) {
+            const err = e as { error?: { message?: string }; message?: string };
+            throw new Error(
+                err?.error?.message || err?.message || 'Недостатньо прав для видалення цього рецепта'
+            );
+        }
         this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
     }
 
     /**
      * Publish every recipe the current user may edit (super admin: all) publicly.
-     * Returns the number of dishes updated. RLS scopes which rows are affected.
+     * Returns the number of dishes updated. The backend scopes which rows are affected.
      */
     async makeAllPublic(): Promise<number> {
-        const { data, error } = await this.supabase.client
-            .from('dishes')
-            .update({ visibility: 'public', status: 'published' })
-            .not('id', 'is', null)
-            .select('id');
-        if (error) throw error;
+        const { count } = await this.api.post<{ count: number }>('/dishes/make-all-public');
         await this.reload();
-        return data?.length ?? 0;
+        return count;
     }
 
     /** Optimistically adjust a dish's like counter (used by FavoritesService). */
@@ -381,4 +296,3 @@ export class DishService {
         );
     }
 }
-

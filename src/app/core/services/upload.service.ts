@@ -1,29 +1,20 @@
 import { Injectable, inject } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { ApiService } from './api.service';
 
-/** Uploads images to Supabase Storage and returns their public URLs. */
+/** Uploads images through the NestJS backend and returns their public URLs. */
 @Injectable({ providedIn: 'root' })
 export class UploadService {
-    private readonly supabase = inject(SupabaseService);
-    private readonly bucket = 'recipe-images';
+    private readonly api = inject(ApiService);
 
     async uploadImage(file: File | Blob): Promise<{ url: string }> {
-        const originalName = file instanceof File ? file.name : 'image.jpg';
-        const extension = (originalName.split('.').pop() || 'jpg').toLowerCase();
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
-
-        const { error } = await this.supabase.client.storage
-            .from(this.bucket)
-            .upload(path, file, {
-                cacheControl: '3600',
-                upsert: false,
-                contentType: file instanceof File ? file.type || 'image/jpeg' : 'image/jpeg',
-            });
-        if (error) {
-            throw error;
+        const form = new FormData();
+        if (file instanceof File) {
+            form.append('file', file);
+        } else {
+            form.append('file', file, 'image.jpg');
         }
 
-        const { data } = this.supabase.client.storage.from(this.bucket).getPublicUrl(path);
-        return { url: data.publicUrl };
+        const response = await this.api.postForm<{ url: string }>('/uploads/recipe-images', form);
+        return { url: response.url };
     }
 }

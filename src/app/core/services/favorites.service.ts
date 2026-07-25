@@ -1,5 +1,5 @@
 import { computed, effect, inject, Injectable, Injector, signal } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { DishService } from './dish.service';
 
@@ -10,7 +10,7 @@ import { DishService } from './dish.service';
  */
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
-    private readonly supabase = inject(SupabaseService);
+    private readonly api = inject(ApiService);
     private readonly auth = inject(AuthService);
     private readonly injector = inject(Injector);
 
@@ -30,11 +30,8 @@ export class FavoritesService {
             this.favoriteIds.set(new Set());
             return;
         }
-        const { data } = await this.supabase.client
-            .from('dish_likes')
-            .select('dish_id')
-            .eq('user_id', userId);
-        this.favoriteIds.set(new Set((data ?? []).map((row: { dish_id: string }) => row.dish_id)));
+        const data = await this.api.get<string[]>('/me/likes');
+        this.favoriteIds.set(new Set(data ?? []));
     }
 
     isFavorite(dishId: string): boolean {
@@ -51,11 +48,13 @@ export class FavoritesService {
         // Lazy lookup avoids the FavoritesService <-> DishService construction cycle.
         this.injector.get(DishService).applyLikeDelta(dishId, wasLiked ? -1 : 1);
 
-        const query = wasLiked
-            ? this.supabase.client.from('dish_likes').delete().eq('dish_id', dishId).eq('user_id', userId)
-            : this.supabase.client.from('dish_likes').insert({ dish_id: dishId, user_id: userId });
-        const { error } = await query;
-        if (error) {
+        try {
+            if (wasLiked) {
+                await this.api.delete('/dishes/' + dishId + '/like');
+            } else {
+                await this.api.put('/dishes/' + dishId + '/like');
+            }
+        } catch {
             this.setLiked(dishId, wasLiked);
             this.injector.get(DishService).applyLikeDelta(dishId, wasLiked ? 1 : -1);
         }

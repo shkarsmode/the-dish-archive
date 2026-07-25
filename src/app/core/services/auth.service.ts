@@ -1,27 +1,41 @@
+import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Session, User } from '@supabase/supabase-js';
-import { SupabaseService } from './supabase.service';
-import { UserProfile } from '../models/user-profile.model';
+import { environment } from '../../../environments/environment';
 import { Family } from '../models/family.model';
 import { EDITOR_ROLES, FamilyMember, FamilyRole } from '../models/family-member.model';
-import { mapProfile, mapFamily, mapFamilyMember } from './supabase-mappers';
+import { UserProfile } from '../models/user-profile.model';
+import { ApiService } from './api.service';
+
+/** Minimal authenticated-user shape (replaces the Supabase `User`). */
+export interface AuthUser {
+    id: string;
+    email: string;
+}
 
 export interface MembershipWithFamily extends FamilyMember {
     family: Family | null;
 }
 
+interface SessionResponse {
+    user: AuthUser | null;
+    profile: UserProfile | null;
+    memberships: MembershipWithFamily[];
+}
+
 /**
- * Single source of truth for the authenticated user, their profile, family
- * memberships and derived permissions. Replaces the old nickname/password
- * AdminService with Supabase Google OAuth + role-aware state.
+ * Single source of truth for the authenticated user, profile, memberships and
+ * derived permissions — now backed by the NestJS API instead of Supabase.
+ * The public surface (signals + methods) is unchanged so guards/components and
+ * the rest of the app are untouched.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-    private readonly supabase = inject(SupabaseService);
+    private readonly api = inject(ApiService);
     private readonly router = inject(Router);
+    private readonly doc = inject(DOCUMENT);
 
-    private readonly userSignal = signal<User | null>(null);
+    private readonly userSignal = signal<AuthUser | null>(null);
     private readonly profileSignal = signal<UserProfile | null>(null);
     private readonly membershipsSignal = signal<MembershipWithFamily[]>([]);
     private readonly readySignal = signal<boolean>(false);
@@ -39,7 +53,7 @@ export class AuthService {
     readonly isAuthenticated = computed(() => this.userSignal() !== null);
     readonly isSuperAdmin = computed(() => this.profileSignal()?.globalRole === 'super_admin');
     readonly approvedMemberships = computed(() =>
-        this.membershipsSignal().filter(membership => membership.status === 'approved'),
+        this.membershipsSignal().filter((membership) => membership.status === 'approved'),
     );
     readonly isApproved = computed(() => this.isSuperAdmin() || this.approvedMemberships().length > 0);
     readonly displayName = computed(
@@ -47,62 +61,55 @@ export class AuthService {
     );
     readonly avatarUrl = computed(() => this.profileSignal()?.avatarUrl ?? null);
 
-    /** True when the user can create/edit recipes in at least one family. */
     readonly canEditAnything = computed(
-        () => this.isSuperAdmin() || this.approvedMemberships().some(m => EDITOR_ROLES.includes(m.role)),
+        () => this.isSuperAdmin() || this.approvedMemberships().some((m) => EDITOR_ROLES.includes(m.role)),
     );
 
-    /** Inline "edit mode" toggle (replaces the old global admin-mode boolean). */
     readonly editMode = this.editModeSignal.asReadonly();
 
     constructor() {
-        this.initialize();
+        void this.initialize();
     }
 
     private async initialize(): Promise<void> {
-        const { data } = await this.supabase.client.auth.getSession();
-        await this.applySession(data.session);
-        this.supabase.client.auth.onAuthStateChange((_event, session) => {
-            void this.applySession(session);
-        });
+        // The OAuth callback bounces back to the SPA with `#token=<jwt>` (Safari
+        // cross-site-cookie fallback). Capture + persist it, then strip the hash.
+        const hash = this.doc.location.hash || '';
+        const match = hash.match(/[#&]token=([^&]+)/);
+        if (match) {
+            this.api.setToken(decodeURIComponent(match[1]));
+            const url = this.doc.location.pathname + this.doc.location.search;
+            this.doc.defaultView?.history.replaceState(null, '', url);
+        }
+        await this.loadSession();
     }
 
-    private async applySession(session: Session | null): Promise<void> {
-        const user = session?.user ?? null;
-        this.userSignal.set(user);
-        if (user) {
-            await this.loadProfileAndMemberships(user.id);
-            void this.supabase.client.rpc('touch_last_login');
-        } else {
-            this.profileSignal.set(null);
-            this.membershipsSignal.set([]);
-            this.editModeSignal.set(false);
+    private async loadSession(): Promise<void> {
+        try {
+            const data = await this.api.get<SessionResponse>('/auth/session');
+            this.applySession(data);
+        } catch {
+            this.applySession({ user: null, profile: null, memberships: [] });
         }
         this.markReady();
     }
 
-    private async loadProfileAndMemberships(userId: string): Promise<void> {
-        const [profileResult, membershipResult] = await Promise.all([
-            this.supabase.client.from('profiles').select('*').eq('id', userId).maybeSingle(),
-            this.supabase.client
-                .from('family_members')
-                .select('*, families(*)')
-                .eq('user_id', userId),
-        ]);
-
-        this.profileSignal.set(profileResult.data ? mapProfile(profileResult.data) : null);
-        const memberships = (membershipResult.data ?? []).map((row: Record<string, any>) => ({
-            ...mapFamilyMember(row),
-            family: row['families'] ? mapFamily(row['families']) : null,
-        }));
-        this.membershipsSignal.set(memberships);
+    private applySession(data: SessionResponse): void {
+        this.userSignal.set(data.user ?? null);
+        this.profileSignal.set(data.profile ?? null);
+        this.membershipsSignal.set(data.memberships ?? []);
+        if (!data.user) {
+            this.editModeSignal.set(false);
+        } else {
+            void this.api.post('/auth/touch-last-login').catch(() => undefined);
+        }
     }
 
     private markReady(): void {
         this.readySignal.set(true);
         const resolvers = this.readyResolvers;
         this.readyResolvers = [];
-        resolvers.forEach(resolve => resolve());
+        resolvers.forEach((resolve) => resolve());
     }
 
     /** Resolves once the initial session has been restored (for route guards). */
@@ -110,29 +117,32 @@ export class AuthService {
         if (this.readySignal()) {
             return Promise.resolve();
         }
-        return new Promise<void>(resolve => this.readyResolvers.push(resolve));
+        return new Promise<void>((resolve) => this.readyResolvers.push(resolve));
     }
 
-    async signInWithGoogle(redirectPath = '/'): Promise<void> {
+    async signInWithGoogle(_redirectPath = '/'): Promise<void> {
+        // Full-page redirect into the backend OAuth flow; it returns to the SPA
+        // with the session token in the URL fragment (see initialize()).
         this.signingInSignal.set(true);
-        const { error } = await this.supabase.client.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: `${window.location.origin}${redirectPath}` },
-        });
-        if (error) {
-            this.signingInSignal.set(false);
-            throw error;
-        }
+        this.doc.location.href = `${environment.apiUrl.replace(/\/$/, '')}/auth/google`;
     }
 
     async signOut(): Promise<void> {
         this.editModeSignal.set(false);
-        await this.supabase.client.auth.signOut();
+        try {
+            await this.api.post('/auth/logout');
+        } catch {
+            /* ignore */
+        }
+        this.api.setToken(null);
+        this.userSignal.set(null);
+        this.profileSignal.set(null);
+        this.membershipsSignal.set([]);
         await this.router.navigate(['/login']);
     }
 
     toggleEditMode(): void {
-        this.editModeSignal.update(value => !value);
+        this.editModeSignal.update((value) => !value);
     }
 
     setEditMode(value: boolean): void {
@@ -140,23 +150,23 @@ export class AuthService {
     }
 
     async refresh(): Promise<void> {
-        const { data } = await this.supabase.client.auth.getSession();
-        await this.applySession(data.session);
+        await this.loadSession();
     }
 
     async requestAccess(familyId: string | null = null, role: FamilyRole = 'viewer') {
-        return this.supabase.client.rpc('request_access', {
-            p_family: familyId,
-            p_requested_role: role,
-        });
+        const result = await this.api.call(() =>
+            this.api.post('/access-requests', { familyId: familyId ?? undefined, role }),
+        );
+        await this.refresh();
+        return result;
     }
 
     familyRole(familyId: string): FamilyRole | null {
-        return this.approvedMemberships().find(membership => membership.familyId === familyId)?.role ?? null;
+        return this.approvedMemberships().find((membership) => membership.familyId === familyId)?.role ?? null;
     }
 
     familyBySlug(slug: string): Family | null {
-        return this.approvedMemberships().find(membership => membership.family?.slug === slug)?.family ?? null;
+        return this.approvedMemberships().find((membership) => membership.family?.slug === slug)?.family ?? null;
     }
 
     canEditFamily(familyId: string): boolean {
