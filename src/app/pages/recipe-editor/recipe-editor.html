@@ -17,6 +17,51 @@
     </header>
 
     <div class="editor-body">
+        <!-- AI compose (new recipe, group admins) -->
+        @if (showAi()) {
+            <section class="card ai-card">
+                <h2 class="card-title">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    Створити за допомогою AI
+                </h2>
+                <p class="ai-hint">
+                    Опишіть страву своїми словами — інгредієнти, кроки, час.
+                    AI заповнить форму, а ви перевірите та відредагуєте перед збереженням.
+                </p>
+                <textarea
+                    class="ai-textarea"
+                    rows="4"
+                    [value]="aiText()"
+                    (input)="aiText.set($any($event.target).value)"
+                    [disabled]="aiLoading()"
+                    placeholder="Напр.: Сирники з ягодами. 500 г сиру, 2 яйця, 3 ст.л. борошна, цукор за смаком. Змішати, сформувати, обсмажити по 3 хв з кожного боку…"></textarea>
+                <div class="ai-actions">
+                    <button
+                        type="button"
+                        class="ai-generate"
+                        (click)="generateWithAi()"
+                        [disabled]="aiLoading() || aiText().trim().length < 10">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        {{ aiLoading() ? 'Генерую…' : 'Згенерувати' }}
+                    </button>
+                    @if (aiDaily(); as d) {
+                        <span class="ai-quota">
+                            @if (d.limit !== null) { Залишилось {{ d.remaining }} з {{ d.limit }} сьогодні }
+                            @else { Без ліміту }
+                        </span>
+                    }
+                </div>
+                @if (aiError()) {
+                    <p class="ai-error" role="alert">{{ aiError() }}</p>
+                }
+                @if (aiWarnings().length) {
+                    <ul class="ai-warnings">
+                        @for (w of aiWarnings(); track w) { <li>{{ w }}</li> }
+                    </ul>
+                }
+            </section>
+        }
+
         <!-- Basic -->
         <section class="card">
             <h2 class="card-title">Основне</h2>

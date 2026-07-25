@@ -124,5 +124,6 @@ export class AdminLayoutPage {
         { path: '/admin/families', label: 'Родини', icon: 'diversity_3', exact: false },
         { path: '/admin/users', label: 'Користувачі', icon: 'group', exact: false },
         { path: '/admin/activity', label: 'Активність', icon: 'history', exact: false },
+        { path: '/admin/ai-usage', label: 'AI', icon: 'auto_awesome', exact: false },
     ];
 }

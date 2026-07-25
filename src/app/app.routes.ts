@@ -87,6 +87,10 @@ export const routes: Routes = [
                 path: 'activity',
                 loadComponent: () => import('./pages/admin/admin-activity').then(m => m.AdminActivityPage),
             },
+            {
+                path: 'ai-usage',
+                loadComponent: () => import('./pages/admin/admin-ai-usage').then(m => m.AdminAiUsagePage),
+            },
         ],
     },
     {

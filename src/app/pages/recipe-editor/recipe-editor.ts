@@ -13,6 +13,7 @@ import {
     DishDifficulty,
     TASTE_LABELS,
 } from '../../core/models/dish.model';
+import { AiRecipeDraft, AiService } from '../../core/services/ai.service';
 import { DishService } from '../../core/services/dish.service';
 import { FamilyService } from '../../core/services/family.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -43,6 +44,7 @@ export class RecipeEditorPage {
     private readonly dishService = inject(DishService);
     protected readonly familyService = inject(FamilyService);
     private readonly auth = inject(AuthService);
+    private readonly ai = inject(AiService);
     private readonly uploadService = inject(UploadService);
     private readonly toast = inject(ToastService);
     private readonly confirm = inject(ConfirmService);
@@ -71,8 +73,21 @@ export class RecipeEditorPage {
     protected readonly restoredDraft = signal(false);
     private hydrating = false;
 
+    // ── AI compose (new-recipe only, group admins + super-admin) ──
+    protected readonly aiText = signal('');
+    protected readonly aiLoading = signal(false);
+    protected readonly aiError = signal<string | null>(null);
+    protected readonly aiWarnings = signal<string[]>([]);
+    protected readonly aiDaily = signal<{ limit: number | null; used: number | null; remaining: number | null } | null>(null);
+    protected readonly isGroupAdmin = computed(() =>
+        this.auth.isSuperAdmin() ||
+        this.auth.approvedMemberships().some((m) => m.role === 'owner' || m.role === 'admin'),
+    );
+
     private readonly editId = toSignal(this.route.paramMap.pipe(map(p => p.get('dishId'))));
     protected readonly isEdit = computed(() => !!this.editId());
+    /** The AI compose panel shows only for a new recipe and only to group admins. */
+    protected readonly showAi = computed(() => !this.isEdit() && this.isGroupAdmin());
 
     protected readonly form = this.fb.group({
         familyId: ['', Validators.required],
@@ -202,6 +217,61 @@ export class RecipeEditorPage {
         const first = this.familyService.editableFamilies()[0];
         if (first) this.form.controls.familyId.setValue(first.id, { emitEvent: false });
         this.form.markAsPristine();
+    }
+
+    /** Generate a draft from the free-form description and fill the form for editing. */
+    protected async generateWithAi(): Promise<void> {
+        const text = this.aiText().trim();
+        if (text.length < 10) {
+            this.aiError.set('Опишіть страву докладніше (мінімум кілька слів).');
+            return;
+        }
+        this.aiLoading.set(true);
+        this.aiError.set(null);
+        this.aiWarnings.set([]);
+        try {
+            const draft = await this.ai.parseRecipe(text);
+            this.applyAiDraft(draft);
+            this.aiWarnings.set(draft.warnings ?? []);
+            if (draft.meta) {
+                this.aiDaily.set({
+                    limit: draft.meta.dailyLimit,
+                    used: draft.meta.dailyUsed,
+                    remaining: draft.meta.dailyRemaining,
+                });
+            }
+            this.toast.success('Рецепт згенеровано ✨ Перевірте і збережіть');
+        } catch (error: any) {
+            const payload = error?.error ?? {};
+            this.aiError.set(payload.message || 'Не вдалося згенерувати рецепт. Спробуйте ще раз.');
+        } finally {
+            this.aiLoading.set(false);
+        }
+    }
+
+    /** Fill the editor form from an AI draft (keeps the chosen family). */
+    private applyAiDraft(draft: AiRecipeDraft): void {
+        const familyId = this.form.controls.familyId.value;
+        this.hydrate({
+            familyId,
+            title: draft.title,
+            slug: draft.title ? slugify(draft.title) : '',
+            description: draft.description,
+            visibility: 'public',
+            status: 'draft',
+            prepTime: draft.cookingTime.preparation,
+            cookTime: draft.cookingTime.cooking,
+            totalTime: draft.cookingTime.total,
+            calories: draft.calories,
+            servings: draft.servings || 1,
+            difficulty: draft.difficulty,
+            categories: draft.categories,
+            notes: draft.notes,
+            ingredients: draft.ingredients,
+            steps: draft.steps.map((s) => ({ description: s.description, duration: s.duration ?? null })),
+            tags: draft.tags,
+        });
+        this.form.markAsDirty();
     }
 
     private newIngredient(value?: { name: string; amount: string; unit: string; optional: boolean }) {
