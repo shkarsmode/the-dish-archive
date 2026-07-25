@@ -13,6 +13,7 @@ export interface AiRecipeDraft {
     tags: string[];
     ingredients: { name: string; amount: string; unit: string; optional: boolean }[];
     steps: { order: number; description: string; duration?: number }[];
+    taste: { sweet: number; salty: number; sour: number; bitter: number; spicy: number; umami: number };
     notes: string;
     warnings: string[];
     meta: { model: string; dailyLimit: number | null; dailyUsed: number | null; dailyRemaining: number | null };

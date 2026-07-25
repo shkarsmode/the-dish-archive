@@ -141,7 +141,7 @@
                 <button type="button" class="add-row" (click)="addIngredient()"><span class="material-symbols-outlined">add</span></button>
             </div>
             <div class="rows" formArrayName="ingredients">
-                @for (row of ingredients.controls; track $index) {
+                @for (row of ingredients.controls; track row) {
                     <div class="ingredient-row" [formGroupName]="$index">
                         <input class="grow" type="text" formControlName="name" placeholder="Інгредієнт">
                         <input class="sm" type="text" formControlName="amount" placeholder="К-сть">
@@ -159,7 +159,7 @@
                 <button type="button" class="add-row" (click)="addStep()"><span class="material-symbols-outlined">add</span></button>
             </div>
             <div class="rows" formArrayName="steps">
-                @for (row of steps.controls; track $index) {
+                @for (row of steps.controls; track row) {
                     <div class="step-row" [formGroupName]="$index">
                         <span class="step-num">{{ $index + 1 }}</span>
                         <textarea class="grow" formControlName="description" rows="2" placeholder="Опис кроку"></textarea>

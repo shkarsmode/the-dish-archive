@@ -270,6 +270,7 @@ export class RecipeEditorPage {
             ingredients: draft.ingredients,
             steps: draft.steps.map((s) => ({ description: s.description, duration: s.duration ?? null })),
             tags: draft.tags,
+            taste: draft.taste,
         });
         this.form.markAsDirty();
     }
