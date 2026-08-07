@@ -229,3 +229,22 @@ textarea { resize: vertical; }
 .ai-quota { font-size: var(--text-sm); color: var(--color-text-tertiary); }
 .ai-error { margin: 10px 0 0; color: var(--color-error); font-size: var(--text-sm); }
 .ai-warnings { margin: 10px 0 0; padding-left: 18px; color: var(--color-text-tertiary); font-size: var(--text-sm); }
+
+// ── AI proposal review (edit mode) ──
+.ai-review { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-accent-light); }
+.ai-section {
+    display: flex; align-items: baseline; gap: 10px; padding: 8px 0;
+    cursor: pointer; font-size: var(--text-sm);
+}
+// The editor's global `input { width: 100% }` would otherwise stretch the checkbox.
+.ai-section input[type="checkbox"] { width: auto; flex: none; accent-color: var(--color-accent); }
+.ai-section-label { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.ai-section-preview {
+    color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ai-review-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.ai-secondary {
+    width: auto; padding: 10px 16px; border: 1px solid var(--color-border);
+    border-radius: var(--radius-full); background: transparent; color: var(--color-text-secondary);
+    font-size: var(--text-sm); cursor: pointer;
+}

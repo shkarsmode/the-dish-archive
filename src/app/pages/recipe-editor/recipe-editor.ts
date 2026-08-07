@@ -31,6 +31,21 @@ const CYRILLIC: Record<string, string> = {
 const slugify = (v: string) => v.toLowerCase().split('').map(c => CYRILLIC[c] ?? c).join('')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+/** Mirrors the backend's input cap; the composed edit context is trimmed to fit. */
+const AI_MAX_INPUT = 6000;
+
+/** Blocks an AI proposal can fill in edit mode, applied one by one. */
+type AiSectionKey = 'basics' | 'timing' | 'ingredients' | 'steps' | 'taxonomy' | 'taste';
+
+const AI_SECTION_LABELS: Record<AiSectionKey, string> = {
+    basics: 'Опис і нотатки',
+    timing: 'Час, порції, складність',
+    ingredients: 'Інгредієнти',
+    steps: 'Кроки',
+    taxonomy: 'Категорії і теги',
+    taste: 'Смаковий профіль',
+};
+
 @Component({
     selector: 'app-recipe-editor',
     imports: [ReactiveFormsModule, FormsModule, SelectComponent],
@@ -73,12 +88,22 @@ export class RecipeEditorPage {
     protected readonly restoredDraft = signal(false);
     private hydrating = false;
 
-    // ── AI compose (new-recipe only, group admins + super-admin) ──
+    // ── AI compose / assist (group admins + super-admin) ──
     protected readonly aiText = signal('');
     protected readonly aiLoading = signal(false);
     protected readonly aiError = signal<string | null>(null);
     protected readonly aiWarnings = signal<string[]>([]);
     protected readonly aiDaily = signal<{ limit: number | null; used: number | null; remaining: number | null } | null>(null);
+    /**
+     * Edit mode parks the AI proposal here instead of writing it to the form,
+     * so the user reviews it against the live recipe and merges section by section.
+     */
+    protected readonly aiDraft = signal<AiRecipeDraft | null>(null);
+    protected readonly aiSectionKeys: AiSectionKey[] = ['basics', 'timing', 'ingredients', 'steps', 'taxonomy', 'taste'];
+    protected readonly aiSectionLabels = AI_SECTION_LABELS;
+    protected readonly aiSections = signal<Record<AiSectionKey, boolean>>({
+        basics: false, timing: false, ingredients: false, steps: false, taxonomy: false, taste: false,
+    });
     protected readonly isGroupAdmin = computed(() =>
         this.auth.isSuperAdmin() ||
         this.auth.approvedMemberships().some((m) => m.role === 'owner' || m.role === 'admin'),
@@ -86,8 +111,8 @@ export class RecipeEditorPage {
 
     private readonly editId = toSignal(this.route.paramMap.pipe(map(p => p.get('dishId'))));
     protected readonly isEdit = computed(() => !!this.editId());
-    /** The AI compose panel shows only for a new recipe and only to group admins. */
-    protected readonly showAi = computed(() => !this.isEdit() && this.isGroupAdmin());
+    /** The AI panel shows to group admins in both new-recipe and edit mode. */
+    protected readonly showAi = computed(() => this.isGroupAdmin());
 
     protected readonly form = this.fb.group({
         familyId: ['', Validators.required],
@@ -219,7 +244,11 @@ export class RecipeEditorPage {
         this.form.markAsPristine();
     }
 
-    /** Generate a draft from the free-form description and fill the form for editing. */
+    /**
+     * New recipe: generate a draft and fill the empty form directly.
+     * Existing recipe: send the current recipe as context and park the result
+     * for review — the form is not touched until the user applies a section.
+     */
     protected async generateWithAi(): Promise<void> {
         const text = this.aiText().trim();
         if (text.length < 10) {
@@ -229,9 +258,15 @@ export class RecipeEditorPage {
         this.aiLoading.set(true);
         this.aiError.set(null);
         this.aiWarnings.set([]);
+        this.aiDraft.set(null);
         try {
-            const draft = await this.ai.parseRecipe(text);
-            this.applyAiDraft(draft);
+            const draft = await this.ai.parseRecipe(this.isEdit() ? this.composeEditPrompt(text) : text);
+            if (this.isEdit()) {
+                this.aiDraft.set(draft);
+                this.aiSections.set(this.defaultSections());
+            } else {
+                this.applyAiDraft(draft);
+            }
             this.aiWarnings.set(draft.warnings ?? []);
             if (draft.meta) {
                 this.aiDaily.set({
@@ -240,24 +275,208 @@ export class RecipeEditorPage {
                     remaining: draft.meta.dailyRemaining,
                 });
             }
-            this.toast.success('Рецепт згенеровано ✨ Перевірте і збережіть');
+            this.toast.success(this.isEdit()
+                ? 'Готово ✨ Оберіть, що застосувати'
+                : 'Рецепт згенеровано ✨ Перевірте і збережіть');
         } catch (error: any) {
             const payload = error?.error ?? {};
-            this.aiError.set(payload.message || 'Не вдалося згенерувати рецепт. Спробуйте ще раз.');
+            const retryAfterMs = Number(payload.retryAfterMs);
+            const wait = Number.isFinite(retryAfterMs) && retryAfterMs > 0
+                ? ` Спробуйте через ${Math.ceil(retryAfterMs / 1000)} с.`
+                : '';
+            this.aiError.set((payload.message || 'Не вдалося згенерувати рецепт. Спробуйте ще раз.') + wait);
         } finally {
             this.aiLoading.set(false);
         }
     }
 
-    /** Fill the editor form from an AI draft (keeps the chosen family). */
+    /**
+     * Serialize the recipe currently in the form into a single-line description the
+     * parse endpoint understands, then append the author's request. Only the context
+     * is truncated to fit the backend's input cap — the author's text is never cut.
+     */
+    private composeEditPrompt(userText: string): string {
+        const v = this.form.getRawValue();
+        const parts: string[] = [];
+        if (v.title) parts.push(`Страва: ${v.title}.`);
+        if (v.description) parts.push(`Опис: ${v.description}`);
+        if (v.servings) parts.push(`Порцій: ${v.servings}.`);
+        if (v.prepTime || v.cookTime || v.totalTime) {
+            parts.push(`Час: підготовка ${v.prepTime ?? 0} хв, готування ${v.cookTime ?? 0} хв, разом ${v.totalTime ?? 0} хв.`);
+        }
+        if (v.calories) parts.push(`Калорійність: ${v.calories} ккал.`);
+        if (v.difficulty) parts.push(`Складність: ${DIFFICULTY_LABELS[v.difficulty as DishDifficulty]}.`);
+        const categories = (v.categories ?? []).map(c => CATEGORY_LABELS[c]).filter(Boolean);
+        if (categories.length) parts.push(`Категорії: ${categories.join(', ')}.`);
+        const ingredients = this.ingredients.value
+            .filter((i: any) => i?.name?.trim())
+            .map((i: any) => {
+                const line = [i.amount, i.unit, i.name].filter(Boolean).join(' ').trim();
+                return i.optional ? `${line} (за бажанням)` : line;
+            });
+        if (ingredients.length) parts.push(`Інгредієнти: ${ingredients.join('; ')}.`);
+        const steps = this.steps.value
+            .filter((s: any) => s?.description?.trim())
+            .map((s: any, i: number) => `${i + 1}) ${s.description}`);
+        if (steps.length) parts.push(`Кроки: ${steps.join(' ')}`);
+        if (this.tags.length) parts.push(`Теги: ${this.tags.value.join(', ')}.`);
+        const taste = ALL_TASTE_KEYS
+            .filter(k => (v.taste as any)?.[k])
+            .map(k => `${TASTE_LABELS[k].toLowerCase()} ${(v.taste as any)[k]}`);
+        if (taste.length) parts.push(`Смаковий профіль (0-5): ${taste.join(', ')}.`);
+        if (v.notes) parts.push(`Нотатки: ${v.notes}`);
+
+        const collapse = (s: string) => s.replace(/\s+/g, ' ').trim();
+        let context = collapse(parts.join(' '));
+        const budget = AI_MAX_INPUT - userText.length - 120;
+        if (context.length > budget) context = context.slice(0, Math.max(0, budget));
+        return collapse(`${context} Додатково від автора: ${userText}`);
+    }
+
+    /** True when the recipe currently has nothing in that block. */
+    private sectionIsEmpty(key: AiSectionKey): boolean {
+        const v = this.form.getRawValue();
+        switch (key) {
+            case 'basics': return !v.description?.trim() && !v.notes?.trim();
+            // Must cover every control applySection('timing') writes, or a "pre-checked
+            // because empty" block would overwrite servings/difficulty with no confirm.
+            case 'timing':
+                return !v.prepTime && !v.cookTime && !v.totalTime && !v.calories
+                    && (!v.servings || v.servings <= 1)
+                    && (!v.difficulty || v.difficulty === 'easy');
+            case 'ingredients': return this.ingredients.value.every((i: any) => !i?.name?.trim());
+            case 'steps': return this.steps.value.every((s: any) => !s?.description?.trim());
+            case 'taxonomy': return !(v.categories ?? []).length && this.tags.length === 0;
+            case 'taste': return ALL_TASTE_KEYS.every(k => !(v.taste as any)?.[k]);
+        }
+    }
+
+    /** Pre-check only the empty blocks, so accepting the defaults can never overwrite. */
+    private defaultSections(): Record<AiSectionKey, boolean> {
+        const result = {} as Record<AiSectionKey, boolean>;
+        for (const key of this.aiSectionKeys) result[key] = this.sectionIsEmpty(key);
+        return result;
+    }
+
+    /** Patch a single block from the proposal. Never touches title, slug, images, price or sourceUrl. */
+    private applySection(key: AiSectionKey, draft: AiRecipeDraft): void {
+        switch (key) {
+            case 'basics':
+                this.form.patchValue({ description: draft.description, notes: draft.notes });
+                break;
+            case 'timing':
+                this.form.patchValue({
+                    prepTime: draft.cookingTime.preparation,
+                    cookTime: draft.cookingTime.cooking,
+                    totalTime: draft.cookingTime.total,
+                    calories: draft.calories,
+                    // The model may omit servings (the API then sends 0) — keep what we have.
+                    servings: draft.servings || this.form.controls.servings.value || 1,
+                    difficulty: draft.difficulty,
+                });
+                break;
+            case 'ingredients':
+                this.ingredients.clear();
+                draft.ingredients.forEach(ing => this.ingredients.push(this.newIngredient(ing)));
+                if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient());
+                break;
+            case 'steps':
+                this.steps.clear();
+                draft.steps.forEach(s => this.steps.push(this.newStep({ description: s.description, duration: s.duration ?? null })));
+                if (this.steps.length === 0) this.steps.push(this.newStep());
+                break;
+            case 'taxonomy':
+                this.form.controls.categories.setValue([...draft.categories]);
+                this.tags.clear();
+                draft.tags.forEach(tag => this.tags.push(this.fb.control(tag, { nonNullable: true })));
+                break;
+            case 'taste':
+                this.form.controls.taste.patchValue(draft.taste);
+                break;
+        }
+    }
+
+    protected toggleAiSection(key: AiSectionKey): void {
+        this.aiSections.update(sections => ({ ...sections, [key]: !sections[key] }));
+    }
+
+    protected dismissAiDraft(): void {
+        this.aiDraft.set(null);
+        this.aiWarnings.set([]);
+        this.aiError.set(null);
+    }
+
+    /** One-line summary of what a block of the proposal contains. */
+    protected aiSectionPreview(key: AiSectionKey): string {
+        const draft = this.aiDraft();
+        if (!draft) return '';
+        switch (key) {
+            case 'basics': {
+                const text = draft.description || draft.notes || '';
+                return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+            }
+            case 'timing':
+                return `${draft.cookingTime.total} хв · ${draft.calories} ккал · порцій: ${draft.servings}`
+                    + ` · ${DIFFICULTY_LABELS[draft.difficulty]}`;
+            case 'ingredients': return `Позицій: ${draft.ingredients.length}`;
+            case 'steps': return `Кроків: ${draft.steps.length}`;
+            case 'taxonomy':
+                return [...draft.categories.map(c => CATEGORY_LABELS[c] ?? c), ...draft.tags].join(', ');
+            case 'taste':
+                return ALL_TASTE_KEYS
+                    .filter(k => draft.taste?.[k])
+                    .map(k => `${TASTE_LABELS[k]} ${draft.taste[k]}`)
+                    .join(' · ');
+        }
+    }
+
+    /** Merge the checked blocks into the form, confirming first if any would be overwritten. */
+    protected async applyAiSelection(): Promise<void> {
+        const draft = this.aiDraft();
+        if (!draft) return;
+        const chosen = this.aiSectionKeys.filter(key => this.aiSections()[key]);
+        if (!chosen.length) {
+            this.aiError.set('Оберіть хоча б один блок.');
+            return;
+        }
+        const overwrite = chosen.filter(key => !this.sectionIsEmpty(key));
+        if (overwrite.length) {
+            const ok = await this.confirm.ask({
+                title: 'Замінити наявні дані?',
+                message: `Буде перезаписано: ${overwrite.map(key => AI_SECTION_LABELS[key]).join(', ')}. `
+                    + 'Зміни застосуються лише до форми — рецепт оновиться після натискання «Зберегти».',
+                confirmLabel: 'Замінити',
+                danger: true,
+                icon: 'auto_awesome',
+            });
+            if (!ok) return;
+        }
+        for (const key of chosen) this.applySection(key, draft);
+        this.aiDraft.set(null);
+        this.aiText.set('');
+        this.aiError.set(null);
+        this.aiWarnings.set([]);
+        this.form.markAsDirty();
+        this.toast.success('Застосовано ✨ Не забудьте зберегти');
+    }
+
+    /** Fill the editor form from an AI draft (keeps the family, photos, price and source). */
     private applyAiDraft(draft: AiRecipeDraft): void {
-        const familyId = this.form.controls.familyId.value;
+        // hydrate() rebuilds everything it is given and defaults the rest, so anything
+        // the user already entered has to be carried across explicitly.
+        const current = this.form.getRawValue();
+        const images = this.images.value;
         this.hydrate({
-            familyId,
+            familyId: current.familyId,
+            images,
+            priceAmount: current.priceAmount,
+            priceCurrency: current.priceCurrency,
+            sourceUrl: current.sourceUrl,
+            // Never silently re-publish a recipe the author marked family-only.
+            visibility: current.visibility,
             title: draft.title,
             slug: draft.title ? slugify(draft.title) : '',
             description: draft.description,
-            visibility: 'public',
             status: 'draft',
             prepTime: draft.cookingTime.preparation,
             cookTime: draft.cookingTime.cooking,
@@ -273,6 +492,9 @@ export class RecipeEditorPage {
             taste: draft.taste,
         });
         this.form.markAsDirty();
+        // hydrate() is silent, so the debounced autosave never sees the AI result —
+        // persist it here or a reload right after generating would lose everything.
+        this.draftSavedAt.set(this.drafts.save(null, this.form.getRawValue()));
     }
 
     private newIngredient(value?: { name: string; amount: string; unit: string; optional: boolean }) {

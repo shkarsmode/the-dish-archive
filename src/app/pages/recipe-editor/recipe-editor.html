@@ -17,24 +17,33 @@
     </header>
 
     <div class="editor-body">
-        <!-- AI compose (new recipe, group admins) -->
+        <!-- AI: compose a new recipe, or propose changes to an existing one (group admins) -->
         @if (showAi()) {
             <section class="card ai-card">
                 <h2 class="card-title">
                     <span class="material-symbols-outlined">auto_awesome</span>
-                    Створити за допомогою AI
+                    {{ isEdit() ? 'Доповнити за допомогою AI' : 'Створити за допомогою AI' }}
                 </h2>
-                <p class="ai-hint">
-                    Опишіть страву своїми словами — інгредієнти, кроки, час.
-                    AI заповнить форму, а ви перевірите та відредагуєте перед збереженням.
-                </p>
+                @if (isEdit()) {
+                    <p class="ai-hint">
+                        Опишіть, що додати чи уточнити — інгредієнти, кроки, час, смак.
+                        AI враховує поточний рецепт і пропонує зміни; ви оберете, що застосувати.
+                    </p>
+                } @else {
+                    <p class="ai-hint">
+                        Опишіть страву своїми словами — інгредієнти, кроки, час.
+                        AI заповнить форму, а ви перевірите та відредагуєте перед збереженням.
+                    </p>
+                }
                 <textarea
                     class="ai-textarea"
                     rows="4"
                     [value]="aiText()"
                     (input)="aiText.set($any($event.target).value)"
                     [disabled]="aiLoading()"
-                    placeholder="Напр.: Сирники з ягодами. 500 г сиру, 2 яйця, 3 ст.л. борошна, цукор за смаком. Змішати, сформувати, обсмажити по 3 хв з кожного боку…"></textarea>
+                    [placeholder]="isEdit()
+                        ? 'Напр.: додати ваніль і цедру лимона, обсмажувати по 4 хв, подавати зі сметаною…'
+                        : 'Напр.: Сирники з ягодами. 500 г сиру, 2 яйця, 3 ст.л. борошна, цукор за смаком. Змішати, сформувати, обсмажити по 3 хв з кожного боку…'"></textarea>
                 <div class="ai-actions">
                     <button
                         type="button"
@@ -42,7 +51,7 @@
                         (click)="generateWithAi()"
                         [disabled]="aiLoading() || aiText().trim().length < 10">
                         <span class="material-symbols-outlined">auto_awesome</span>
-                        {{ aiLoading() ? 'Генерую…' : 'Згенерувати' }}
+                        {{ aiLoading() ? 'Генерую…' : (isEdit() ? 'Запропонувати зміни' : 'Згенерувати') }}
                     </button>
                     @if (aiDaily(); as d) {
                         <span class="ai-quota">
@@ -58,6 +67,31 @@
                     <ul class="ai-warnings">
                         @for (w of aiWarnings(); track w) { <li>{{ w }}</li> }
                     </ul>
+                }
+                @if (aiDraft()) {
+                    <div class="ai-review">
+                        <p class="ai-hint">
+                            Оберіть, що застосувати до рецепта. Позначені блоки зараз порожні —
+                            решту буде замінено лише після підтвердження.
+                        </p>
+                        @for (key of aiSectionKeys; track key) {
+                            <label class="ai-section">
+                                <input
+                                    type="checkbox"
+                                    [checked]="aiSections()[key]"
+                                    (change)="toggleAiSection(key)">
+                                <span class="ai-section-label">{{ aiSectionLabels[key] }}</span>
+                                <span class="ai-section-preview">{{ aiSectionPreview(key) }}</span>
+                            </label>
+                        }
+                        <div class="ai-review-actions">
+                            <button type="button" class="ai-generate" (click)="applyAiSelection()">
+                                <span class="material-symbols-outlined">check</span>
+                                Застосувати вибране
+                            </button>
+                            <button type="button" class="ai-secondary" (click)="dismissAiDraft()">Відхилити</button>
+                        </div>
+                    </div>
                 }
             </section>
         }
