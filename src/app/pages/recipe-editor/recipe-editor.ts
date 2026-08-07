@@ -34,17 +34,15 @@ const slugify = (v: string) => v.toLowerCase().split('').map(c => CYRILLIC[c] ??
 /** Mirrors the backend's input cap; the composed edit context is trimmed to fit. */
 const AI_MAX_INPUT = 6000;
 
-/** Blocks an AI proposal can fill in edit mode, applied one by one. */
-type AiSectionKey = 'basics' | 'timing' | 'ingredients' | 'steps' | 'taxonomy' | 'taste';
-
-const AI_SECTION_LABELS: Record<AiSectionKey, string> = {
-    basics: 'Опис і нотатки',
-    timing: 'Час, порції, складність',
-    ingredients: 'Інгредієнти',
-    steps: 'Кроки',
-    taxonomy: 'Категорії і теги',
-    taste: 'Смаковий профіль',
-};
+/** One line of the "what the AI changed" changelog shown after an update. */
+interface AiChange {
+    label: string;
+    before: string;
+    after: string;
+    /** Items gained / lost, for list-shaped fields (ingredients, steps, tags, categories). */
+    added?: string[];
+    removed?: string[];
+}
 
 @Component({
     selector: 'app-recipe-editor',
@@ -95,15 +93,16 @@ export class RecipeEditorPage {
     protected readonly aiWarnings = signal<string[]>([]);
     protected readonly aiDaily = signal<{ limit: number | null; used: number | null; remaining: number | null } | null>(null);
     /**
-     * Edit mode parks the AI proposal here instead of writing it to the form,
-     * so the user reviews it against the live recipe and merges section by section.
+     * Edit mode applies the AI update straight to the form and reports what it changed
+     * here, so a complex update reads as a changelog instead of a checklist.
      */
-    protected readonly aiDraft = signal<AiRecipeDraft | null>(null);
-    protected readonly aiSectionKeys: AiSectionKey[] = ['basics', 'timing', 'ingredients', 'steps', 'taxonomy', 'taste'];
-    protected readonly aiSectionLabels = AI_SECTION_LABELS;
-    protected readonly aiSections = signal<Record<AiSectionKey, boolean>>({
-        basics: false, timing: false, ingredients: false, steps: false, taxonomy: false, taste: false,
-    });
+    protected readonly aiChanges = signal<AiChange[]>([]);
+    /** Set once an AI update has been applied and can still be rolled back. */
+    protected readonly aiCanUndo = signal(false);
+    /** Full form snapshot taken immediately before the AI update, for one-click undo. */
+    private aiUndoSnapshot: any = null;
+    /** Form state right after the AI update — lets undo detect later manual edits. */
+    private aiAppliedFingerprint: string | null = null;
     protected readonly isGroupAdmin = computed(() =>
         this.auth.isSuperAdmin() ||
         this.auth.approvedMemberships().some((m) => m.role === 'owner' || m.role === 'admin'),
@@ -245,9 +244,10 @@ export class RecipeEditorPage {
     }
 
     /**
-     * New recipe: generate a draft and fill the empty form directly.
-     * Existing recipe: send the current recipe as context and park the result
-     * for review — the form is not touched until the user applies a section.
+     * New recipe: generate a draft and fill the empty form.
+     * Existing recipe: send the current recipe as context, apply the update, and
+     * report the diff. Nothing is persisted until the user presses «Зберегти», and
+     * the pre-update snapshot stays available for undo.
      */
     protected async generateWithAi(): Promise<void> {
         const text = this.aiText().trim();
@@ -258,12 +258,26 @@ export class RecipeEditorPage {
         this.aiLoading.set(true);
         this.aiError.set(null);
         this.aiWarnings.set([]);
-        this.aiDraft.set(null);
+        // Undo state is deliberately NOT cleared here: if this call fails, the previous
+        // update stays applied and must stay revertible.
+        let applied = false;
         try {
             const draft = await this.ai.parseRecipe(this.isEdit() ? this.composeEditPrompt(text) : text);
             if (this.isEdit()) {
-                this.aiDraft.set(draft);
-                this.aiSections.set(this.defaultSections());
+                const before = this.form.getRawValue();
+                const beforeJson = JSON.stringify(before);
+                this.applyAiUpdate(draft);
+                const afterJson = JSON.stringify(this.form.getRawValue());
+                this.aiChanges.set(this.diffAgainst(before));
+                // Reversibility keys off the raw form, never off the (lossy) changelog —
+                // otherwise a rewrite the diff cannot see would be silent and permanent.
+                applied = afterJson !== beforeJson;
+                if (applied) {
+                    this.aiUndoSnapshot = before;
+                    this.aiAppliedFingerprint = afterJson;
+                    this.aiCanUndo.set(true);
+                    this.form.markAsDirty();
+                }
             } else {
                 this.applyAiDraft(draft);
             }
@@ -276,7 +290,9 @@ export class RecipeEditorPage {
                 });
             }
             this.toast.success(this.isEdit()
-                ? 'Готово ✨ Оберіть, що застосувати'
+                ? (applied
+                    ? 'Рецепт оновлено ✨ Перевірте зміни і збережіть'
+                    : 'AI не запропонував змін')
                 : 'Рецепт згенеровано ✨ Перевірте і збережіть');
         } catch (error: any) {
             const payload = error?.error ?? {};
@@ -333,131 +349,174 @@ export class RecipeEditorPage {
         return collapse(`${context} Додатково від автора: ${userText}`);
     }
 
-    /** True when the recipe currently has nothing in that block. */
-    private sectionIsEmpty(key: AiSectionKey): boolean {
-        const v = this.form.getRawValue();
-        switch (key) {
-            case 'basics': return !v.description?.trim() && !v.notes?.trim();
-            // Must cover every control applySection('timing') writes, or a "pre-checked
-            // because empty" block would overwrite servings/difficulty with no confirm.
-            case 'timing':
-                return !v.prepTime && !v.cookTime && !v.totalTime && !v.calories
-                    && (!v.servings || v.servings <= 1)
-                    && (!v.difficulty || v.difficulty === 'easy');
-            case 'ingredients': return this.ingredients.value.every((i: any) => !i?.name?.trim());
-            case 'steps': return this.steps.value.every((s: any) => !s?.description?.trim());
-            case 'taxonomy': return !(v.categories ?? []).length && this.tags.length === 0;
-            case 'taste': return ALL_TASTE_KEYS.every(k => !(v.taste as any)?.[k]);
-        }
+    /**
+     * Write the whole AI update into the form. Deliberately never touches title, slug,
+     * images, price, sourceUrl, visibility or familyId — the recipe's identity, photos
+     * and public URL stay exactly as the author left them.
+     */
+    private applyAiUpdate(draft: AiRecipeDraft): void {
+        this.form.patchValue({
+            description: draft.description,
+            notes: draft.notes,
+            prepTime: draft.cookingTime.preparation,
+            cookTime: draft.cookingTime.cooking,
+            totalTime: draft.cookingTime.total,
+            calories: draft.calories,
+            // The model may omit servings (the API then sends 0) — keep what we have.
+            servings: draft.servings || this.form.controls.servings.value || 1,
+            difficulty: draft.difficulty,
+            categories: [...draft.categories],
+            taste: draft.taste,
+        });
+        this.ingredients.clear();
+        draft.ingredients.forEach(ing => this.ingredients.push(this.newIngredient(ing)));
+        if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient());
+        this.steps.clear();
+        draft.steps.forEach(s => this.steps.push(this.newStep({ description: s.description, duration: s.duration ?? null })));
+        if (this.steps.length === 0) this.steps.push(this.newStep());
+        this.tags.clear();
+        draft.tags.forEach(tag => this.tags.push(this.fb.control(tag, { nonNullable: true })));
     }
 
-    /** Pre-check only the empty blocks, so accepting the defaults can never overwrite. */
-    private defaultSections(): Record<AiSectionKey, boolean> {
-        const result = {} as Record<AiSectionKey, boolean>;
-        for (const key of this.aiSectionKeys) result[key] = this.sectionIsEmpty(key);
-        return result;
-    }
-
-    /** Patch a single block from the proposal. Never touches title, slug, images, price or sourceUrl. */
-    private applySection(key: AiSectionKey, draft: AiRecipeDraft): void {
-        switch (key) {
-            case 'basics':
-                this.form.patchValue({ description: draft.description, notes: draft.notes });
-                break;
-            case 'timing':
-                this.form.patchValue({
-                    prepTime: draft.cookingTime.preparation,
-                    cookTime: draft.cookingTime.cooking,
-                    totalTime: draft.cookingTime.total,
-                    calories: draft.calories,
-                    // The model may omit servings (the API then sends 0) — keep what we have.
-                    servings: draft.servings || this.form.controls.servings.value || 1,
-                    difficulty: draft.difficulty,
-                });
-                break;
-            case 'ingredients':
-                this.ingredients.clear();
-                draft.ingredients.forEach(ing => this.ingredients.push(this.newIngredient(ing)));
-                if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient());
-                break;
-            case 'steps':
-                this.steps.clear();
-                draft.steps.forEach(s => this.steps.push(this.newStep({ description: s.description, duration: s.duration ?? null })));
-                if (this.steps.length === 0) this.steps.push(this.newStep());
-                break;
-            case 'taxonomy':
-                this.form.controls.categories.setValue([...draft.categories]);
-                this.tags.clear();
-                draft.tags.forEach(tag => this.tags.push(this.fb.control(tag, { nonNullable: true })));
-                break;
-            case 'taste':
-                this.form.controls.taste.patchValue(draft.taste);
-                break;
-        }
-    }
-
-    protected toggleAiSection(key: AiSectionKey): void {
-        this.aiSections.update(sections => ({ ...sections, [key]: !sections[key] }));
-    }
-
-    protected dismissAiDraft(): void {
-        this.aiDraft.set(null);
-        this.aiWarnings.set([]);
-        this.aiError.set(null);
-    }
-
-    /** One-line summary of what a block of the proposal contains. */
-    protected aiSectionPreview(key: AiSectionKey): string {
-        const draft = this.aiDraft();
-        if (!draft) return '';
-        switch (key) {
-            case 'basics': {
-                const text = draft.description || draft.notes || '';
-                return text.length > 80 ? `${text.slice(0, 80)}…` : text;
-            }
-            case 'timing':
-                return `${draft.cookingTime.total} хв · ${draft.calories} ккал · порцій: ${draft.servings}`
-                    + ` · ${DIFFICULTY_LABELS[draft.difficulty]}`;
-            case 'ingredients': return `Позицій: ${draft.ingredients.length}`;
-            case 'steps': return `Кроків: ${draft.steps.length}`;
-            case 'taxonomy':
-                return [...draft.categories.map(c => CATEGORY_LABELS[c] ?? c), ...draft.tags].join(', ');
-            case 'taste':
-                return ALL_TASTE_KEYS
-                    .filter(k => draft.taste?.[k])
-                    .map(k => `${TASTE_LABELS[k]} ${draft.taste[k]}`)
-                    .join(' · ');
-        }
-    }
-
-    /** Merge the checked blocks into the form, confirming first if any would be overwritten. */
-    protected async applyAiSelection(): Promise<void> {
-        const draft = this.aiDraft();
-        if (!draft) return;
-        const chosen = this.aiSectionKeys.filter(key => this.aiSections()[key]);
-        if (!chosen.length) {
-            this.aiError.set('Оберіть хоча б один блок.');
-            return;
-        }
-        const overwrite = chosen.filter(key => !this.sectionIsEmpty(key));
-        if (overwrite.length) {
+    /** Roll the form back to the snapshot taken before the AI update. */
+    protected async undoAiUpdate(): Promise<void> {
+        if (!this.aiUndoSnapshot) return;
+        // Undo restores the whole form, so anything typed after the AI update goes too.
+        if (JSON.stringify(this.form.getRawValue()) !== this.aiAppliedFingerprint) {
             const ok = await this.confirm.ask({
-                title: 'Замінити наявні дані?',
-                message: `Буде перезаписано: ${overwrite.map(key => AI_SECTION_LABELS[key]).join(', ')}. `
-                    + 'Зміни застосуються лише до форми — рецепт оновиться після натискання «Зберегти».',
-                confirmLabel: 'Замінити',
+                title: 'Повернути попередню версію?',
+                message: 'Ви редагували рецепт після оновлення AI. Повернення відкине і ці правки теж.',
+                confirmLabel: 'Повернути',
                 danger: true,
-                icon: 'auto_awesome',
+                icon: 'undo',
             });
             if (!ok) return;
         }
-        for (const key of chosen) this.applySection(key, draft);
-        this.aiDraft.set(null);
-        this.aiText.set('');
-        this.aiError.set(null);
-        this.aiWarnings.set([]);
-        this.form.markAsDirty();
-        this.toast.success('Застосовано ✨ Не забудьте зберегти');
+        this.hydrate(this.aiUndoSnapshot);
+        this.aiUndoSnapshot = null;
+        this.aiAppliedFingerprint = null;
+        this.aiCanUndo.set(false);
+        this.aiChanges.set([]);
+        this.toast.show('Зміни скасовано', 'info');
+    }
+
+    private static ingredientLine(i: any): string {
+        const line = [i?.amount, i?.unit, i?.name].filter(Boolean).join(' ').trim();
+        return i?.optional ? `${line} (за бажанням)` : line;
+    }
+
+    /** Includes duration — applyAiUpdate writes it, so the diff has to see it. */
+    private static stepLine(s: any): string {
+        const description = RecipeEditorPage.clip(s?.description, 70);
+        return s?.duration ? `${description} · ${s.duration} хв` : description;
+    }
+
+    private static clip(text: string | null | undefined, max = 90): string {
+        const value = (text ?? '').trim();
+        return value.length > max ? `${value.slice(0, max)}…` : value;
+    }
+
+    /** Compare the form against a pre-update snapshot and describe what changed. */
+    private diffAgainst(before: any): AiChange[] {
+        const after = this.form.getRawValue();
+        const changes: AiChange[] = [];
+
+        // Compare the FULL text and clip only for display, or an edit past the cutoff
+        // would be reported as "no change" while the form already holds the rewrite.
+        const text = (label: string, b: any, a: any) => {
+            const from = (b ?? '').toString().trim();
+            const to = (a ?? '').toString().trim();
+            if (from === to) return;
+            changes.push({
+                label,
+                before: from ? RecipeEditorPage.clip(from) : '—',
+                after: to ? RecipeEditorPage.clip(to) : '—',
+            });
+        };
+
+        // Numbers: null, undefined and 0 all mean "not set", so they must not diff.
+        const num = (label: string, b: any, a: any, suffix = '') => {
+            const from = Number(b) || 0, to = Number(a) || 0;
+            if (from === to) return;
+            changes.push({
+                label,
+                before: from ? `${from}${suffix}` : '—',
+                after: to ? `${to}${suffix}` : '—',
+            });
+        };
+
+        text('Опис', before.description, after.description);
+        text('Нотатки', before.notes, after.notes);
+        num('Підготовка', before.prepTime, after.prepTime, ' хв');
+        num('Готування', before.cookTime, after.cookTime, ' хв');
+        num('Загальний час', before.totalTime, after.totalTime, ' хв');
+        num('Калорійність', before.calories, after.calories, ' ккал');
+        num('Порції', before.servings, after.servings);
+        if (before.difficulty !== after.difficulty) {
+            changes.push({
+                label: 'Складність',
+                before: DIFFICULTY_LABELS[before.difficulty as DishDifficulty] ?? '—',
+                after: DIFFICULTY_LABELS[after.difficulty as DishDifficulty] ?? '—',
+            });
+        }
+
+        const list = (
+            label: string,
+            beforeItems: string[],
+            afterItems: string[],
+            unit: string,
+        ) => {
+            const added = afterItems.filter(x => !beforeItems.includes(x));
+            const removed = beforeItems.filter(x => !afterItems.includes(x));
+            // Set membership alone misses two real changes: a pure reorder (buildDish
+            // derives step `order` from array position) and duplicate-count changes.
+            const countChanged = beforeItems.length !== afterItems.length;
+            const reordered = !countChanged && beforeItems.some((item, i) => afterItems[i] !== item);
+            if (!added.length && !removed.length && !countChanged && !reordered) return;
+            changes.push({
+                label,
+                before: `${beforeItems.length} ${unit}`,
+                after: `${afterItems.length} ${unit}${reordered ? ' · порядок змінено' : ''}`,
+                added: added.length ? added : undefined,
+                removed: removed.length ? removed : undefined,
+            });
+        };
+
+        list(
+            'Інгредієнти',
+            (before.ingredients ?? []).filter((i: any) => i?.name?.trim()).map(RecipeEditorPage.ingredientLine),
+            (after.ingredients ?? []).filter((i: any) => i?.name?.trim()).map(RecipeEditorPage.ingredientLine),
+            'поз.',
+        );
+        list(
+            'Кроки',
+            (before.steps ?? []).filter((s: any) => s?.description?.trim()).map(RecipeEditorPage.stepLine),
+            (after.steps ?? []).filter((s: any) => s?.description?.trim()).map(RecipeEditorPage.stepLine),
+            'шт.',
+        );
+        list(
+            'Категорії',
+            (before.categories ?? []).map((c: DishCategory) => CATEGORY_LABELS[c] ?? c),
+            (after.categories ?? []).map((c: DishCategory) => CATEGORY_LABELS[c] ?? c),
+            'шт.',
+        );
+        list('Теги', before.tags ?? [], after.tags ?? [], 'шт.');
+
+        const tasteChanged = ALL_TASTE_KEYS
+            .filter(key => (before.taste?.[key] ?? 0) !== (after.taste?.[key] ?? 0))
+            .map(key => `${TASTE_LABELS[key]}: ${before.taste?.[key] ?? 0} → ${after.taste?.[key] ?? 0}`);
+        if (tasteChanged.length) {
+            const fmt = (source: any) => ALL_TASTE_KEYS
+                .filter(key => source?.[key]).map(key => `${TASTE_LABELS[key]} ${source[key]}`).join(', ') || '—';
+            changes.push({
+                label: 'Смаковий профіль',
+                before: fmt(before.taste),
+                after: fmt(after.taste),
+                added: tasteChanged,
+            });
+        }
+
+        return changes;
     }
 
     /** Fill the editor form from an AI draft (keeps the family, photos, price and source). */

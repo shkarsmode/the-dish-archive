@@ -27,7 +27,8 @@
                 @if (isEdit()) {
                     <p class="ai-hint">
                         Опишіть, що додати чи уточнити — інгредієнти, кроки, час, смак.
-                        AI враховує поточний рецепт і пропонує зміни; ви оберете, що застосувати.
+                        AI враховує поточний рецепт і одразу його оновить — ви побачите список
+                        змін і зможете їх скасувати.
                     </p>
                 } @else {
                     <p class="ai-hint">
@@ -68,29 +69,55 @@
                         @for (w of aiWarnings(); track w) { <li>{{ w }}</li> }
                     </ul>
                 }
-                @if (aiDraft()) {
+                @if (aiChanges().length || aiCanUndo()) {
                     <div class="ai-review">
-                        <p class="ai-hint">
-                            Оберіть, що застосувати до рецепта. Позначені блоки зараз порожні —
-                            решту буде замінено лише після підтвердження.
+                        <p class="ai-changelog-title">
+                            <span class="material-symbols-outlined">history</span>
+                            @if (aiChanges().length) {
+                                Що змінилось · {{ aiChanges().length }}
+                            } @else {
+                                Рецепт оновлено
+                            }
                         </p>
-                        @for (key of aiSectionKeys; track key) {
-                            <label class="ai-section">
-                                <input
-                                    type="checkbox"
-                                    [checked]="aiSections()[key]"
-                                    (change)="toggleAiSection(key)">
-                                <span class="ai-section-label">{{ aiSectionLabels[key] }}</span>
-                                <span class="ai-section-preview">{{ aiSectionPreview(key) }}</span>
-                            </label>
+                        @if (!aiChanges().length) {
+                            <p class="ai-hint">
+                                AI переписав рецепт, але помітних відмінностей немає.
+                            </p>
                         }
-                        <div class="ai-review-actions">
-                            <button type="button" class="ai-generate" (click)="applyAiSelection()">
-                                <span class="material-symbols-outlined">check</span>
-                                Застосувати вибране
-                            </button>
-                            <button type="button" class="ai-secondary" (click)="dismissAiDraft()">Відхилити</button>
-                        </div>
+                        <ul class="ai-changelog">
+                            @for (change of aiChanges(); track change.label) {
+                                <li class="ai-change">
+                                    <span class="ai-change-label">{{ change.label }}</span>
+                                    <span class="ai-change-diff">
+                                        <span class="ai-change-before">{{ change.before }}</span>
+                                        <span class="ai-change-arrow">→</span>
+                                        <span class="ai-change-after">{{ change.after }}</span>
+                                    </span>
+                                    @if (change.added?.length || change.removed?.length) {
+                                        <ul class="ai-change-items">
+                                            @for (item of change.added ?? []; track item) {
+                                                <li class="added">+ {{ item }}</li>
+                                            }
+                                            @for (item of change.removed ?? []; track item) {
+                                                <li class="removed">− {{ item }}</li>
+                                            }
+                                        </ul>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                        <p class="ai-hint ai-changelog-note">
+                            Зміни внесені лише у форму — рецепт оновиться після натискання «Зберегти».
+                            Фото, ціна й посилання не змінювались.
+                        </p>
+                        @if (aiCanUndo()) {
+                            <div class="ai-review-actions">
+                                <button type="button" class="ai-secondary" (click)="undoAiUpdate()">
+                                    <span class="material-symbols-outlined">undo</span>
+                                    Скасувати зміни
+                                </button>
+                            </div>
+                        }
                     </div>
                 }
             </section>

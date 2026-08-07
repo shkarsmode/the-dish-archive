@@ -230,21 +230,41 @@ textarea { resize: vertical; }
 .ai-error { margin: 10px 0 0; color: var(--color-error); font-size: var(--text-sm); }
 .ai-warnings { margin: 10px 0 0; padding-left: 18px; color: var(--color-text-tertiary); font-size: var(--text-sm); }
 
-// ── AI proposal review (edit mode) ──
+// ── AI changelog (edit mode) ──
 .ai-review { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-accent-light); }
-.ai-section {
-    display: flex; align-items: baseline; gap: 10px; padding: 8px 0;
-    cursor: pointer; font-size: var(--text-sm);
+.ai-changelog-title {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
+    font-weight: var(--weight-semibold); font-size: var(--text-sm); color: var(--color-text-primary);
 }
-// The editor's global `input { width: 100% }` would otherwise stretch the checkbox.
-.ai-section input[type="checkbox"] { width: auto; flex: none; accent-color: var(--color-accent); }
-.ai-section-label { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
-.ai-section-preview {
-    color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.ai-changelog-title .material-symbols-outlined { font-size: 18px; color: var(--color-accent); }
+.ai-changelog { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.ai-change {
+    padding: 10px 12px; border-radius: var(--radius-md);
+    background: var(--color-bg); border: 1px solid var(--color-border);
 }
+.ai-change-label {
+    display: block; font-weight: var(--weight-semibold);
+    font-size: var(--text-sm); color: var(--color-text-primary);
+}
+.ai-change-diff {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    margin-top: 4px; font-size: var(--text-sm);
+}
+.ai-change-before { color: var(--color-text-tertiary); text-decoration: line-through; }
+.ai-change-arrow { color: var(--color-text-tertiary); }
+.ai-change-after { color: var(--color-text-primary); font-weight: var(--weight-semibold); }
+.ai-change-items {
+    margin: 8px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 3px; font-size: var(--text-sm);
+}
+.ai-change-items .added { color: var(--color-success); }
+.ai-change-items .removed { color: var(--color-text-tertiary); text-decoration: line-through; }
+.ai-changelog-note { margin: 12px 0 0; }
 .ai-review-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 .ai-secondary {
+    display: inline-flex; align-items: center; gap: 6px;
     width: auto; padding: 10px 16px; border: 1px solid var(--color-border);
     border-radius: var(--radius-full); background: transparent; color: var(--color-text-secondary);
     font-size: var(--text-sm); cursor: pointer;
 }
+.ai-secondary .material-symbols-outlined { font-size: 18px; }
