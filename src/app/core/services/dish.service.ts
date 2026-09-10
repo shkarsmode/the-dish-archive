@@ -176,15 +176,28 @@ export class DishService {
         );
     });
 
+    private lastUserId: string | null | undefined = undefined;
+
     constructor() {
-        // Load (and reload) dishes whenever the auth session resolves or changes,
-        // so the backend returns the right set for the current user.
+        // Fire the dishes fetch immediately — the Bearer token is already restored
+        // synchronously from localStorage, so /dishes runs in PARALLEL with
+        // /auth/session instead of waiting for the session round-trip (no waterfall).
+        void this.reload();
+        // Then reload only when the signed-in identity actually changes, so the
+        // backend returns the right set for the new user.
         effect(() => {
             if (!this.authService.isReady()) {
                 return;
             }
-            this.authService.user();
-            void this.reload();
+            const uid = this.authService.user()?.id ?? null;
+            if (this.lastUserId === undefined) {
+                this.lastUserId = uid; // first resolved session — constructor already fetched
+                return;
+            }
+            if (uid !== this.lastUserId) {
+                this.lastUserId = uid;
+                void this.reload();
+            }
         });
     }
 
@@ -202,8 +215,10 @@ export class DishService {
         }
     }
 
-    private async fetchDishById(id: string): Promise<Dish | null> {
-        return this.api.get<Dish>('/dishes/' + id);
+    /** Fetch a single recipe by slug (backend: GET /dishes/slug/:slug) so a deep
+     *  link renders immediately instead of waiting for the whole archive to load. */
+    async fetchDishBySlug(slug: string): Promise<Dish | null> {
+        return this.api.get<Dish>('/dishes/slug/' + encodeURIComponent(slug));
     }
 
     getDishBySlug(slug: string) {

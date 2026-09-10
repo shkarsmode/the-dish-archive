@@ -55,9 +55,11 @@
         <!-- Hero Image -->
         <div class="detail-hero">
             <img
-                [src]="currentImage"
+                [src]="cld(currentImage, 'f_auto,q_auto,w_1200')"
                 [alt]="currentImageAlt"
                 class="hero-image"
+                fetchpriority="high"
+                crossorigin="anonymous"
                 decoding="async"
                 (load)="onHeroLoad($event)"
                 (error)="onImageError($event)" />
@@ -79,7 +81,7 @@
                             [class.active]="activeImageIndex() === i"
                             (click)="selectImage(i)"
                             [attr.aria-label]="'Фото ' + (i + 1)">
-                            <img [src]="image.url" [alt]="image.alt" (error)="onImageError($event)" />
+                            <img [src]="cld(image.url, 'f_auto,q_auto,c_fill,w_120,h_90')" [alt]="image.alt" loading="lazy" (error)="onImageError($event)" />
                         </button>
                     }
                 </div>
@@ -121,7 +123,7 @@
                             @for (img of editImages(); track img.url; let i = $index) {
                                 <div class="img-manager-card" [class.is-primary]="img.isPrimary">
                                     <div class="img-card-preview">
-                                        <img [src]="img.url" [alt]="img.alt" (error)="onImageError($event)" />
+                                        <img [src]="cld(img.url, 'f_auto,q_auto,c_fill,w_400')" [alt]="img.alt" loading="lazy" (error)="onImageError($event)" />
                                         @if (img.isPrimary) {
                                             <span class="img-primary-badge">Головне</span>
                                         }

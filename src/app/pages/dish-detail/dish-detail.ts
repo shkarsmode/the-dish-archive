@@ -30,6 +30,7 @@ import { DishRatingsComponent } from '../../shared/components/dish-ratings.compo
 import { TagChipComponent } from '../../shared/components/tag-chip.component';
 import { TasteRadarComponent } from '../../shared/components/taste-radar.component';
 import { SelectComponent, SelectOption } from '../../shared/components/select.component';
+import { cld } from '../../core/utils/cloudinary';
 
 @Component({
     selector: 'app-dish-detail',
@@ -77,10 +78,21 @@ export class DishDetailPage {
         this.route.paramMap.pipe(map(params => params.get('slug') ?? ''))
     );
 
+    // Cloudinary transform helper, exposed for the template image [src] bindings.
+    protected readonly cld = cld;
+
+    // A single recipe fetched directly by slug when it isn't in the cached list yet
+    // (deep link / cold load) — so the page renders without waiting for the whole archive.
+    private readonly fetchedDish = signal<Dish | undefined>(undefined);
+    private readonly fetchedSlugs = new Set<string>();
+
     readonly dish = computed(() => {
         const slugValue = this.slug();
         if (!slugValue) return undefined;
-        return this.dishService.getDishBySlug(slugValue)();
+        const cached = this.dishService.getDishBySlug(slugValue)();
+        if (cached) return cached;
+        const fetched = this.fetchedDish();
+        return fetched?.slug === slugValue ? fetched : undefined;
     });
 
     readonly isLoading = this.dishService.isLoading;
@@ -138,6 +150,9 @@ export class DishDetailPage {
         const current = this.dish();
         if (!current || all.length < 2) return { prev: undefined, next: undefined };
         const idx = all.findIndex(d => d.id === current.id);
+        // The open dish may not be in the active filtered set (deep link, or it was
+        // just filtered out) — guard idx === -1 so we don't return all[0] as "next".
+        if (idx === -1) return { prev: undefined, next: undefined };
         return {
             prev: idx > 0 ? all[idx - 1] : undefined,
             next: idx < all.length - 1 ? all[idx + 1] : undefined,
@@ -149,6 +164,20 @@ export class DishDetailPage {
     private readonly destroyRef = inject(DestroyRef);
 
     constructor() {
+        // Deep link / cold load: if this recipe isn't in the cached list yet, fetch
+        // just this one by slug so it paints immediately instead of blocking on the
+        // whole archive. The background list load still fills prev/next shortly after.
+        effect(() => {
+            const slugValue = this.slug();
+            if (!slugValue) return;
+            if (this.dishService.getDishBySlug(slugValue)()) return; // already cached
+            if (this.fetchedSlugs.has(slugValue)) return;            // already attempted
+            this.fetchedSlugs.add(slugValue);
+            void this.dishService.fetchDishBySlug(slugValue).then(d => {
+                if (d) this.fetchedDish.set(d);
+            });
+        });
+
         // Keep the document's title + social/SEO metadata in sync with the open
         // recipe (mirrors the server-rendered tags from api/render.js), and
         // restore the site defaults when navigating away.
@@ -322,33 +351,43 @@ export class DishDetailPage {
     // ── Confetti ──
     private launchConfetti(): void {
         const emojis = ['🎉', '✨', '🌟', '💫', '🎊', '⭐'];
+        const frag = document.createDocumentFragment();
+        const nodes: HTMLElement[] = [];
         for (let i = 0; i < 30; i++) {
             const el = document.createElement('span');
             el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
             const x = 20 + Math.random() * 60;
             const delay = Math.random() * 300;
+            const dur = 1.2 + Math.random() * 0.8;
+            const dx = (Math.random() - 0.5) * 20;
+            const dy = 90 + Math.random() * 30;
+            const rot = Math.random() * 720 - 360;
             Object.assign(el.style, {
                 position: 'fixed',
                 left: `${x}vw`,
-                top: '-20px',
+                top: '0',
                 fontSize: `${14 + Math.random() * 18}px`,
                 pointerEvents: 'none',
                 zIndex: '9999',
                 opacity: '1',
-                transition: `all ${1.2 + Math.random() * 0.8}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+                transform: 'translate3d(0, -20px, 0)',
+                // Animate only compositor-friendly props (transform/opacity) — no
+                // top/left, so 30 nodes don't force a main-thread layout each frame.
+                transition: `transform ${dur}s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity ${dur}s`,
                 transitionDelay: `${delay}ms`,
             });
-            document.body.appendChild(el);
-
-            requestAnimationFrame(() => {
-                el.style.top = `${70 + Math.random() * 30}vh`;
-                el.style.left = `${x + (Math.random() - 0.5) * 20}vw`;
-                el.style.opacity = '0';
-                el.style.transform = `rotate(${Math.random() * 720 - 360}deg)`;
-            });
-
+            el.dataset['tx'] = `translate3d(${dx}vw, ${dy}vh, 0) rotate(${rot}deg)`;
+            frag.appendChild(el);
+            nodes.push(el);
             setTimeout(() => el.remove(), 2500);
         }
+        document.body.appendChild(frag);
+        requestAnimationFrame(() => {
+            for (const el of nodes) {
+                el.style.transform = el.dataset['tx']!;
+                el.style.opacity = '0';
+            }
+        });
     }
 
     // ── Inline editing ──

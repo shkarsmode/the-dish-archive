@@ -14,6 +14,7 @@ import {
     TASTE_LABELS,
 } from '../../core/models/dish.model';
 import { AiRecipeDraft, AiService } from '../../core/services/ai.service';
+import { cld } from '../../core/utils/cloudinary';
 import { DishService } from '../../core/services/dish.service';
 import { FamilyService } from '../../core/services/family.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -151,7 +152,7 @@ export class RecipeEditorPage {
         queueMicrotask(() => {
             const id = this.editId();
             if (id) {
-                this.loadDish(id);
+                void this.loadDish(id);
             } else {
                 this.initNewRecipe();
             }
@@ -572,8 +573,15 @@ export class RecipeEditorPage {
         });
     }
 
-    private loadDish(id: string): void {
-        const dish = this.dishService.allDishes().find(d => d.id === id);
+    private async loadDish(id: string): Promise<void> {
+        let dish = this.dishService.allDishes().find(d => d.id === id);
+        if (!dish) {
+            // Cold load / hard refresh / shared link: the dish list may not be
+            // populated yet. Load it before declaring the recipe missing, so we
+            // don't falsely bounce to the catalog with "Рецепт не знайдено".
+            await this.dishService.reload();
+            dish = this.dishService.allDishes().find(d => d.id === id);
+        }
         if (!dish) {
             this.toast.show('Рецепт не знайдено', 'error');
             void this.router.navigate(['/']);
@@ -673,7 +681,7 @@ export class RecipeEditorPage {
         this.form.markAsDirty();
     }
 
-    protected imageUrl(index: number): string { return this.images.at(index).value.url; }
+    protected imageUrl(index: number): string { return cld(this.images.at(index).value.url, 'f_auto,q_auto,c_fill,w_400'); }
     protected imageIsPrimary(index: number): boolean { return this.images.at(index).value.isPrimary; }
 
     private buildDish(status: 'draft' | 'published'): Partial<Dish> {

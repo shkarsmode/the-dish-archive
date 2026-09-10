@@ -1,6 +1,7 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { CATEGORY_LABELS, Dish, DishCategory } from '../../core/models/dish.model';
+import { cld, cldSrcset } from '../../core/utils/cloudinary';
 import { CompareService } from '../../core/services/compare.service';
 import { ScrollRestorationService } from '../../core/services/scroll-restoration.service';
 import { DisplayMode } from '../../core/services/settings.service';
@@ -10,6 +11,7 @@ import { RatingStarsComponent } from './rating-stars.component';
 
 @Component({
     selector: 'app-dish-card',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [RatingStarsComponent, FavoritesButtonComponent],
     hostDirectives: [RevealDirective],
     host: {
@@ -22,7 +24,9 @@ import { RatingStarsComponent } from './rating-stars.component';
                  (keydown.enter)="openDish()" [attr.aria-label]="dish().title">
             <div class="card-image">
                 <img
-                    [src]="primaryImage()"
+                    [src]="cardImage()"
+                    [srcset]="cardSrcset()"
+                    sizes="(min-width: 1024px) 300px, (min-width: 768px) 33vw, 50vw"
                     [alt]="dish().images[0]?.alt || dish().title"
                     loading="lazy"
                     decoding="async"
@@ -432,6 +436,11 @@ export class DishCardComponent {
         const primary = images.find(img => img.isPrimary);
         return primary?.url ?? images[0]?.url ?? '';
     });
+
+    // Render a card-sized, auto-format/quality Cloudinary derivative instead of the
+    // multi-megapixel original (non-Cloudinary/local/data URLs pass through unchanged).
+    protected readonly cardImage = computed(() => cld(this.primaryImage(), 'f_auto,q_auto,c_fill,w_600'));
+    protected readonly cardSrcset = computed(() => cldSrcset(this.primaryImage(), 'f_auto,q_auto,c_fill', [400, 600, 800]));
 
     protected getCategoryLabel(category: DishCategory): string {
         return CATEGORY_LABELS[category] ?? category;
