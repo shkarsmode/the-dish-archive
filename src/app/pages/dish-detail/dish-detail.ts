@@ -132,7 +132,7 @@ export class DishDetailPage {
     protected readonly activeImageIndex = signal(0);
     protected readonly completedSteps = signal<Set<number>>(new Set());
 
-    // Swipe navigation
+    // Prev/next dish navigation (arrow buttons only — swipe was removed intentionally).
     protected readonly adjacentDishes = computed(() => {
         const all = this.dishService.filteredDishes();
         const current = this.dish();
@@ -144,7 +144,6 @@ export class DishDetailPage {
         };
     });
 
-    private touchStartX = 0;
     private lastDishId: string | null = null;
 
     private readonly destroyRef = inject(DestroyRef);
@@ -318,24 +317,6 @@ export class DishDetailPage {
             }
             return next;
         });
-    }
-
-    // ── Swipe navigation ──
-    protected onTouchStart(event: TouchEvent): void {
-        this.touchStartX = event.touches[0].clientX;
-    }
-
-    protected onTouchEnd(event: TouchEvent): void {
-        const diff = this.touchStartX - event.changedTouches[0].clientX;
-        const threshold = 80;
-        if (Math.abs(diff) < threshold) return;
-
-        const { prev, next } = this.adjacentDishes();
-        if (diff > 0 && next) {
-            this.router.navigate(['/dish', next.slug]);
-        } else if (diff < 0 && prev) {
-            this.router.navigate(['/dish', prev.slug]);
-        }
     }
 
     // ── Confetti ──

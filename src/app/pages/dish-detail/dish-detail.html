@@ -14,9 +14,7 @@
     </div>
 } @else {
     <article class="dish-detail"
-        [class.admin-editing]="canEdit()"
-        (touchstart)="onTouchStart($event)"
-        (touchend)="onTouchEnd($event)">
+        [class.admin-editing]="canEdit()">
 
         <!-- Admin Mode Bar -->
         @if (canEdit()) {
