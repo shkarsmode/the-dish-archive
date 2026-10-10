@@ -1,162 +1,311 @@
-<form class="editor" [formGroup]="form" (ngSubmit)="save('published')">
-    <header class="editor-header">
-        <button type="button" class="icon-btn" (click)="cancel()" aria-label="Назад">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </button>
-        <div class="header-titles">
-            <h1 class="editor-title">{{ isEdit() ? 'Редагувати рецепт' : 'Новий рецепт' }}</h1>
-            @if (!isEdit() && draftSavedAt()) {
-                <span class="autosave"><span class="material-symbols-outlined">cloud_done</span> Чернетку збережено автоматично</span>
-            }
-        </div>
-        @if (restoredDraft()) {
-            <button type="button" class="icon-btn subtle" (click)="startFresh()" aria-label="Почати заново" title="Почати заново">
-                <span class="material-symbols-outlined">restart_alt</span>
-            </button>
+<header class="editor-header">
+    <button type="button" class="icon-btn" (click)="cancel()" aria-label="Назад">
+        <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div class="header-titles">
+        <h1 class="editor-title">{{ isEdit() ? 'Редагувати рецепт' : 'Новий рецепт' }}</h1>
+        @if (!isEdit() && mode() === 'form' && draftSavedAt()) {
+            <span class="autosave"><span class="material-symbols-outlined">cloud_done</span> Чернетка зберігається автоматично</span>
         }
-    </header>
+    </div>
+    @if (!isEdit() && mode() === 'form' && canUseAi() && !importResult()) {
+        <button type="button" class="header-ai" (click)="restartImport()" title="Заповнити з посилання або фото">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span class="header-ai-label">З посилання</span>
+        </button>
+    } @else if (restoredDraft() && mode() === 'form') {
+        <button type="button" class="icon-btn subtle" (click)="startFresh()" aria-label="Почати заново" title="Почати заново">
+            <span class="material-symbols-outlined">restart_alt</span>
+        </button>
+    }
+</header>
 
-    <div class="editor-body">
-        <!-- AI: compose a new recipe, or propose changes to an existing one (group admins) -->
-        @if (showAi()) {
-            <section class="card ai-card">
-                <h2 class="card-title">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    {{ isEdit() ? 'Доповнити за допомогою AI' : 'Створити за допомогою AI' }}
-                </h2>
-                @if (isEdit()) {
-                    <p class="ai-hint">
-                        Опишіть, що додати чи уточнити — інгредієнти, кроки, час, смак.
-                        AI враховує поточний рецепт і одразу його оновить — ви побачите список
-                        змін і зможете їх скасувати.
-                    </p>
-                } @else {
-                    <p class="ai-hint">
-                        Опишіть страву своїми словами — інгредієнти, кроки, час.
-                        AI заповнить форму, а ви перевірите та відредагуєте перед збереженням.
-                    </p>
-                }
-                <textarea
-                    class="ai-textarea"
-                    rows="4"
-                    [value]="aiText()"
-                    (input)="aiText.set($any($event.target).value)"
-                    [disabled]="aiLoading()"
-                    [placeholder]="isEdit()
-                        ? 'Напр.: додати ваніль і цедру лимона, обсмажувати по 4 хв, подавати зі сметаною…'
-                        : 'Напр.: Сирники з ягодами. 500 г сиру, 2 яйця, 3 ст.л. борошна, цукор за смаком. Змішати, сформувати, обсмажити по 3 хв з кожного боку…'"></textarea>
-                <div class="ai-actions">
-                    <button
-                        type="button"
-                        class="ai-generate"
-                        (click)="generateWithAi()"
-                        [disabled]="aiLoading() || aiText().trim().length < 10">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        {{ aiLoading() ? 'Генерую…' : (isEdit() ? 'Запропонувати зміни' : 'Згенерувати') }}
-                    </button>
-                    @if (aiDaily(); as d) {
-                        <span class="ai-quota">
-                            @if (d.limit !== null) { Залишилось {{ d.remaining }} з {{ d.limit }} сьогодні }
-                            @else { Без ліміту }
+@if (mode() !== 'form') {
+    <div class="editor-body narrow">
+        <!-- Stays mounted (hidden) during an import, so a failed attempt keeps the
+             pasted link, picked photos and dictated text. -->
+        <app-recipe-import-start
+            [style.display]="mode() === 'importing' ? 'none' : null"
+            [error]="importError()"
+            [notRecipe]="notRecipe()"
+            [draftTitle]="pendingDraftTitle()"
+            [quota]="aiDaily()"
+            [aiAvailable]="canUseAi()"
+            (start)="startImport($event)"
+            (manual)="startManual()"
+            (resumeDraft)="resumeDraft()" />
+        @if (mode() === 'importing') {
+            <app-import-progress
+                [kind]="importKind()"
+                [platform]="importPlatform()"
+                [preview]="importPreview()"
+                [photos]="importPhotos()"
+                [text]="importText()"
+                [done]="importDone()"
+                (cancel)="cancelImport()" />
+        }
+    </div>
+}
+@if (mode() === 'form') {
+    <form class="editor" [formGroup]="form" (ngSubmit)="save('published')">
+        <div class="editor-body">
+            @if (showReview() && importResult(); as result) {
+                <app-import-review
+                    [result]="result"
+                    (jump)="jumpToIssue($event)"
+                    (dismiss)="showReview.set(false)"
+                    (restart)="restartImport()" />
+            }
+
+            <!-- AI assist for an existing recipe (folded until asked for) -->
+            @if (isEdit() && showAi()) {
+                <section class="card ai-card" [class.open]="aiAssistOpen()">
+                    <button type="button" class="ai-toggle" (click)="aiAssistOpen.set(!aiAssistOpen())" [attr.aria-expanded]="aiAssistOpen()">
+                        <span class="material-symbols-outlined spark">auto_awesome</span>
+                        <span class="ai-toggle-copy">
+                            <strong>Покращити з AI</strong>
+                            <span>Додати інгредієнт, уточнити кроки, час чи смак</span>
                         </span>
-                    }
-                </div>
-                @if (aiError()) {
-                    <p class="ai-error" role="alert">{{ aiError() }}</p>
-                }
-                @if (aiWarnings().length) {
-                    <ul class="ai-warnings">
-                        @for (w of aiWarnings(); track w) { <li>{{ w }}</li> }
-                    </ul>
-                }
-                @if (aiChanges().length || aiCanUndo()) {
-                    <div class="ai-review">
-                        <p class="ai-changelog-title">
-                            <span class="material-symbols-outlined">history</span>
-                            @if (aiChanges().length) {
-                                Що змінилось · {{ aiChanges().length }}
-                            } @else {
-                                Рецепт оновлено
-                            }
-                        </p>
-                        @if (!aiChanges().length) {
+                        <span class="material-symbols-outlined chevron">expand_more</span>
+                    </button>
+                    @if (aiAssistOpen()) {
+                        <div class="ai-body">
                             <p class="ai-hint">
-                                AI переписав рецепт, але помітних відмінностей немає.
+                                Опишіть, що додати чи уточнити. AI врахує поточний рецепт і одразу його оновить:
+                                ви побачите список змін і зможете їх скасувати.
                             </p>
-                        }
-                        <ul class="ai-changelog">
-                            @for (change of aiChanges(); track change.label) {
-                                <li class="ai-change">
-                                    <span class="ai-change-label">{{ change.label }}</span>
-                                    <span class="ai-change-diff">
-                                        <span class="ai-change-before">{{ change.before }}</span>
-                                        <span class="ai-change-arrow">→</span>
-                                        <span class="ai-change-after">{{ change.after }}</span>
+                            <textarea
+                                class="ai-textarea"
+                                rows="3"
+                                [value]="aiText()"
+                                (input)="aiText.set($any($event.target).value)"
+                                [disabled]="aiLoading()"
+                                placeholder="Напр.: додати ваніль і цедру лимона, обсмажувати по 4 хв, подавати зі сметаною"></textarea>
+                            <div class="ai-actions">
+                                <button
+                                    type="button"
+                                    class="ai-generate"
+                                    (click)="generateWithAi()"
+                                    [disabled]="aiLoading() || aiText().trim().length < 10">
+                                    <span class="material-symbols-outlined">{{ aiLoading() ? 'progress_activity' : 'auto_awesome' }}</span>
+                                    {{ aiLoading() ? 'Оновлюю...' : 'Запропонувати зміни' }}
+                                </button>
+                                @if (aiDaily(); as d) {
+                                    <span class="ai-quota">
+                                        @if (d.limit !== null) { Залишилось {{ d.remaining }} з {{ d.limit }} сьогодні }
+                                        @else { Без ліміту }
                                     </span>
-                                    @if (change.added?.length || change.removed?.length) {
-                                        <ul class="ai-change-items">
-                                            @for (item of change.added ?? []; track item) {
-                                                <li class="added">+ {{ item }}</li>
-                                            }
-                                            @for (item of change.removed ?? []; track item) {
-                                                <li class="removed">− {{ item }}</li>
-                                            }
-                                        </ul>
-                                    }
-                                </li>
+                                }
+                            </div>
+                            @if (aiError()) {
+                                <p class="ai-error" role="alert">{{ aiError() }}</p>
                             }
-                        </ul>
-                        <p class="ai-hint ai-changelog-note">
-                            Зміни внесені лише у форму — рецепт оновиться після натискання «Зберегти».
-                            Фото, ціна й посилання не змінювались.
-                        </p>
-                        @if (aiCanUndo()) {
-                            <div class="ai-review-actions">
-                                <button type="button" class="ai-secondary" (click)="undoAiUpdate()">
-                                    <span class="material-symbols-outlined">undo</span>
-                                    Скасувати зміни
+                            @if (aiWarnings().length) {
+                                <ul class="ai-warnings">
+                                    @for (w of aiWarnings(); track w) { <li>{{ w }}</li> }
+                                </ul>
+                            }
+                            @if (aiChanges().length || aiCanUndo()) {
+                                <div class="ai-review">
+                                    <p class="ai-changelog-title">
+                                        <span class="material-symbols-outlined">history</span>
+                                        @if (aiChanges().length) {
+                                            Що змінилось · {{ aiChanges().length }}
+                                        } @else {
+                                            Рецепт оновлено
+                                        }
+                                    </p>
+                                    @if (!aiChanges().length) {
+                                        <p class="ai-hint">AI переписав рецепт, але помітних відмінностей немає.</p>
+                                    }
+                                    <ul class="ai-changelog">
+                                        @for (change of aiChanges(); track change.label) {
+                                            <li class="ai-change">
+                                                <span class="ai-change-label">{{ change.label }}</span>
+                                                <span class="ai-change-diff">
+                                                    <span class="ai-change-before">{{ change.before }}</span>
+                                                    <span class="ai-change-arrow">→</span>
+                                                    <span class="ai-change-after">{{ change.after }}</span>
+                                                </span>
+                                                @if (change.added?.length || change.removed?.length) {
+                                                    <ul class="ai-change-items">
+                                                        @for (item of change.added ?? []; track item) {
+                                                            <li class="added">+ {{ item }}</li>
+                                                        }
+                                                        @for (item of change.removed ?? []; track item) {
+                                                            <li class="removed">- {{ item }}</li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                    <p class="ai-hint ai-changelog-note">
+                                        Зміни внесені лише у форму: рецепт оновиться після «Опублікувати» чи «Чернетка».
+                                        Фото, ціна й посилання не змінювались.
+                                    </p>
+                                    @if (aiCanUndo()) {
+                                        <div class="ai-review-actions">
+                                            <button type="button" class="ai-secondary" (click)="undoAiUpdate()">
+                                                <span class="material-symbols-outlined">undo</span>
+                                                Скасувати зміни
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+
+            <!-- Basic: photos, title, description -->
+            <section class="card" id="sec-basic">
+                <div class="image-strip">
+                    @for (control of images.controls; track $index) {
+                        <div class="image-tile" [class.primary]="imageIsPrimary($index)">
+                            <img [src]="imageUrl($index)" alt="" loading="lazy">
+                            <div class="image-actions">
+                                <button type="button" title="Зробити головним" (click)="setPrimary($index)" [class.on]="imageIsPrimary($index)">
+                                    <span class="material-symbols-outlined">star</span>
+                                </button>
+                                <button type="button" title="Видалити" (click)="removeImage($index)">
+                                    <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
-                        }
+                            @if (imageIsPrimary($index)) { <span class="primary-badge">Обкладинка</span> }
+                        </div>
+                    }
+                    <label class="image-upload" [class.busy]="uploading()" [class.empty]="!images.length">
+                        <input type="file" accept="image/*" multiple (change)="onImageSelected($event)" hidden>
+                        <span class="material-symbols-outlined">{{ uploading() ? 'progress_activity' : 'add_photo_alternate' }}</span>
+                        <span>{{ uploading() ? 'Завантаження...' : images.length ? 'Ще фото' : 'Додати фото страви' }}</span>
+                    </label>
+                </div>
+                <div class="field">
+                    <label for="f-title">Назва *</label>
+                    <input id="f-title" type="text" formControlName="title" (input)="onTitleInput($any($event.target).value)" placeholder="Напр. Сирники з ягодами"
+                        [class.invalid]="form.controls.title.invalid && form.controls.title.touched">
+                </div>
+                <div class="field">
+                    <label for="f-desc">Опис</label>
+                    <textarea id="f-desc" formControlName="description" rows="2" placeholder="Коротко й апетитно: чим смакує ця страва"></textarea>
+                </div>
+            </section>
+
+            <!-- Ingredients -->
+            <section class="card" id="sec-ingredients">
+                <div class="card-head">
+                    <h2 class="card-title">Інгредієнти <span class="count">{{ ingredients.length }}</span></h2>
+                    <div class="head-actions">
+                        <button type="button" class="text-btn" (click)="bulkOpen.set(!bulkOpen())">
+                            <span class="material-symbols-outlined">format_list_bulleted_add</span>
+                            <span class="text-btn-label">Списком</span>
+                        </button>
+                        <button type="button" class="add-row" (click)="addIngredient()" aria-label="Додати інгредієнт"><span class="material-symbols-outlined">add</span></button>
+                    </div>
+                </div>
+                @if (bulkOpen()) {
+                    <div class="bulk">
+                        <textarea rows="5" [(ngModel)]="bulkText" [ngModelOptions]="{ standalone: true }"
+                            placeholder="Вставте список, по одному в рядку:&#10;500 г сиру&#10;2 яйця&#10;3 ст. л. борошна&#10;цукор - за смаком"></textarea>
+                        <div class="bulk-actions">
+                            <button type="button" class="btn ghost" (click)="bulkOpen.set(false)">Скасувати</button>
+                            <button type="button" class="btn primary" (click)="applyBulkIngredients()" [disabled]="!bulkText.trim()">Додати до списку</button>
+                        </div>
                     </div>
                 }
+                <div class="rows" formArrayName="ingredients">
+                    @for (row of ingredients.controls; track row) {
+                        <div class="row-wrap" [attr.data-row]="'ingredients-' + $index" [class.has-issue]="rowIssue(row)">
+                            <div class="ingredient-row" [formGroupName]="$index">
+                                <input class="grow" type="text" formControlName="name" placeholder="Інгредієнт" aria-label="Інгредієнт">
+                                <input class="sm" type="text" formControlName="amount" placeholder="К-сть" aria-label="Кількість">
+                                <input class="sm" type="text" formControlName="unit" placeholder="од." aria-label="Одиниця">
+                                <button type="button" class="row-del" (click)="removeIngredient($index)" aria-label="Видалити інгредієнт"><span class="material-symbols-outlined">close</span></button>
+                            </div>
+                            @if (rowIssue(row); as issue) {
+                                <p class="row-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                            }
+                        </div>
+                    }
+                </div>
+                <button type="button" class="add-wide" (click)="addIngredient()">
+                    <span class="material-symbols-outlined">add</span> Додати інгредієнт
+                </button>
             </section>
-        }
 
-        <!-- Basic -->
-        <section class="card">
-            <h2 class="card-title">Основне</h2>
-            <div class="field">
-                <label>Назва *</label>
-                <input type="text" formControlName="title" (input)="onTitleInput($any($event.target).value)" placeholder="Напр. Сирники з ягодами">
-            </div>
-            <div class="field">
-                <label>Посилання (slug)</label>
-                <input type="text" formControlName="slug" (input)="markSlugTouched()" placeholder="syrnyky">
-            </div>
-            <div class="field">
-                <label>Опис</label>
-                <textarea formControlName="description" rows="3" placeholder="Короткий апетитний опис"></textarea>
-            </div>
-        </section>
+            <!-- Steps -->
+            <section class="card" id="sec-steps">
+                <div class="card-head">
+                    <h2 class="card-title">Кроки приготування <span class="count">{{ steps.length }}</span></h2>
+                    <button type="button" class="add-row" (click)="addStep()" aria-label="Додати крок"><span class="material-symbols-outlined">add</span></button>
+                </div>
+                @for (issue of sectionIssues('steps', 'temperature', 'equipment'); track $index) {
+                    <p class="section-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                }
+                <div class="rows" formArrayName="steps">
+                    @for (row of steps.controls; track row) {
+                        <div class="row-wrap" [attr.data-row]="'steps-' + $index" [class.has-issue]="rowIssue(row)">
+                            <div class="step-row" [formGroupName]="$index">
+                                <span class="step-num">{{ $index + 1 }}</span>
+                                <textarea class="grow" formControlName="description" rows="2" placeholder="Що робимо на цьому кроці" aria-label="Опис кроку"></textarea>
+                                <div class="step-side">
+                                    <input class="sm" type="number" inputmode="numeric" formControlName="duration" placeholder="хв" aria-label="Хвилин">
+                                    <button type="button" class="row-del" (click)="removeStep($index)" aria-label="Видалити крок"><span class="material-symbols-outlined">close</span></button>
+                                </div>
+                            </div>
+                            @if (rowIssue(row); as issue) {
+                                <p class="row-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                            }
+                        </div>
+                    }
+                </div>
+                <button type="button" class="add-wide" (click)="addStep()">
+                    <span class="material-symbols-outlined">add</span> Додати крок
+                </button>
+            </section>
 
-        <!-- Family / visibility / status -->
-        <section class="card">
-            <h2 class="card-title">Родина та доступ</h2>
-            <div class="field">
-                <label>Родина *</label>
-                <app-select
-                    formControlName="familyId"
-                    [options]="familyOptions()"
-                    placeholder="— Оберіть родину —"
-                    sheetTitle="Оберіть родину"
-                    ariaLabel="Родина" />
-            </div>
-            <div class="field">
-                <label>Видимість</label>
+            <!-- Time & servings -->
+            <section class="card" id="sec-details">
+                <h2 class="card-title">Час і порції</h2>
+                @for (issue of sectionIssues('time', 'servings'); track $index) {
+                    <p class="section-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                }
+                <div class="grid-fields">
+                    <div class="field"><label>Підготовка, хв</label><input type="number" inputmode="numeric" formControlName="prepTime"></div>
+                    <div class="field"><label>Готування, хв</label><input type="number" inputmode="numeric" formControlName="cookTime"></div>
+                    <div class="field"><label>Разом, хв</label><input type="number" inputmode="numeric" formControlName="totalTime"></div>
+                    <div class="field"><label>Порцій</label><input type="number" inputmode="numeric" formControlName="servings"></div>
+                    <div class="field">
+                        <label>Складність</label>
+                        <app-select
+                            formControlName="difficulty"
+                            [options]="difficultyOptions"
+                            sheetTitle="Складність"
+                            ariaLabel="Складність" />
+                    </div>
+                    <div class="field"><label>Ккал на порцію</label><input type="number" inputmode="numeric" formControlName="calories"></div>
+                </div>
+            </section>
+
+            <!-- Who sees it -->
+            <section class="card" id="sec-access">
+                <h2 class="card-title">Хто побачить рецепт</h2>
+                @if (showFamilyPicker()) {
+                    <div class="field">
+                        <label>Родина *</label>
+                        <app-select
+                            formControlName="familyId"
+                            [options]="familyOptions()"
+                            placeholder="Оберіть родину"
+                            sheetTitle="Оберіть родину"
+                            ariaLabel="Родина" />
+                    </div>
+                }
                 <div class="segmented">
                     <button type="button" [class.active]="form.controls.visibility.value === 'public'" (click)="form.controls.visibility.setValue('public')" [disabled]="!canMakePublic()">
-                        <span class="material-symbols-outlined">public</span> Публічно
+                        <span class="material-symbols-outlined">public</span> Усі
                     </button>
                     <button type="button" [class.active]="form.controls.visibility.value === 'family'" (click)="form.controls.visibility.setValue('family')">
                         <span class="material-symbols-outlined">lock</span> Тільки родина
@@ -166,157 +315,87 @@
                     <span class="field-hint">Публічними може робити лише власник або адмін родини.</span>
                 } @else if (form.controls.visibility.value === 'family') {
                     <span class="field-hint">Приватний рецепт бачать лише члени родини та головний адмін.</span>
+                } @else {
+                    <span class="field-hint">Рецептом можна буде поділитися посиланням.</span>
                 }
-            </div>
-        </section>
-
-        <!-- Images -->
-        <section class="card">
-            <h2 class="card-title">Фото</h2>
-            <div class="image-grid">
-                @for (control of images.controls; track $index) {
-                    <div class="image-tile" [class.primary]="imageIsPrimary($index)">
-                        <img [src]="imageUrl($index)" alt="">
-                        <div class="image-actions">
-                            <button type="button" title="Головне" (click)="setPrimary($index)" [class.on]="imageIsPrimary($index)">
-                                <span class="material-symbols-outlined">star</span>
-                            </button>
-                            <button type="button" title="Видалити" (click)="removeImage($index)">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </div>
-                    </div>
-                }
-                <label class="image-upload" [class.busy]="uploading()">
-                    <input type="file" accept="image/*" multiple (change)="onImageSelected($event)" hidden>
-                    <span class="material-symbols-outlined">{{ uploading() ? 'hourglass_top' : 'add_photo_alternate' }}</span>
-                    <span>{{ uploading() ? 'Завантаження…' : 'Додати фото' }}</span>
-                </label>
-            </div>
-        </section>
-
-        <!-- Ingredients -->
-        <section class="card">
-            <div class="card-head">
-                <h2 class="card-title">Інгредієнти</h2>
-                <button type="button" class="add-row" (click)="addIngredient()"><span class="material-symbols-outlined">add</span></button>
-            </div>
-            <div class="rows" formArrayName="ingredients">
-                @for (row of ingredients.controls; track row) {
-                    <div class="ingredient-row" [formGroupName]="$index">
-                        <input class="grow" type="text" formControlName="name" placeholder="Інгредієнт">
-                        <input class="sm" type="text" formControlName="amount" placeholder="К-сть">
-                        <input class="sm" type="text" formControlName="unit" placeholder="од.">
-                        <button type="button" class="row-del" (click)="removeIngredient($index)"><span class="material-symbols-outlined">close</span></button>
-                    </div>
-                }
-            </div>
-        </section>
-
-        <!-- Steps -->
-        <section class="card">
-            <div class="card-head">
-                <h2 class="card-title">Кроки приготування</h2>
-                <button type="button" class="add-row" (click)="addStep()"><span class="material-symbols-outlined">add</span></button>
-            </div>
-            <div class="rows" formArrayName="steps">
-                @for (row of steps.controls; track row) {
-                    <div class="step-row" [formGroupName]="$index">
-                        <span class="step-num">{{ $index + 1 }}</span>
-                        <textarea class="grow" formControlName="description" rows="2" placeholder="Опис кроку"></textarea>
-                        <input class="sm" type="number" formControlName="duration" placeholder="хв">
-                        <button type="button" class="row-del" (click)="removeStep($index)"><span class="material-symbols-outlined">close</span></button>
-                    </div>
-                }
-            </div>
-        </section>
-
-        <!-- Timings & nutrition -->
-        <section class="card">
-            <h2 class="card-title">Час, поживність, ціна</h2>
-            <div class="grid-fields">
-                <div class="field"><label>Підготовка, хв</label><input type="number" formControlName="prepTime"></div>
-                <div class="field"><label>Готування, хв</label><input type="number" formControlName="cookTime"></div>
-                <div class="field"><label>Разом, хв</label><input type="number" formControlName="totalTime"></div>
-                <div class="field"><label>Калорії</label><input type="number" formControlName="calories"></div>
-                <div class="field"><label>Порцій</label><input type="number" formControlName="servings"></div>
-                <div class="field">
-                    <label>Складність</label>
-                    <app-select
-                        formControlName="difficulty"
-                        [options]="difficultyOptions"
-                        sheetTitle="Складність"
-                        ariaLabel="Складність" />
-                </div>
-                <div class="field"><label>Ціна</label><input type="number" formControlName="priceAmount"></div>
-                <div class="field"><label>Валюта</label><input type="text" formControlName="priceCurrency"></div>
-            </div>
-        </section>
-
-        <!-- Categories, taste, tags -->
-        <section class="card">
-            <h2 class="card-title">Категорії, смак, теги</h2>
-            <label class="sub-label">Категорії</label>
-            <div class="chips">
-                @for (category of allCategories; track category) {
-                    <button type="button" class="chip" [class.active]="isCategoryActive(category)" (click)="toggleCategory(category)">
-                        {{ categoryLabels[category] }}
-                    </button>
-                }
-            </div>
-
-            <label class="sub-label">Смаковий профіль</label>
-            <div class="taste-grid" formGroupName="taste">
-                @for (key of tasteKeys; track key) {
-                    <div class="taste-row">
-                        <span class="taste-name">{{ tasteLabels[key] }}</span>
-                        <input type="range" min="0" max="5" [formControlName]="key">
-                        <span class="taste-value">{{ form.controls.taste.get(key)?.value }}</span>
-                    </div>
-                }
-            </div>
-
-            <label class="sub-label">Теги</label>
-            <div class="tag-input">
-                <input type="text" [(ngModel)]="newTag" [ngModelOptions]="{standalone:true}" (keydown.enter)="$event.preventDefault(); addTag()" placeholder="Додати тег і Enter">
-                <button type="button" (click)="addTag()"><span class="material-symbols-outlined">add</span></button>
-            </div>
-            <div class="chips">
-                @for (tag of tags.controls; track $index) {
-                    <span class="tag-chip">{{ tag.value }}<button type="button" (click)="removeTag($index)">×</button></span>
-                }
-            </div>
-        </section>
-
-        <!-- Notes -->
-        <section class="card">
-            <h2 class="card-title">Нотатки та джерело</h2>
-            <div class="field"><label>Нотатки</label><textarea formControlName="notes" rows="3" placeholder="Поради, історія страви"></textarea></div>
-            <div class="field"><label>Джерело (URL)</label><input type="text" formControlName="sourceUrl" placeholder="https://…"></div>
-        </section>
-
-        @if (isEdit()) {
-            <section class="card danger-card">
-                <div class="danger-copy">
-                    <h2 class="card-title">Видалити рецепт</h2>
-                    <p class="danger-hint">Рецепт зникне для всієї родини. Дію не можна скасувати.</p>
-                </div>
-                <button type="button" class="btn danger-outline" (click)="remove()" [disabled]="deleting()">
-                    <span class="material-symbols-outlined">delete</span>
-                    {{ deleting() ? 'Видаляю…' : 'Видалити' }}
-                </button>
             </section>
-        }
-    </div>
 
-    <div class="action-bar">
-        <button type="button" class="btn ghost bar-draft" (click)="save('draft')" [disabled]="saving()">
-            <span class="material-symbols-outlined">bookmark</span>
-            <span class="bar-label">Чернетка</span>
-        </button>
-        <button type="submit" class="btn primary bar-publish" [disabled]="saving()">
-            <span class="material-symbols-outlined">check_circle</span>
-            {{ saving() ? 'Зберігаю…' : 'Опублікувати' }}
-        </button>
-    </div>
-</form>
+            <!-- Extras, folded -->
+            <section class="card extra" id="sec-extra" [class.open]="showExtra()">
+                <button type="button" class="extra-toggle" (click)="showExtra.set(!showExtra())" [attr.aria-expanded]="showExtra()">
+                    <span class="extra-copy">
+                        <strong>Додатково</strong>
+                        <span>Категорії, смак, теги, нотатки, джерело, ціна</span>
+                    </span>
+                    <span class="material-symbols-outlined chevron">expand_more</span>
+                </button>
+                @if (showExtra()) {
+                    <div class="extra-body">
+                        <label class="sub-label">Категорії</label>
+                        <div class="chips">
+                            @for (category of allCategories; track category) {
+                                <button type="button" class="chip" [class.active]="isCategoryActive(category)" (click)="toggleCategory(category)">
+                                    {{ categoryLabels[category] }}
+                                </button>
+                            }
+                        </div>
+
+                        <label class="sub-label">Смаковий профіль</label>
+                        <div class="taste-grid" formGroupName="taste">
+                            @for (key of tasteKeys; track key) {
+                                <div class="taste-row">
+                                    <span class="taste-name">{{ tasteLabels[key] }}</span>
+                                    <input type="range" min="0" max="5" [formControlName]="key">
+                                    <span class="taste-value">{{ form.controls.taste.get(key)?.value }}</span>
+                                </div>
+                            }
+                        </div>
+
+                        <label class="sub-label">Теги</label>
+                        <div class="tag-input">
+                            <input type="text" [(ngModel)]="newTag" [ngModelOptions]="{standalone:true}" (keydown.enter)="$event.preventDefault(); addTag()" placeholder="Додати тег і Enter">
+                            <button type="button" (click)="addTag()" aria-label="Додати тег"><span class="material-symbols-outlined">add</span></button>
+                        </div>
+                        <div class="chips">
+                            @for (tag of tags.controls; track $index) {
+                                <span class="tag-chip">{{ tag.value }}<button type="button" (click)="removeTag($index)" aria-label="Прибрати тег">×</button></span>
+                            }
+                        </div>
+
+                        <div class="field spaced"><label>Нотатки</label><textarea formControlName="notes" rows="3" placeholder="Поради, історія страви"></textarea></div>
+                        <div class="field"><label>Джерело (посилання)</label><input type="url" formControlName="sourceUrl" placeholder="https://..."></div>
+                        <div class="grid-fields two">
+                            <div class="field"><label>Ціна</label><input type="number" inputmode="numeric" formControlName="priceAmount"></div>
+                            <div class="field"><label>Валюта</label><input type="text" formControlName="priceCurrency"></div>
+                        </div>
+                        <div class="field"><label>Адреса сторінки (slug)</label><input type="text" formControlName="slug" (input)="markSlugTouched()" placeholder="syrnyky"></div>
+                    </div>
+                }
+            </section>
+
+            @if (isEdit()) {
+                <section class="card danger-card">
+                    <div class="danger-copy">
+                        <h2 class="card-title">Видалити рецепт</h2>
+                        <p class="danger-hint">Рецепт зникне для всієї родини. Дію не можна скасувати.</p>
+                    </div>
+                    <button type="button" class="btn danger-outline" (click)="remove()" [disabled]="deleting()">
+                        <span class="material-symbols-outlined">delete</span>
+                        {{ deleting() ? 'Видаляю...' : 'Видалити' }}
+                    </button>
+                </section>
+            }
+        </div>
+
+        <div class="action-bar">
+            <button type="button" class="btn ghost bar-draft" (click)="save('draft')" [disabled]="saving()">
+                <span class="material-symbols-outlined">bookmark</span>
+                <span class="bar-label">Чернетка</span>
+            </button>
+            <button type="submit" class="btn primary bar-publish" [disabled]="saving()">
+                <span class="material-symbols-outlined">{{ saving() ? 'progress_activity' : 'check_circle' }}</span>
+                {{ saving() ? 'Зберігаю...' : 'Опублікувати' }}
+            </button>
+        </div>
+    </form>
+}

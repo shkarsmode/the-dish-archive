@@ -1,0 +1,195 @@
+@if (draftTitle(); as title) {
+    <button type="button" class="resume" (click)="resumeDraft.emit()">
+        <span class="material-symbols-outlined resume-icon">history_edu</span>
+        <span class="resume-copy">
+            <strong>Продовжити чернетку</strong>
+            <span>{{ title }}</span>
+        </span>
+        <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+}
+
+<section class="hero" [class.dragging]="dragging()">
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <div class="hero-head">
+        <span class="hero-badge"><span class="material-symbols-outlined">auto_awesome</span> AI-помічник</span>
+        <h2 class="hero-title">Додайте рецепт за&nbsp;секунди</h2>
+        <p class="hero-sub">
+            Вставте посилання на допис, відео чи сайт або сфотографуйте рецепт.
+            AI сам заповнить інгредієнти, кроки й час і підкаже, чого бракує.
+        </p>
+    </div>
+
+    @if (!aiAvailable()) {
+        <p class="notice info">
+            <span class="material-symbols-outlined">lock</span>
+            AI-імпорт доступний власникам, адмінам і редакторам родини. Ви можете заповнити рецепт вручну.
+        </p>
+    } @else {
+        <div class="tabs" role="tablist" aria-label="Звідки взяти рецепт">
+            <button type="button" role="tab" [class.active]="panel() === 'link'" [attr.aria-selected]="panel() === 'link'" (click)="setPanel('link')">
+                <span class="material-symbols-outlined">link</span> Посилання
+            </button>
+            <button type="button" role="tab" [class.active]="panel() === 'photo'" [attr.aria-selected]="panel() === 'photo'" (click)="setPanel('photo')">
+                <span class="material-symbols-outlined">photo_camera</span> Фото
+            </button>
+            <button type="button" role="tab" [class.active]="panel() === 'text'" [attr.aria-selected]="panel() === 'text'" (click)="setPanel('text')">
+                <span class="material-symbols-outlined">mic</span> Текст
+            </button>
+        </div>
+
+        @switch (panel()) {
+            @case ('link') {
+                <form class="panel" (submit)="$event.preventDefault(); submitLink()">
+                    <div class="link-field" [class.valid]="linkValid()">
+                        <span class="link-icon" [class.detected]="!!detected()">
+                            @if (detected(); as platform) {
+                                <app-platform-icon [platform]="platform" />
+                            } @else {
+                                <span class="material-symbols-outlined">link</span>
+                            }
+                        </span>
+                        <input
+                            #linkInput
+                            type="url"
+                            inputmode="url"
+                            autocomplete="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            enterkeyhint="go"
+                            placeholder="Посилання на рецепт"
+                            aria-label="Посилання на рецепт"
+                            [value]="link()"
+                            (input)="link.set($any($event.target).value)" />
+                        @if (link()) {
+                            <button type="button" class="field-btn ghost" (click)="link.set('')" aria-label="Очистити">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        } @else {
+                            <button type="button" class="field-btn" (click)="pasteFromClipboard()">
+                                <span class="material-symbols-outlined">content_paste</span>
+                                <span class="field-btn-label">Вставити</span>
+                            </button>
+                        }
+                    </div>
+
+                    <ul class="platforms" aria-label="Підтримувані джерела">
+                        @for (item of supported; track item.key) {
+                            <li [class.on]="detected() === item.key">
+                                <app-platform-icon [platform]="item.key" />
+                                <span>{{ item.label }}</span>
+                            </li>
+                        }
+                    </ul>
+
+                    <button type="submit" class="cta" [disabled]="!linkValid()">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        Отримати рецепт
+                    </button>
+                </form>
+            }
+
+            @case ('photo') {
+                <div class="panel">
+                    <div class="photo-grid">
+                        @for (photo of photos(); track photo.id; let i = $index) {
+                            <figure class="photo">
+                                <img [src]="photo.dataUrl" [alt]="'Фото ' + (i + 1)" />
+                                <button type="button" class="photo-remove" (click)="removePhoto(photo.id)" aria-label="Прибрати фото">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </figure>
+                        }
+                        @if (photos().length < 4) {
+                            <button type="button" class="photo-add" (click)="openPicker()" [disabled]="preparing()">
+                                <span class="material-symbols-outlined">{{ preparing() ? 'progress_activity' : 'add_a_photo' }}</span>
+                                <span>{{ photos().length ? 'Ще фото' : 'Обрати фото' }}</span>
+                            </button>
+                        }
+                    </div>
+                    <p class="hint">
+                        Скриншот рецепта, сторінка з книги, рукописна картка або фото готової страви. До 4 фото.
+                    </p>
+                    @if (photos().length) {
+                        <input
+                            class="note"
+                            type="text"
+                            placeholder="Підказка для AI (необов'язково): напр. «на 6 порцій»"
+                            [value]="photoNote()"
+                            (input)="photoNote.set($any($event.target).value)" />
+                    }
+                    <button type="button" class="cta" [disabled]="preparing()" (click)="submitPhotos()">
+                        <span class="material-symbols-outlined">{{ photos().length ? 'auto_awesome' : 'add_a_photo' }}</span>
+                        {{ photos().length ? 'Розпізнати рецепт' : 'Обрати фото' }}
+                    </button>
+                </div>
+            }
+
+            @case ('text') {
+                <div class="panel">
+                    <div class="text-field" [class.listening]="listening()">
+                        <textarea
+                            rows="5"
+                            placeholder="Напр.: Сирники. 500 г сиру, 2 яйця, 3 ст. л. борошна, цукор за смаком. Змішати, сформувати, обсмажити по 3 хв з кожного боку."
+                            [value]="text()"
+                            (input)="text.set($any($event.target).value)"></textarea>
+                        @if (speechSupported) {
+                            <button type="button" class="mic" [class.on]="listening()" (click)="toggleVoice()"
+                                [attr.aria-label]="listening() ? 'Зупинити диктування' : 'Надиктувати'">
+                                <span class="material-symbols-outlined">{{ listening() ? 'stop' : 'mic' }}</span>
+                            </button>
+                        }
+                    </div>
+                    <p class="hint">
+                        @if (listening()) {
+                            <span class="rec-dot"></span> Слухаю... Розкажіть рецепт своїми словами.
+                        } @else {
+                            Напишіть або надиктуйте рецепт як подрузі: AI розкладе все по полицях.
+                        }
+                    </p>
+                    <button type="button" class="cta" [disabled]="text().trim().length < 10" (click)="submitText()">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        Створити рецепт
+                    </button>
+                </div>
+            }
+        }
+
+        @if (notRecipe(); as reason) {
+            <div class="notice warn" role="status">
+                <span class="material-symbols-outlined">search_off</span>
+                <div>
+                    <strong>Рецепта тут не знайшлося</strong>
+                    <p>{{ reason }}</p>
+                    <p class="notice-tip">Спробуйте скриншот рецепта або опишіть його словами.</p>
+                </div>
+            </div>
+        }
+        @if (shownError(); as message) {
+            <div class="notice error" role="alert">
+                <span class="material-symbols-outlined">error</span>
+                <p>{{ message }}</p>
+            </div>
+        }
+        @if (quota(); as q) {
+            @if (q.limit !== null && q.remaining !== null) {
+                <p class="quota">Сьогодні залишилось {{ q.remaining }} з {{ q.limit }} AI-рецептів</p>
+            }
+        }
+    }
+
+    @if (dragging()) {
+        <div class="drop-overlay" aria-hidden="true">
+            <span class="material-symbols-outlined">add_photo_alternate</span>
+            Відпустіть, щоб додати фото
+        </div>
+    }
+    <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFiles($event)" />
+</section>
+
+<button type="button" class="manual" (click)="manual.emit()">
+    <span class="material-symbols-outlined">edit_note</span>
+    <span>Заповнити вручну</span>
+    <span class="material-symbols-outlined chevron">chevron_right</span>
+</button>

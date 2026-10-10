@@ -3,7 +3,7 @@ import { CanActivateFn, CanDeactivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 interface CanDeactivateComponent {
-    canDeactivate?: () => boolean;
+    canDeactivate?: () => boolean | Promise<boolean>;
 }
 
 /** Warns before leaving a form with unsaved changes. */
