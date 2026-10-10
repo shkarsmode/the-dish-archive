@@ -87,6 +87,21 @@
                                     "with": "src/environments/environment.development.ts"
                                 }
                             ]
+                        },
+                        "mock": {
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.development.ts"
+                                },
+                                {
+                                    "replace": "src/app/core/dev/mock-providers.ts",
+                                    "with": "src/app/core/dev/mock-providers.mock.ts"
+                                }
+                            ]
                         }
                     },
                     "defaultConfiguration": "production"
@@ -99,6 +114,9 @@
                         },
                         "development": {
                             "buildTarget": "the-dish-archive:build:development"
+                        },
+                        "mock": {
+                            "buildTarget": "the-dish-archive:build:mock"
                         }
                     },
                     "defaultConfiguration": "development"

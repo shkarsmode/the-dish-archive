@@ -1,8 +1,9 @@
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withInMemoryScrolling, withPreloading } from '@angular/router';
 
 import { routes } from './app.routes';
+import { MOCK_INTERCEPTORS } from './core/dev/mock-providers';
 import { SelectivePreloading } from './core/services/selective-preloading';
 
 export const appConfig: ApplicationConfig = {
@@ -16,6 +17,7 @@ export const appConfig: ApplicationConfig = {
             withPreloading(SelectivePreloading),
             withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
         ),
-        provideHttpClient(withFetch()),
+        // MOCK_INTERCEPTORS is empty outside `ng serve -c mock`.
+        provideHttpClient(withFetch(), withInterceptors(MOCK_INTERCEPTORS)),
     ],
 };
