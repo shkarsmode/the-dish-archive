@@ -30,6 +30,8 @@ type Status = 'all' | 'success' | 'error';
                     <div class="kpi"><span class="kpi-value">{{ (s.period.totalTokens || 0) | number }}</span><span class="kpi-label">Токенів</span></div>
                     <div class="kpi"><span class="kpi-value">{{ s.period.avgLatencyMs }} мс</span><span class="kpi-label">Сер. час</span></div>
                     <div class="kpi"><span class="kpi-value">{{ s.period.errors }}</span><span class="kpi-label">Помилок</span></div>
+                    <div class="kpi accent"><span class="kpi-value">{{ usd(s.period.costUsd) }}</span><span class="kpi-label">Витрати за період</span></div>
+                    <div class="kpi"><span class="kpi-value">{{ usd(s.period.avgCostUsd, 4) }}</span><span class="kpi-label">Сер. ціна запиту</span></div>
                 </div>
             }
 
@@ -68,8 +70,8 @@ type Status = 'all' | 'success' | 'error';
                     <table class="usage-table">
                         <thead>
                             <tr>
-                                <th>Користувач</th><th>Статус</th><th>Інгр.</th><th>Кроки</th>
-                                <th>Токени</th><th>Час</th><th>Коли</th>
+                                <th>Користувач</th><th>Тип</th><th>Статус</th><th>Інгр.</th><th>Кроки</th>
+                                <th>Токени</th><th>Ціна</th><th>Час</th><th>Коли</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,6 +81,10 @@ type Status = 'all' | 'success' | 'error';
                                         <div class="u-name">{{ row.userName }}</div>
                                         <div class="u-email">{{ row.userEmail }}</div>
                                     </td>
+                                    <td class="kind">
+                                        {{ row.operation === 'import_recipe' ? 'Імпорт' : 'Опис' }}
+                                        @if (row.source) { <span class="src">{{ row.source }}</span> }
+                                    </td>
                                     <td>
                                         <span class="badge" [class.ok]="row.status === 'success'" [class.err]="row.status !== 'success'">
                                             {{ row.status === 'success' ? 'ок' : (row.errorCode || 'помилка') }}
@@ -87,11 +93,12 @@ type Status = 'all' | 'success' | 'error';
                                     <td>{{ row.recognizedIngredients ?? '—' }}</td>
                                     <td>{{ row.recognizedSteps ?? '—' }}</td>
                                     <td>{{ row.totalTokens ?? '—' }}</td>
+                                    <td>{{ row.costUsd != null ? usd(row.costUsd, 4) : '-' }}</td>
                                     <td>{{ row.durationMs != null ? row.durationMs + ' мс' : '—' }}</td>
                                     <td class="when">{{ fmtDate(row.createdAt) }}</td>
                                 </tr>
                             } @empty {
-                                <tr><td colspan="7" class="empty">Записів немає</td></tr>
+                                <tr><td colspan="9" class="empty">Записів немає</td></tr>
                             }
                         </tbody>
                     </table>
@@ -116,6 +123,9 @@ type Status = 'all' | 'success' | 'error';
         .kpi { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 14px 16px; text-align: center; }
         .kpi-value { display: block; font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
         .kpi-label { display: block; margin-top: 2px; font-size: var(--text-xs); color: var(--color-text-tertiary); }
+        .kpi.accent { border-color: var(--color-accent); background: var(--color-accent-light); }
+        .kind { white-space: nowrap; }
+        .src { display: block; font-size: var(--text-xs); color: var(--color-text-tertiary); }
         .model-line { font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0 0 16px; }
         .filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
         .segmented { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius-full); overflow: hidden; }
@@ -191,6 +201,12 @@ export class AdminAiUsagePage {
     protected next(): void {
         const r = this.requests();
         if (r && this.page() < r.totalPages) { this.page.update((p) => p + 1); void this.reload(); }
+    }
+
+    /** $0.0042: costs are fractions of a cent, so show enough digits to compare. */
+    protected usd(value: number | null | undefined, digits = 2): string {
+        const amount = Number(value) || 0;
+        return '$' + amount.toFixed(amount > 0 && amount < 0.01 ? Math.max(digits, 4) : digits);
     }
 
     protected fmtDate(iso: string): string {
