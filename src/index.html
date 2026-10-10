@@ -32,6 +32,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    <!-- Installable app: on Android, "Share -> The Dish Archive" from Instagram, TikTok or
+         YouTube opens /recipes/new?url=... and the import starts by itself. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Warm the Cloudinary connection so the LCP hero/card images skip cold DNS+TLS -->

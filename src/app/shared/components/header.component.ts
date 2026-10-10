@@ -42,11 +42,12 @@ import { RankBadgeComponent } from './rank-badge.component';
                     </button>
                     @if (authService.canEditAnything()) {
                         <a
-                            class="icon-button"
+                            class="add-recipe"
                             routerLink="/recipes/new"
-                            title="Додати рецепт"
+                            title="Додати рецепт з посилання, фото чи вручну"
                             aria-label="Додати рецепт">
                             <span class="material-symbols-outlined">add</span>
+                            <span class="add-recipe-label">Рецепт</span>
                         </a>
                     }
                     @if (authService.canEditAnything()) {
@@ -170,6 +171,33 @@ import { RankBadgeComponent } from './rank-badge.component';
 
             .material-symbols-outlined {
                 font-size: 22px;
+            }
+        }
+
+        .add-recipe {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 36px;
+            padding: 0 10px;
+            margin: 0 2px;
+            border-radius: var(--radius-full);
+            background: var(--color-accent);
+            color: var(--color-text-inverse);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            transition: background-color var(--transition-fast), transform var(--transition-fast);
+
+            .material-symbols-outlined { font-size: 20px; }
+            &:hover { background: var(--color-accent-hover); }
+            &:active { transform: scale(0.96); }
+            &:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+            @include m.mobile-only {
+                width: 36px;
+                padding: 0;
+                justify-content: center;
+                .add-recipe-label { display: none; }
             }
         }
 

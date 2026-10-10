@@ -7,6 +7,16 @@
             <p class="hero-subtitle">
                 {{ greeting().suggestion }} Улюблені рецепти, зібрані з турботою.
             </p>
+            @if (authService.canEditAnything()) {
+                <a routerLink="/recipes/new" class="hero-add">
+                    <span class="hero-add-icon"><span class="material-symbols-outlined">auto_awesome</span></span>
+                    <span class="hero-add-copy">
+                        <strong>Додати рецепт</strong>
+                        <span>з Instagram, TikTok, YouTube, фото чи вручну</span>
+                    </span>
+                    <span class="material-symbols-outlined hero-add-go">arrow_forward</span>
+                </a>
+            }
             <app-slot-machine (spun)="onSlotResult($event)" />
 
             <!-- Inline Stats Strip → Insights -->
@@ -78,8 +88,7 @@
             @if (!dishService.isLoading()) {
                 <div class="results-info">
                     <span class="results-count">
-                        {{ dishService.totalFilteredCount() }}
-                        {{ dishService.totalFilteredCount() === 1 ? 'страва' : 'страв' }}
+                        {{ dishService.totalFilteredCount() }} {{ dishWord(dishService.totalFilteredCount()) }}
                     </span>
                 </div>
             }
@@ -92,10 +101,36 @@
                     }
                 </div>
             } @else if (dishService.visibleDishes().length === 0) {
-                <app-empty-state
-                    icon="search_off"
-                    title="Нічого не знайдено"
-                    description="Спробуйте змінити параметри пошуку або скинути фільтри" />
+                @if (dishService.loadError() && !dishService.allDishes().length) {
+                    <app-empty-state
+                        icon="cloud_upload"
+                        title="Не вдалося завантажити рецепти"
+                        description="Схоже, зник інтернет або сервер ще прокидається. Спробуйте ще раз.">
+                        <button type="button" class="empty-action" (click)="dishService.reload()">
+                            <span class="material-symbols-outlined">refresh</span> Спробувати ще
+                        </button>
+                    </app-empty-state>
+                } @else if (!dishService.allDishes().length) {
+                    <app-empty-state
+                        icon="restaurant"
+                        title="Тут поки порожньо"
+                        description="Додайте перший рецепт: вставте посилання з Instagram чи YouTube, сфотографуйте сторінку з книги або впишіть вручну.">
+                        @if (authService.canEditAnything()) {
+                            <a routerLink="/recipes/new" class="empty-action">
+                                <span class="material-symbols-outlined">auto_awesome</span> Додати перший рецепт
+                            </a>
+                        }
+                    </app-empty-state>
+                } @else {
+                    <app-empty-state
+                        icon="search_off"
+                        title="Нічого не знайдено"
+                        description="Спробуйте змінити параметри пошуку або скинути фільтри">
+                        <button type="button" class="empty-action" (click)="dishService.resetFilters()">
+                            <span class="material-symbols-outlined">restart_alt</span> Скинути фільтри
+                        </button>
+                    </app-empty-state>
+                }
             } @else {
                 <div class="dish-grid">
                     @for (dish of dishService.visibleDishes(); track dish.id) {

@@ -7,6 +7,7 @@ import { Component, input } from '@angular/core';
             <span class="material-symbols-outlined empty-icon">{{ icon() }}</span>
             <h3 class="empty-title">{{ title() }}</h3>
             <p class="empty-description">{{ description() }}</p>
+            <ng-content />
         </div>
     `,
     styles: `
@@ -39,6 +40,24 @@ import { Component, input } from '@angular/core';
             color: var(--color-text-tertiary);
             max-width: 320px;
             line-height: var(--leading-relaxed);
+        }
+
+        :host ::ng-deep .empty-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: var(--space-5);
+            padding: 11px 20px;
+            border-radius: var(--radius-full);
+            background: var(--color-accent);
+            color: var(--color-text-inverse);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-semibold);
+            cursor: pointer;
+        }
+
+        :host ::ng-deep .empty-action .material-symbols-outlined {
+            font-size: 18px;
         }
     `,
 })

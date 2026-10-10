@@ -49,6 +49,13 @@ export class CatalogPage implements OnDestroy {
 
     protected readonly quickCategories: DishCategory[] = ['quick', 'healthy', 'dessert', 'everyday', 'festive', 'vegetarian'];
     protected readonly skeletonItems = Array.from({ length: 6 });
+    private readonly plural = new Intl.PluralRules('uk');
+
+    /** 1 страва, 2 страви, 5 страв. */
+    protected dishWord(count: number): string {
+        const form = this.plural.select(count);
+        return form === 'one' ? 'страва' : form === 'few' ? 'страви' : 'страв';
+    }
     protected loadingMore = false;
 
     constructor() {
