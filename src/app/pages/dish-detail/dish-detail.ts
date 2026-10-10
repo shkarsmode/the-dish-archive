@@ -95,7 +95,10 @@ export class DishDetailPage {
         return fetched?.slug === slugValue ? fetched : undefined;
     });
 
-    readonly isLoading = this.dishService.isLoading;
+    /** True while the single-recipe fetch for a deep link is in flight. */
+    private readonly slugFetching = signal(false);
+    /** Spinner only while nothing can be shown yet: a fetched recipe renders at once. */
+    readonly isLoading = computed(() => !this.dish() && (this.dishService.isLoading() || this.slugFetching()));
 
     /** The user may edit this dish only in edit mode and with rights in its family. */
     protected readonly canEdit = computed(() => {
@@ -173,9 +176,14 @@ export class DishDetailPage {
             if (this.dishService.getDishBySlug(slugValue)()) return; // already cached
             if (this.fetchedSlugs.has(slugValue)) return;            // already attempted
             this.fetchedSlugs.add(slugValue);
-            void this.dishService.fetchDishBySlug(slugValue).then(d => {
-                if (d) this.fetchedDish.set(d);
-            });
+            this.slugFetching.set(true);
+            void this.dishService.fetchDishBySlug(slugValue)
+                .then(d => {
+                    if (d) this.fetchedDish.set(d);
+                })
+                // A private or deleted recipe answers 404: show "not found", not a spinner forever.
+                .catch(() => undefined)
+                .finally(() => this.slugFetching.set(false));
         });
 
         // Keep the document's title + social/SEO metadata in sync with the open

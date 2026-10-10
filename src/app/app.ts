@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -22,7 +23,9 @@ export class App {
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);
 
-    private readonly currentUrl = signal(this.router.url);
+    // router.url is '/' until the first navigation ends, which briefly rendered the
+    // header (and its catalog fetch) on /login; the address bar is right from the start.
+    private readonly currentUrl = signal(inject(DOCUMENT).location.pathname);
 
     /** Hide the header/compare bar on standalone auth + admin screens. */
     readonly showChrome = computed(() => {
@@ -31,8 +34,16 @@ export class App {
     });
 
     constructor() {
+        let first = true;
         this.router.events
             .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-            .subscribe(event => this.currentUrl.set(event.urlAfterRedirects));
+            .subscribe(event => {
+                this.currentUrl.set(event.urlAfterRedirects);
+                if (first) {
+                    first = false;
+                    // Lift the splash only once the first page is actually on screen.
+                    requestAnimationFrame(() => (window as { __hidePreloader?: () => void }).__hidePreloader?.());
+                }
+            });
     }
 }

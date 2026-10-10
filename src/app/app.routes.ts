@@ -14,11 +14,13 @@ export const routes: Routes = [
     {
         path: '',
         canActivate: [approvedUserGuard],
+        data: { preload: true },
         loadComponent: () => import('./pages/catalog/catalog').then(m => m.CatalogPage),
     },
     {
         path: 'dish/:slug',
         canActivate: [publicDishGuard],
+        data: { preload: true },
         loadComponent: () => import('./pages/dish-detail/dish-detail').then(m => m.DishDetailPage),
     },
     {
@@ -39,18 +41,21 @@ export const routes: Routes = [
     {
         path: 'cook/:slug',
         canActivate: [approvedUserGuard],
+        data: { preload: true },
         loadComponent: () => import('./pages/cook-mode/cook-mode').then(m => m.CookModePage),
     },
     {
         path: 'recipes/new',
         canActivate: [approvedUserGuard],
         canDeactivate: [unsavedChangesGuard],
+        data: { preload: 'editor' },
         loadComponent: () => import('./pages/recipe-editor/recipe-editor').then(m => m.RecipeEditorPage),
     },
     {
         path: 'recipes/:dishId/edit',
         canActivate: [approvedUserGuard],
         canDeactivate: [unsavedChangesGuard],
+        data: { preload: 'editor' },
         loadComponent: () => import('./pages/recipe-editor/recipe-editor').then(m => m.RecipeEditorPage),
     },
     {

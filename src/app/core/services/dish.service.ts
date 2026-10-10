@@ -11,6 +11,9 @@ import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { FavoritesService } from './favorites.service';
 
+/** Last catalog per user, shown instantly on the next visit while it revalidates. */
+const DISH_CACHE_KEY = 'dish_list_v1';
+
 @Injectable({ providedIn: 'root' })
 export class DishService {
     private readonly api = inject(ApiService);
@@ -179,7 +182,14 @@ export class DishService {
     private lastUserId: string | null | undefined = undefined;
 
     constructor() {
-        // Fire the dishes fetch immediately — the Bearer token is already restored
+        // A returning user gets the catalog from the local cache immediately (the
+        // cached session is applied synchronously, so its user id is known here).
+        const cached = this.readCache();
+        if (cached) {
+            this.allDishesSignal.set(cached);
+            this.isLoading.set(false);
+        }
+        // Fire the dishes fetch immediately: the Bearer token is already restored
         // synchronously from localStorage, so /dishes runs in PARALLEL with
         // /auth/session instead of waiting for the session round-trip (no waterfall).
         void this.reload();
@@ -202,11 +212,13 @@ export class DishService {
     }
 
     async reload(): Promise<void> {
-        this.isLoading.set(true);
+        // Skeletons only when there is nothing to show; a cached list stays on screen.
+        this.isLoading.set(this.allDishesSignal().length === 0);
         this.loadError.set(null);
         try {
             const dishes = await this.api.get<Dish[]>('/dishes');
             this.allDishesSignal.set(dishes ?? []);
+            this.writeCache(dishes ?? []);
         } catch (error) {
             console.error('Failed to load dishes from API:', error);
             this.loadError.set('Не вдалося завантажити дані');
@@ -215,10 +227,39 @@ export class DishService {
         }
     }
 
+    private readCache(): Dish[] | null {
+        const userId = this.authService.user()?.id;
+        if (!userId || !this.api.getToken()) return null;
+        try {
+            const cache = JSON.parse(localStorage.getItem(DISH_CACHE_KEY) || 'null');
+            return cache?.userId === userId && Array.isArray(cache.dishes) ? (cache.dishes as Dish[]) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    private writeCache(dishes: Dish[]): void {
+        const userId = this.authService.user()?.id;
+        try {
+            if (userId && this.api.getToken()) {
+                localStorage.setItem(DISH_CACHE_KEY, JSON.stringify({ userId, savedAt: Date.now(), dishes }));
+            } else {
+                localStorage.removeItem(DISH_CACHE_KEY);
+            }
+        } catch {
+            /* quota: the cache is only a speed-up */
+        }
+    }
+
     /** Fetch a single recipe by slug (backend: GET /dishes/slug/:slug) so a deep
      *  link renders immediately instead of waiting for the whole archive to load. */
     async fetchDishBySlug(slug: string): Promise<Dish | null> {
         return this.api.get<Dish>('/dishes/slug/' + encodeURIComponent(slug));
+    }
+
+    /** One recipe straight from the API (the editor must never start from a cached copy). */
+    async fetchDishById(id: string): Promise<Dish | null> {
+        return this.api.get<Dish>('/dishes/' + encodeURIComponent(id));
     }
 
     getDishBySlug(slug: string) {
@@ -266,12 +307,14 @@ export class DishService {
     async updateDish(id: string, updates: Partial<Dish>): Promise<Dish> {
         const dish = await this.api.patch<Dish>('/dishes/' + id, updates);
         this.allDishesSignal.update(dishes => dishes.map(d => (d.id === id ? dish : d)));
+        this.writeCache(this.allDishesSignal());
         return dish;
     }
 
     async createDish(dish: Partial<Dish>): Promise<Dish> {
         const created = await this.api.post<Dish>('/dishes', dish);
         this.allDishesSignal.update(dishes => [...dishes, created]);
+        this.writeCache(this.allDishesSignal());
         return created;
     }
 
@@ -285,6 +328,7 @@ export class DishService {
             );
         }
         this.allDishesSignal.update(dishes => dishes.filter(d => d.id !== id));
+        this.writeCache(this.allDishesSignal());
     }
 
     /**

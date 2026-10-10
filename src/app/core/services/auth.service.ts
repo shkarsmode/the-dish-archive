@@ -23,6 +23,38 @@ interface SessionResponse {
     memberships: MembershipWithFamily[];
 }
 
+const EMPTY_SESSION: SessionResponse = { user: null, profile: null, memberships: [] };
+/** Last good session, so a returning user sees the app at once while it revalidates. */
+const SESSION_CACHE_KEY = 'dish_session_v1';
+
+/** A JWT whose `exp` has passed can never succeed; treat it as signed out without a round trip. */
+function isExpiredJwt(token: string): boolean {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return typeof payload?.exp === 'number' && payload.exp * 1000 < Date.now();
+    } catch {
+        return false;
+    }
+}
+
+function readCachedSession(): SessionResponse | null {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(SESSION_CACHE_KEY) || 'null');
+        return parsed?.user ? (parsed as SessionResponse) : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeCachedSession(session: SessionResponse | null): void {
+    try {
+        if (session?.user) localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(session));
+        else localStorage.removeItem(SESSION_CACHE_KEY);
+    } catch {
+        /* storage full or blocked: the cache is only a speed-up */
+    }
+}
+
 /**
  * Single source of truth for the authenticated user, profile, memberships and
  * derived permissions — now backed by the NestJS API instead of Supabase.
@@ -78,34 +110,67 @@ export class AuthService {
         const match = hash.match(/[#&]token=([^&]+)/);
         if (match) {
             this.api.setToken(decodeURIComponent(match[1]));
+            writeCachedSession(null);
             const url = this.doc.location.pathname + this.doc.location.search;
             this.doc.defaultView?.history.replaceState(null, '', url);
         }
-        await this.loadSession();
+
+        const token = this.api.getToken();
+        if (token && isExpiredJwt(token)) {
+            this.api.setToken(null);
+            writeCachedSession(null);
+        }
+        if (!this.api.getToken()) {
+            // No token: render as signed out right away (the login page in ~1 s instead
+            // of waiting on a cold API), and still ask in the background in case a
+            // cookie session exists.
+            this.applySession(EMPTY_SESSION);
+            this.markReady();
+            await this.loadSession();
+            return;
+        }
+
+        const cached = readCachedSession();
+        if (cached) {
+            // Returning user: open the app from the cached session, revalidate behind it.
+            this.applySession(cached, { touch: false });
+            this.markReady();
+        }
+        await this.loadSession(!!cached);
     }
 
-    private async loadSession(): Promise<void> {
+    private async loadSession(hadCachedUser = false): Promise<void> {
         try {
             const data = await this.api.get<SessionResponse>('/auth/session');
             this.applySession(data);
+            writeCachedSession(data);
+            if (hadCachedUser && !data.user) {
+                // The cached session no longer holds (token revoked or expired).
+                void this.router.navigate(['/login']);
+            }
         } catch {
-            this.applySession({ user: null, profile: null, memberships: [] });
+            // Offline or a cold API failing: keep a cached session rather than logging out.
+            if (!hadCachedUser) this.applySession(EMPTY_SESSION);
         }
         this.markReady();
     }
 
-    private applySession(data: SessionResponse): void {
+    private touched = false;
+
+    private applySession(data: SessionResponse, options: { touch?: boolean } = {}): void {
         this.userSignal.set(data.user ?? null);
         this.profileSignal.set(data.profile ?? null);
         this.membershipsSignal.set(data.memberships ?? []);
         if (!data.user) {
             this.editModeSignal.set(false);
-        } else {
+        } else if (options.touch !== false && !this.touched) {
+            this.touched = true;
             void this.api.post('/auth/touch-last-login').catch(() => undefined);
         }
     }
 
     private markReady(): void {
+        if (this.readySignal()) return;
         this.readySignal.set(true);
         const resolvers = this.readyResolvers;
         this.readyResolvers = [];
@@ -135,6 +200,7 @@ export class AuthService {
             /* ignore */
         }
         this.api.setToken(null);
+        writeCachedSession(null);
         this.userSignal.set(null);
         this.profileSignal.set(null);
         this.membershipsSignal.set([]);
