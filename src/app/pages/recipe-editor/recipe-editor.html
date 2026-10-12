@@ -269,8 +269,12 @@
             <!-- Time & servings -->
             <section class="card" id="sec-details">
                 <h2 class="card-title">Час і порції</h2>
-                @for (issue of sectionIssues('time', 'servings', 'estimates'); track $index) {
+                @for (issue of sectionIssues('time', 'servings'); track $index) {
                     <p class="section-issue" [attr.data-severity]="issue.severity"><span class="material-symbols-outlined">{{ issueIcon(issue) }}</span>{{ issue.message }}</p>
+                }
+                <!-- Live, unlike the import note: it follows the marks, so it never shows numbers the cook has since changed. -->
+                @if (hasEstimates()) {
+                    <p class="section-issue" data-severity="assumed"><span class="material-symbols-outlined">lightbulb</span><span>Числа з позначкою ✦ оцінив AI. Перевірте їх.</span></p>
                 }
                 <!-- A number the AI estimated keeps a sparkle and a dashed outline until the cook edits it. -->
                 <ng-template #estMark>

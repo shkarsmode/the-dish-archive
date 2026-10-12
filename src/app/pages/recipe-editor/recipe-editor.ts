@@ -497,8 +497,6 @@ export class RecipeEditorPage {
         const touched: Partial<Record<ImportIssue['field'], boolean>> = {
             time: this.form.controls.prepTime.dirty || this.form.controls.cookTime.dirty || this.form.controls.totalTime.dirty,
             servings: this.form.controls.servings.dirty,
-            // The estimates note goes once no number is still the AI's guess.
-            estimates: ![...this.estimated()].some((field) => this.isEstimated(field)),
         };
         return result.issues.filter((issue) =>
             fields.includes(issue.field) && issue.itemIndex == null && !touched[issue.field]);
@@ -519,6 +517,11 @@ export class RecipeEditorPage {
     /** True while a number is still the AI's estimate (the cook has not edited it). */
     protected isEstimated(field: EstimableField): boolean {
         return this.estimated().has(field) && !this.form.controls[field].dirty;
+    }
+
+    /** Whether any number on the form is still an AI estimate (import and edit mode alike). */
+    protected hasEstimates(): boolean {
+        return [...this.estimated()].some((field) => this.isEstimated(field));
     }
 
     /**
