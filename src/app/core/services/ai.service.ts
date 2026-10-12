@@ -2,12 +2,20 @@ import { Injectable, inject } from '@angular/core';
 import { DishCategory, DishDifficulty } from '../models/dish.model';
 import { ApiService } from './api.service';
 
+/** Recipe-level numbers the AI fills itself when the source does not state them. */
+export type EstimableField = 'servings' | 'prepTime' | 'cookTime' | 'totalTime' | 'calories';
+
 export interface AiRecipeDraft {
     title: string;
     description: string;
     servings: number;
     cookingTime: { preparation: number; cooking: number; total: number };
+    /** kcal per serving. */
     calories: number;
+    /** kcal of the whole recipe (sum of the ingredients); 0 or absent when unknown. */
+    caloriesTotal?: number;
+    /** Which numbers are AI estimates rather than read from the source. */
+    estimated?: EstimableField[];
     difficulty: DishDifficulty;
     categories: DishCategory[];
     tags: string[];
@@ -23,7 +31,9 @@ export type ImportPlatform =
     | 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'telegram'
     | 'pinterest' | 'threads' | 'x' | 'website' | 'photo' | 'text';
 
-export type ImportIssueField = 'title' | 'ingredients' | 'steps' | 'time' | 'servings' | 'temperature' | 'equipment' | 'other';
+/** 'estimates' is the server's one note listing the numbers the AI estimated. */
+export type ImportIssueField =
+    | 'title' | 'ingredients' | 'steps' | 'time' | 'servings' | 'temperature' | 'equipment' | 'other' | 'estimates';
 
 export interface ImportIssue {
     field: ImportIssueField;

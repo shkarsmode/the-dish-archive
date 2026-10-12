@@ -242,7 +242,7 @@
                     <button type="button" class="add-row" (click)="addStep()" aria-label="Додати крок"><span class="material-symbols-outlined">add</span></button>
                 </div>
                 @for (issue of sectionIssues('steps', 'temperature', 'equipment'); track $index) {
-                    <p class="section-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                    <p class="section-issue" [attr.data-severity]="issue.severity"><span class="material-symbols-outlined">{{ issueIcon(issue) }}</span>{{ issue.message }}</p>
                 }
                 <div class="rows" formArrayName="steps">
                     @for (row of steps.controls; track row) {
@@ -269,14 +269,30 @@
             <!-- Time & servings -->
             <section class="card" id="sec-details">
                 <h2 class="card-title">Час і порції</h2>
-                @for (issue of sectionIssues('time', 'servings'); track $index) {
-                    <p class="section-issue"><span class="material-symbols-outlined">error</span>{{ issue.message }}</p>
+                @for (issue of sectionIssues('time', 'servings', 'estimates'); track $index) {
+                    <p class="section-issue" [attr.data-severity]="issue.severity"><span class="material-symbols-outlined">{{ issueIcon(issue) }}</span>{{ issue.message }}</p>
                 }
+                <!-- A number the AI estimated keeps a sparkle and a dashed outline until the cook edits it. -->
+                <ng-template #estMark>
+                    <span class="est" role="img" aria-label="оцінка AI" title="Оцінка AI - перевірте"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span></span>
+                </ng-template>
                 <div class="grid-fields">
-                    <div class="field"><label>Підготовка, хв</label><input type="number" inputmode="numeric" formControlName="prepTime"></div>
-                    <div class="field"><label>Готування, хв</label><input type="number" inputmode="numeric" formControlName="cookTime"></div>
-                    <div class="field"><label>Разом, хв</label><input type="number" inputmode="numeric" formControlName="totalTime"></div>
-                    <div class="field"><label>Порцій</label><input type="number" inputmode="numeric" formControlName="servings"></div>
+                    <div class="field">
+                        <label>Підготовка, хв @if (isEstimated('prepTime')) { <ng-container [ngTemplateOutlet]="estMark" /> }</label>
+                        <input type="number" inputmode="numeric" formControlName="prepTime" [class.estimated]="isEstimated('prepTime')">
+                    </div>
+                    <div class="field">
+                        <label>Готування, хв @if (isEstimated('cookTime')) { <ng-container [ngTemplateOutlet]="estMark" /> }</label>
+                        <input type="number" inputmode="numeric" formControlName="cookTime" [class.estimated]="isEstimated('cookTime')">
+                    </div>
+                    <div class="field">
+                        <label>Разом, хв @if (isEstimated('totalTime')) { <ng-container [ngTemplateOutlet]="estMark" /> }</label>
+                        <input type="number" inputmode="numeric" formControlName="totalTime" [class.estimated]="isEstimated('totalTime')">
+                    </div>
+                    <div class="field">
+                        <label>Порцій @if (isEstimated('servings')) { <ng-container [ngTemplateOutlet]="estMark" /> }</label>
+                        <input type="number" inputmode="numeric" formControlName="servings" [class.estimated]="isEstimated('servings')">
+                    </div>
                     <div class="field">
                         <label>Складність</label>
                         <app-select
@@ -285,7 +301,10 @@
                             sheetTitle="Складність"
                             ariaLabel="Складність" />
                     </div>
-                    <div class="field"><label>Ккал на порцію</label><input type="number" inputmode="numeric" formControlName="calories"></div>
+                    <div class="field">
+                        <label>Ккал на порцію @if (isEstimated('calories')) { <ng-container [ngTemplateOutlet]="estMark" /> }</label>
+                        <input type="number" inputmode="numeric" formControlName="calories" [class.estimated]="isEstimated('calories')">
+                    </div>
                 </div>
             </section>
 

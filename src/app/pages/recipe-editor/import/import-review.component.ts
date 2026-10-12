@@ -47,10 +47,13 @@ const CONFIDENCE: Record<RecipeImportResult['confidence'], { label: string; tone
                 <li><span class="material-symbols-outlined">grocery</span>{{ result().ingredients.length }} {{ plural(result().ingredients.length, 'інгредієнт', 'інгредієнти', 'інгредієнтів') }}</li>
                 <li><span class="material-symbols-outlined">format_list_numbered</span>{{ result().steps.length }} {{ plural(result().steps.length, 'крок', 'кроки', 'кроків') }}</li>
                 @if (result().cookingTime.total) {
-                    <li><span class="material-symbols-outlined">schedule</span>{{ result().cookingTime.total }} хв</li>
+                    <li [class.est]="approx().time"><span class="material-symbols-outlined">schedule</span>{{ approx().time ? '≈ ' : '' }}{{ result().cookingTime.total }} хв</li>
                 }
                 @if (result().servings) {
-                    <li><span class="material-symbols-outlined">restaurant</span>{{ result().servings }} {{ plural(result().servings, 'порція', 'порції', 'порцій') }}</li>
+                    <li [class.est]="approx().servings"><span class="material-symbols-outlined">restaurant</span>{{ approx().servings ? '≈ ' : '' }}{{ result().servings }} {{ plural(result().servings, 'порція', 'порції', 'порцій') }}</li>
+                }
+                @if (result().calories) {
+                    <li [class.est]="approx().calories"><span class="material-symbols-outlined">local_fire_department</span>{{ approx().calories ? '≈ ' : '' }}{{ result().calories }} ккал</li>
                 }
                 @if (result().images.length) {
                     <li><span class="material-symbols-outlined">image</span>фото додано</li>
@@ -128,6 +131,9 @@ const CONFIDENCE: Record<RecipeImportResult['confidence'], { label: string; tone
         .stats li:nth-child(3) { animation-delay: 120ms; }
         .stats li:nth-child(4) { animation-delay: 180ms; }
         .stats li:nth-child(5) { animation-delay: 240ms; }
+        .stats li:nth-child(6) { animation-delay: 300ms; }
+        /* An AI estimate rather than a number from the source. */
+        .stats li.est { border-style: dashed; border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border-light)); }
         @keyframes chip { from { transform: scale(0.85); } to { transform: none; } }
         .stats .material-symbols-outlined { font-size: 17px; color: var(--color-accent); }
 
@@ -168,6 +174,15 @@ export class ImportReviewComponent {
     readonly restart = output<void>();
 
     protected readonly issues = computed(() => this.result().issues ?? []);
+    /** Which summary numbers are AI estimates (shown with "≈"). */
+    protected readonly approx = computed(() => {
+        const estimated = new Set(this.result().estimated ?? []);
+        return {
+            time: estimated.has('prepTime') || estimated.has('cookTime') || estimated.has('totalTime'),
+            servings: estimated.has('servings'),
+            calories: estimated.has('calories'),
+        };
+    });
     protected readonly confidence = computed(() => CONFIDENCE[this.result().confidence] ?? CONFIDENCE.medium);
     protected readonly sourceLabel = computed(() => {
         const source = this.result().source;

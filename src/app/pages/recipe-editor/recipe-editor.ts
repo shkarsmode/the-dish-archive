@@ -1,8 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounceTime, map } from 'rxjs';
+import { debounceTime, map, merge } from 'rxjs';
 import {
     ALL_CATEGORIES,
     ALL_TASTE_KEYS,
@@ -16,6 +17,7 @@ import {
 import {
     AiRecipeDraft,
     AiService,
+    EstimableField,
     ImportIssue,
     ImportPlatform,
     ImportPreview,
@@ -61,7 +63,15 @@ const ISSUE_SECTION: Record<ImportIssue['field'], string> = {
     servings: 'sec-details',
     equipment: 'sec-steps',
     other: 'sec-extra',
+    estimates: 'sec-details',
 };
+
+/** Per-serving kcal from a whole-dish total; mirrors the backend's rounding. */
+function kcalPerServing(total: number, servings: number): number {
+    const value = total / servings;
+    if (!(value > 0)) return 0;
+    return value >= 50 ? Math.round(value / 10) * 10 : Math.max(1, Math.round(value));
+}
 
 /** "200 г борошна" / "борошно - 200 г" / "2 яйця" -> ingredient row parts. */
 const UNIT = String.raw`(г|гр|кг|мл|л|шт\.?|ст\.?\s?л\.?|ч\.?\s?л\.?|склянк[аи]?|склянок|дрібк[аи]|пучок|зубчик[аи]?|упаковк[аи]|g|kg|ml|l)`;
@@ -98,6 +108,7 @@ interface AiChange {
 @Component({
     selector: 'app-recipe-editor',
     imports: [
+        NgTemplateOutlet,
         ReactiveFormsModule,
         FormsModule,
         SelectComponent,
@@ -184,6 +195,16 @@ export class RecipeEditorPage {
     private aiUndoSnapshot: any = null;
     /** Form state right after the AI update — lets undo detect later manual edits. */
     private aiAppliedFingerprint: string | null = null;
+
+    // ── AI estimates: servings, time and kcal the source did not state ──
+    /** Numbers the AI estimated; each keeps its "≈ AI" mark until the cook edits it. */
+    protected readonly estimated = signal<ReadonlySet<EstimableField>>(new Set());
+    /** Whole-dish kcal behind an estimated per-serving value, so it can follow the servings. */
+    private estimatedKcalTotal = 0;
+    /** Minutes an estimated total adds on top of prep + cook (marinating, chilling). */
+    private estimatedTimeExtra = 0;
+    /** Set while the AI writes the form, so the follow rules do not react to its own writes. */
+    private applyingAi = false;
     /** Mirrors the backend default (AI_ALLOWED_ROLES): anyone who writes recipes in a family. */
     protected readonly canUseAi = computed(() =>
         this.auth.isSuperAdmin() ||
@@ -256,6 +277,22 @@ export class RecipeEditorPage {
             if (first && !control.value && !this.isEdit()) control.setValue(first.id, { emitEvent: false });
             if (first) control.updateValueAndValidity({ onlySelf: true });
         });
+        // An estimated kcal-per-serving follows the servings (the dish itself stays the
+        // same size), and an estimated total follows prep + cook, until the cook edits them.
+        this.form.controls.servings.valueChanges
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((servings) => {
+                if (this.applyingAi || !this.estimatedKcalTotal || !this.isEstimated('calories')) return;
+                const count = Number(servings);
+                if (count > 0) this.form.controls.calories.setValue(kcalPerServing(this.estimatedKcalTotal, count));
+            });
+        merge(this.form.controls.prepTime.valueChanges, this.form.controls.cookTime.valueChanges)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                if (this.applyingAi || !this.isEstimated('totalTime')) return;
+                const { prepTime, cookTime } = this.form.getRawValue();
+                this.form.controls.totalTime.setValue((Number(prepTime) || 0) + (Number(cookTime) || 0) + this.estimatedTimeExtra);
+            });
     }
 
     /**
@@ -406,6 +443,7 @@ export class RecipeEditorPage {
             priceAmount: 0,
             priceCurrency: 'UAH',
         });
+        this.setEstimates(result);
         for (const issue of result.issues) {
             if (issue.itemIndex == null) continue;
             const array = issue.field === 'ingredients' ? this.ingredients : issue.field === 'steps' ? this.steps : null;
@@ -459,9 +497,61 @@ export class RecipeEditorPage {
         const touched: Partial<Record<ImportIssue['field'], boolean>> = {
             time: this.form.controls.prepTime.dirty || this.form.controls.cookTime.dirty || this.form.controls.totalTime.dirty,
             servings: this.form.controls.servings.dirty,
+            // The estimates note goes once no number is still the AI's guess.
+            estimates: ![...this.estimated()].some((field) => this.isEstimated(field)),
         };
         return result.issues.filter((issue) =>
             fields.includes(issue.field) && issue.itemIndex == null && !touched[issue.field]);
+    }
+
+    /** Icon of an issue note, matching the review panel. */
+    protected issueIcon(issue: ImportIssue): string {
+        switch (issue.severity) {
+            case 'assumed': return 'lightbulb';
+            case 'unclear': return 'help';
+            case 'conflict': return 'warning';
+            default: return 'error';
+        }
+    }
+
+    // ── AI estimates ─────────────────────────────────────────────────────────
+
+    /** True while a number is still the AI's estimate (the cook has not edited it). */
+    protected isEstimated(field: EstimableField): boolean {
+        return this.estimated().has(field) && !this.form.controls[field].dirty;
+    }
+
+    /**
+     * Mark the numbers an AI result estimated. The AI's value replaces whatever was
+     * there, so those controls count as untouched again. In edit mode, a mark from an
+     * earlier update survives on a number this update left as it was.
+     */
+    private setEstimates(draft: AiRecipeDraft, before?: Record<string, unknown>): void {
+        const value = this.form.getRawValue() as Record<EstimableField, number | null>;
+        const next = new Set<EstimableField>();
+        for (const field of draft.estimated ?? []) {
+            if (!(Number(value[field]) > 0)) continue;
+            next.add(field);
+            this.form.controls[field].markAsPristine({ onlySelf: true });
+        }
+        if (before) {
+            for (const field of this.estimated()) {
+                if (Number(value[field]) > 0 && Number(before[field]) === Number(value[field])) next.add(field);
+            }
+        }
+        const kcalTotal = draft.caloriesTotal ?? 0;
+        this.estimatedKcalTotal = next.has('calories') ? (kcalTotal > 0 ? kcalTotal : this.estimatedKcalTotal) : 0;
+        this.estimatedTimeExtra = Math.max(
+            0,
+            (Number(value.totalTime) || 0) - (Number(value.prepTime) || 0) - (Number(value.cookTime) || 0),
+        );
+        this.estimated.set(next);
+    }
+
+    private clearEstimates(): void {
+        this.estimated.set(new Set());
+        this.estimatedKcalTotal = 0;
+        this.estimatedTimeExtra = 0;
     }
 
     protected jumpToIssue(issue: ImportIssue): void {
@@ -512,6 +602,8 @@ export class RecipeEditorPage {
      */
     private hydrate(value: any): void {
         this.hydrating = true;
+        // A rebuilt form starts with no AI marks; an AI apply re-adds its own afterwards.
+        this.clearEstimates();
         this.slugTouched = !!value?.slug;
         const silent = { emitEvent: false };
         this.form.patchValue({
@@ -591,7 +683,7 @@ export class RecipeEditorPage {
             if (this.isEdit()) {
                 const before = this.form.getRawValue();
                 const beforeJson = JSON.stringify(before);
-                this.applyAiUpdate(draft);
+                this.applyAiUpdate(draft, before);
                 const afterJson = JSON.stringify(this.form.getRawValue());
                 this.aiChanges.set(this.diffAgainst(before));
                 // Reversibility keys off the raw form, never off the (lossy) changelog —
@@ -679,28 +771,35 @@ export class RecipeEditorPage {
      * images, price, sourceUrl, visibility or familyId — the recipe's identity, photos
      * and public URL stay exactly as the author left them.
      */
-    private applyAiUpdate(draft: AiRecipeDraft): void {
-        this.form.patchValue({
-            description: draft.description,
-            notes: draft.notes,
-            prepTime: draft.cookingTime.preparation,
-            cookTime: draft.cookingTime.cooking,
-            totalTime: draft.cookingTime.total,
-            calories: draft.calories,
-            // The model may omit servings (the API then sends 0) — keep what we have.
-            servings: draft.servings || this.form.controls.servings.value || 1,
-            difficulty: draft.difficulty,
-            categories: [...draft.categories],
-            taste: draft.taste,
-        });
-        this.ingredients.clear();
-        draft.ingredients.forEach(ing => this.ingredients.push(this.newIngredient(ing)));
-        if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient());
-        this.steps.clear();
-        draft.steps.forEach(s => this.steps.push(this.newStep({ description: s.description, duration: s.duration ?? null })));
-        if (this.steps.length === 0) this.steps.push(this.newStep());
-        this.tags.clear();
-        draft.tags.forEach(tag => this.tags.push(this.fb.control(tag, { nonNullable: true })));
+    private applyAiUpdate(draft: AiRecipeDraft, before: Record<string, unknown>): void {
+        // The AI's own writes must not trigger the estimate follow rules mid-patch.
+        this.applyingAi = true;
+        try {
+            this.form.patchValue({
+                description: draft.description,
+                notes: draft.notes,
+                prepTime: draft.cookingTime.preparation,
+                cookTime: draft.cookingTime.cooking,
+                totalTime: draft.cookingTime.total,
+                calories: draft.calories,
+                // The model may omit servings (the API then sends 0) — keep what we have.
+                servings: draft.servings || this.form.controls.servings.value || 1,
+                difficulty: draft.difficulty,
+                categories: [...draft.categories],
+                taste: draft.taste,
+            });
+            this.ingredients.clear();
+            draft.ingredients.forEach(ing => this.ingredients.push(this.newIngredient(ing)));
+            if (this.ingredients.length === 0) this.ingredients.push(this.newIngredient());
+            this.steps.clear();
+            draft.steps.forEach(s => this.steps.push(this.newStep({ description: s.description, duration: s.duration ?? null })));
+            if (this.steps.length === 0) this.steps.push(this.newStep());
+            this.tags.clear();
+            draft.tags.forEach(tag => this.tags.push(this.fb.control(tag, { nonNullable: true })));
+        } finally {
+            this.applyingAi = false;
+        }
+        this.setEstimates(draft, before);
     }
 
     /** Roll the form back to the snapshot taken before the AI update. */
@@ -760,23 +859,25 @@ export class RecipeEditorPage {
         };
 
         // Numbers: null, undefined and 0 all mean "not set", so they must not diff.
-        const num = (label: string, b: any, a: any, suffix = '') => {
+        // "≈" marks a value the AI estimated rather than took from the request.
+        const num = (label: string, field: EstimableField, b: any, a: any, suffix = '') => {
             const from = Number(b) || 0, to = Number(a) || 0;
             if (from === to) return;
+            const approx = this.estimated().has(field) ? '≈ ' : '';
             changes.push({
                 label,
                 before: from ? `${from}${suffix}` : '—',
-                after: to ? `${to}${suffix}` : '—',
+                after: to ? `${approx}${to}${suffix}` : '—',
             });
         };
 
         text('Опис', before.description, after.description);
         text('Нотатки', before.notes, after.notes);
-        num('Підготовка', before.prepTime, after.prepTime, ' хв');
-        num('Готування', before.cookTime, after.cookTime, ' хв');
-        num('Загальний час', before.totalTime, after.totalTime, ' хв');
-        num('Калорійність', before.calories, after.calories, ' ккал');
-        num('Порції', before.servings, after.servings);
+        num('Підготовка', 'prepTime', before.prepTime, after.prepTime, ' хв');
+        num('Готування', 'cookTime', before.cookTime, after.cookTime, ' хв');
+        num('Загальний час', 'totalTime', before.totalTime, after.totalTime, ' хв');
+        num('Калорійність', 'calories', before.calories, after.calories, ' ккал');
+        num('Порції', 'servings', before.servings, after.servings);
         if (before.difficulty !== after.difficulty) {
             changes.push({
                 label: 'Складність',
@@ -875,6 +976,7 @@ export class RecipeEditorPage {
             tags: draft.tags,
             taste: draft.taste,
         });
+        this.setEstimates(draft);
         this.form.markAsDirty();
         // hydrate() is silent, so the debounced autosave never sees the AI result —
         // persist it here or a reload right after generating would lose everything.

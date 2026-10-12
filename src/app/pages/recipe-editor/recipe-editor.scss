@@ -175,6 +175,27 @@ textarea { resize: vertical; }
     background: color-mix(in srgb, var(--color-warning) 12%, transparent); font-size: var(--text-sm); color: var(--color-text-primary);
     .material-symbols-outlined { font-size: 18px; }
 }
+// Same tones as the import review: a guess or an AI estimate is a hint, not a problem.
+.section-issue[data-severity='assumed'] {
+    background: color-mix(in srgb, var(--color-secondary) 13%, transparent);
+    .material-symbols-outlined { color: var(--color-secondary); }
+}
+.section-issue[data-severity='unclear'] .material-symbols-outlined { color: var(--color-accent); }
+.section-issue[data-severity='conflict'] {
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    .material-symbols-outlined { color: var(--color-error); }
+}
+
+// A number the AI estimated, until the cook edits it.
+.field label .est {
+    display: inline-flex; vertical-align: -3px; margin-left: 2px; color: var(--color-accent); cursor: help;
+    .material-symbols-outlined { font-size: 15px; }
+}
+input.estimated {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
+    background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg));
+}
 .ingredient-row, .step-row { display: flex; align-items: flex-start; gap: var(--space-2); }
 .grow { flex: 1; }
 .sm { width: 72px; flex: none; }
