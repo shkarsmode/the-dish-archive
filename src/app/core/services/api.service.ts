@@ -12,6 +12,7 @@ const TOKEN_KEY = 'dish_token';
  * also sets an httpOnly cookie, but Safari blocks cross-site cookies between the
  * *.vercel.app subdomains, so the Bearer header is the reliable path). Requests
  * are also sent withCredentials so the cookie flows where the browser allows it.
+ * SessionBackupService keeps a first-party copy that outlives Safari's storage cleanup.
  */
 @Injectable({ providedIn: 'root' })
 export class ApiService {

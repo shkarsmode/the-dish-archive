@@ -6,6 +6,7 @@ import { Family } from '../models/family.model';
 import { EDITOR_ROLES, FamilyMember, FamilyRole } from '../models/family-member.model';
 import { UserProfile } from '../models/user-profile.model';
 import { ApiService } from './api.service';
+import { SessionBackupService } from './session-backup.service';
 
 /** Minimal authenticated-user shape (replaces the Supabase `User`). */
 export interface AuthUser {
@@ -21,6 +22,8 @@ interface SessionResponse {
     user: AuthUser | null;
     profile: UserProfile | null;
     memberships: MembershipWithFamily[];
+    /** A renewed token: the API hands one out once the current token is a day old. */
+    token?: string;
 }
 
 const EMPTY_SESSION: SessionResponse = { user: null, profile: null, memberships: [] };
@@ -64,6 +67,7 @@ function writeCachedSession(session: SessionResponse | null): void {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
     private readonly api = inject(ApiService);
+    private readonly backup = inject(SessionBackupService);
     private readonly router = inject(Router);
     private readonly doc = inject(DOCUMENT);
 
@@ -109,7 +113,7 @@ export class AuthService {
         const hash = this.doc.location.hash || '';
         const match = hash.match(/[#&]token=([^&]+)/);
         if (match) {
-            this.api.setToken(decodeURIComponent(match[1]));
+            this.storeToken(decodeURIComponent(match[1]));
             writeCachedSession(null);
             const url = this.doc.location.pathname + this.doc.location.search;
             this.doc.defaultView?.history.replaceState(null, '', url);
@@ -119,6 +123,16 @@ export class AuthService {
         if (token && isExpiredJwt(token)) {
             this.api.setToken(null);
             writeCachedSession(null);
+        }
+        if (!this.api.getToken()) {
+            // Safari erases localStorage after a week without a visit: bring the token
+            // back from this site's own cookie before deciding the visitor is signed out.
+            const restored = await this.backup.restore();
+            if (restored && !isExpiredJwt(restored)) this.api.setToken(restored);
+            else if (restored) this.backup.clear();
+        } else if (!match && !this.backup.hasBackup()) {
+            // A session from before the backup existed: back it up now.
+            this.backup.save(this.api.getToken()!);
         }
         if (!this.api.getToken()) {
             // No token: render as signed out right away (the login page in ~1 s instead
@@ -140,8 +154,18 @@ export class AuthService {
     }
 
     private async loadSession(hadCachedUser = false): Promise<void> {
+        const sentToken = this.api.getToken();
         try {
-            const data = await this.api.get<SessionResponse>('/auth/session');
+            const { token, ...data } = await this.fetchSession();
+            if (token) {
+                // Sliding session: keep the renewed token so the sign-in never runs out
+                // for someone who keeps using the app.
+                this.storeToken(token);
+            } else if (sentToken && !data.user) {
+                // The API rejected the token (expired, revoked or the account is gone):
+                // it can never work again, so stop sending it and drop the backup.
+                this.forgetToken();
+            }
             this.applySession(data);
             writeCachedSession(data);
             if (hadCachedUser && !data.user) {
@@ -153,6 +177,31 @@ export class AuthService {
             if (!hadCachedUser) this.applySession(EMPTY_SESSION);
         }
         this.markReady();
+    }
+
+    /** GET /auth/session, retried while the API is cold or the network blips. */
+    private async fetchSession(): Promise<SessionResponse> {
+        for (let attempt = 1; ; attempt++) {
+            try {
+                return await this.api.get<SessionResponse>('/auth/session');
+            } catch (error) {
+                const status = (error as { status?: number })?.status ?? 0;
+                const transient = status === 0 || status === 429 || status >= 500;
+                if (!transient || attempt === 3) throw error;
+                await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+            }
+        }
+    }
+
+    /** Keep a session token: localStorage for API calls plus the first-party cookie backup. */
+    private storeToken(token: string): void {
+        this.api.setToken(token);
+        this.backup.save(token);
+    }
+
+    private forgetToken(): void {
+        this.api.setToken(null);
+        this.backup.clear();
     }
 
     private touched = false;
@@ -199,7 +248,7 @@ export class AuthService {
         } catch {
             /* ignore */
         }
-        this.api.setToken(null);
+        this.forgetToken();
         writeCachedSession(null);
         this.userSignal.set(null);
         this.profileSignal.set(null);
