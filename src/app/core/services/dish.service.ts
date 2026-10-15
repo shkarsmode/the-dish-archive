@@ -9,15 +9,37 @@ import {
 } from '../models/dish.model';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
+import { FamilyService } from './family.service';
 import { FavoritesService } from './favorites.service';
 
 /** Last catalog per user, shown instantly on the next visit while it revalidates. */
 const DISH_CACHE_KEY = 'dish_list_v1';
+/** The family picked in the switcher, kept for the next visit on this device. */
+const FAMILY_FILTER_KEY = 'dish_family_filter_v1';
+
+function readRememberedFamilies(): string[] {
+    try {
+        const ids = JSON.parse(localStorage.getItem(FAMILY_FILTER_KEY) || '[]');
+        return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+        return [];
+    }
+}
+
+function rememberFamilies(ids: string[]): void {
+    try {
+        if (ids.length) localStorage.setItem(FAMILY_FILTER_KEY, JSON.stringify(ids));
+        else localStorage.removeItem(FAMILY_FILTER_KEY);
+    } catch {
+        /* storage blocked: the choice simply isn't remembered */
+    }
+}
 
 @Injectable({ providedIn: 'root' })
 export class DishService {
     private readonly api = inject(ApiService);
     private readonly authService = inject(AuthService);
+    private readonly familyService = inject(FamilyService);
     private readonly favoritesService = inject(FavoritesService);
 
     private readonly allDishesSignal = signal<Dish[]>([]);
@@ -27,7 +49,7 @@ export class DishService {
 
     readonly searchQuery = signal('');
     readonly sortOption = signal<SortOption>('date-desc');
-    readonly filters = signal<FilterState>({ ...DEFAULT_FILTER_STATE });
+    readonly filters = signal<FilterState>({ ...DEFAULT_FILTER_STATE, selectedFamilyIds: readRememberedFamilies() });
     readonly visibleCount = signal(12);
     private readonly batchSize = 12;
 
@@ -189,10 +211,11 @@ export class DishService {
             this.allDishesSignal.set(cached);
             this.isLoading.set(false);
         }
-        // Fire the dishes fetch immediately: the Bearer token is already restored
-        // synchronously from localStorage, so /dishes runs in PARALLEL with
-        // /auth/session instead of waiting for the session round-trip (no waterfall).
-        void this.reload();
+        // Fire the dishes fetch as soon as the token is known (at once when it is in
+        // localStorage), so /dishes runs in PARALLEL with /auth/session instead of
+        // waiting for the session round-trip (no waterfall), and never goes out
+        // anonymous while Safari's backup token is still being restored.
+        void this.authService.whenTokenSettled().then(() => this.reload());
         // Then reload only when the signed-in identity actually changes, so the
         // backend returns the right set for the new user.
         effect(() => {
@@ -207,6 +230,19 @@ export class DishService {
             if (uid !== this.lastUserId) {
                 this.lastUserId = uid;
                 void this.reload();
+            }
+        });
+        // A remembered family the user can no longer see (signed out, left it, or it
+        // was archived) would leave an empty catalog: fall back to all families.
+        effect(() => {
+            if (!this.familyService.loaded()) {
+                return;
+            }
+            const visible = new Set(this.familyService.families().map(family => family.id));
+            const ids = this.filters().selectedFamilyIds;
+            const kept = ids.filter(id => visible.has(id));
+            if (kept.length !== ids.length) {
+                this.updateFilters({ selectedFamilyIds: kept });
             }
         });
     }
@@ -283,11 +319,15 @@ export class DishService {
 
     updateFilters(partialFilters: Partial<FilterState>): void {
         this.filters.update(current => ({ ...current, ...partialFilters }));
+        if (partialFilters.selectedFamilyIds) {
+            rememberFamilies(partialFilters.selectedFamilyIds);
+        }
         this.visibleCount.set(this.batchSize);
     }
 
     resetFilters(): void {
         this.filters.set({ ...DEFAULT_FILTER_STATE });
+        rememberFamilies([]);
         this.searchQuery.set('');
         this.visibleCount.set(this.batchSize);
     }

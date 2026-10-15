@@ -11,6 +11,8 @@ export class FamilyService {
 
     private readonly familiesSignal = signal<Family[]>([]);
     readonly families = this.familiesSignal.asReadonly();
+    /** True once the list has arrived, so an empty list means "none", not "not yet". */
+    readonly loaded = signal(false);
 
     /** Families the user may create/edit recipes in (super admin: all visible). */
     readonly editableFamilies = computed(() =>
@@ -18,12 +20,14 @@ export class FamilyService {
     );
 
     constructor() {
-        void this.load();
+        // After the token is known, so a session restored from Safari's backup gets its own families.
+        void this.auth.whenTokenSettled().then(() => this.load());
     }
 
     async load(): Promise<void> {
         const data = await this.api.get<Family[]>('/families?status=active');
         this.familiesSignal.set(data ?? []);
+        this.loaded.set(true);
     }
 
     async updateFamily(id: string, patch: {

@@ -79,6 +79,8 @@ export class AuthService {
     private readonly editModeSignal = signal<boolean>(false);
 
     private readyResolvers: Array<() => void> = [];
+    private resolveTokenSettled!: () => void;
+    private readonly tokenSettled = new Promise<void>((resolve) => (this.resolveTokenSettled = resolve));
 
     readonly user = this.userSignal.asReadonly();
     readonly profile = this.profileSignal.asReadonly();
@@ -134,6 +136,7 @@ export class AuthService {
             // A session from before the backup existed: back it up now.
             this.backup.save(this.api.getToken()!);
         }
+        this.resolveTokenSettled();
         if (!this.api.getToken()) {
             // No token: render as signed out right away (the login page in ~1 s instead
             // of waiting on a cold API), and still ask in the background in case a
@@ -224,6 +227,16 @@ export class AuthService {
         const resolvers = this.readyResolvers;
         this.readyResolvers = [];
         resolvers.forEach((resolve) => resolve());
+    }
+
+    /**
+     * Resolves once this start's token is final (OAuth hash read, an expired one dropped,
+     * Safari's backup restored), before the session check. Data loaded at startup waits
+     * for it so the first request already carries the right token. Immediate when the
+     * token was simply in localStorage.
+     */
+    whenTokenSettled(): Promise<void> {
+        return this.tokenSettled;
     }
 
     /** Resolves once the initial session has been restored (for route guards). */
